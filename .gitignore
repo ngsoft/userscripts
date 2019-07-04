@@ -3,4 +3,4 @@
 /dev/
 /nbproject/*/
 *.dev.*
-/*/*.bak.*
+*/*.bak.*
