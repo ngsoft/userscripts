@@ -1239,7 +1239,7 @@ rloader.prototype = {
         else if (/\.css$/i.test(params.key)) ext = "css";
 
 
-        let item = this.cache.getItem(params.key), load = () => {
+        let item = this.__cache__.getItem(params.key), load = () => {
             switch (ext) {
                 case "css":
                     addstyle(item.get());
@@ -1273,6 +1273,13 @@ rloader.prototype = {
             }).catch(console.warn);
         } else load();
         return this;
+    },
+    /**
+     * Clears the cache
+     * @returns {boolean}
+     */
+    clear() {
+        return this.__cache__.clear();
     }
 
 };

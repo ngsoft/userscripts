@@ -25,62 +25,25 @@
     /* jshint -W083 */
 
     //week
-    const cache = new LSCache(UUID, 604800);
+    //const cache = new LSCache(UUID, 604800);
+
+    const rload = new rloader(UUID, week);
 
     //clear cache on upgrade
     (() => {
         let last = localStorage.getItem(UUID);
-        if (last !== GMinfo.script.version) cache.clear();
+        if (last !== GMinfo.script.version) rload.clear();
         localStorage.setItem(UUID, GMinfo.script.version);
     })();
+    
+    //disables KodiRPC (m3u8 hangs severely)
+    on.body(() => {
+        Object.defineProperty(doc.body, 'KodiRPCModule', {
+            value: "off", configurable: true
+        });
+    });
 
 
-    /**
-     * Loads CSS or JS and save to cache
-     * @param {string} url
-     * @param {function} callback to be executed after resource is loaded
-     * @returns {undefined}
-     */
-    function loadResource(url, callback) {
-        if (typeof url === s && isValidUrl(url)) {
-            let a = doc.createElement('a'),
-                ext;
-            a.href = url;
-            let parsed = new URL(a.href);
-            if (/\.js$/i.test(parsed.pathname)) ext = "js";
-            else if (/\.css$/i.test(parsed.pathname)) ext = "css";
-            else return;
-            let item = cache.getItem(url);
-            if (!item.isHit()) {
-                fetch(a.href, {
-                    cache: "default",
-                    redirect: 'follow'
-                }).then(r => {
-                    r.text().then(text => {
-                        item.set(text);
-                        cache.save(item);
-                        switch (ext) {
-                            case "css":
-                                addstyle(item.get());
-                                break;
-                            default:
-                                addscript(item.get());
-                        }
-                        if (typeof callback === f) callback();
-                    });
-                }).catch(console.warn);
-                return;
-            }
-            switch (ext) {
-                case "css":
-                    addstyle(item.get());
-                    break;
-                default:
-                    addscript(item.get());
-            }
-            if (typeof callback === f) callback();
-        }
-    }
 
 
     class ToolBar {
@@ -198,42 +161,43 @@
             this.start();
         }
 
-        get isHls() {
-            let src = this.src || "";
-            return /\.m3u8/.test(src);
-        }
-
-
-        get src() {
+        get src(){
             return this.__src__;
         }
 
         set src(src) {
             if (isValidUrl(src)) {
                 const self = this;
-                let uri = getURL(src), url = new URL(uri), regex = /#EXT-X-STREAM-INF.*\n([^#].*)/, matches;
+                let uri = getURL(src),
+                    url = new URL(uri),
+                    regex = /#EXT-X-STREAM-INF.*\n([^#].*)/,
+                    matches;
                 url.protocol = location.protocol;
-                if(/\.m3u8/.test(url.pathname)){
-                    let cors = "https://cors-anywhere.herokuapp.com/" + url.href;
-                    fetch(cors, {cache: "default", redirect: 'follow'})
-                            .then(r => {
-                                r.text().then(text => {
-                                    if ((matches = regex.exec(text))) {
-                                        let uri = matches[1].trim();
-                                        if (/^\//.test(uri)) {
-                                            url.pathname = uri;
-                                        } else url.pathname = url.pathname.replace(/([\w\.\-]+)$/, uri);
-                                    }
-                                    self.__src__ = url.href;
-                                    self.start();
+                if (/\.m3u8/.test(url.pathname)) {
+                    fetch(url.href, {
+                            cache: "default",
+                            redirect: 'follow'
+                    }).then(r => {
+                        if (r.status === 200) return r.text();
+                        console.warn(r);
+                        throw new Error("Cannot fetch resource " + url.href);
+                    }).then(text => {
+                        console.debug(text);
+                        if ((matches = regex.exec(text))) {
+                            let uri = matches[1].trim();
+                            if (/^\//.test(uri)) {
+                                url.pathname = uri;
+                            } else url.pathname = url.pathname.replace(/([\w\.\-]+)$/, uri);
+                        }
+                        self.__src__ = url.href;
+                        self.start();
+                        console.debug(self);
 
-                                });
-                            })
-                            .catch(ex => {
-                                console.error(ex);
-                                self.__src__ = url.href;
-                                self.start();
-                            });
+                    }).catch(ex => {
+                        console.warn(ex);
+                        self.__src__ = url.href;
+                        self.start();
+                    });
                 } else {
                     self.__src__ = url.href;
                     self.start();
@@ -356,9 +320,16 @@
                 hls: null,
                 plyr: null,
                 plyropts: {
-                    captions: {active: true, language: 'auto', update: true},
+                    captions: {
+                        active: true,
+                        language: 'auto',
+                        update: true
+                    },
                     settings: ['captions', 'quality'],
-                    keyboard: {focused: true, global: true}
+                    keyboard: {
+                        focused: true,
+                        global: true
+                    }
                 },
                 settings: new UserSettings({
                     autoplay: false,
@@ -371,21 +342,23 @@
 
         }
 
-
-
-
         static loadDeps(onload) {
             const self = this;
             if (self.loaded !== true) {
-
-                loadResource("https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css", () => {
-                    self.loadStyles();
-                });
                 [
+                    {
+                        url: "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
+                        onload(){
+                            self.loadStyles();
+                        }
+                    },
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
-                ].forEach(loadResource);
-                let t = new Timer((timer) => {
+                ].forEach(params => {
+                    rload.require(params);
+                });
+
+                new Timer((timer) => {
                     if (typeof Hls === f && typeof Plyr === f) {
                         timer.stop();
                         self.loaded = true;
@@ -406,7 +379,7 @@
                 let css = `
                     .altvideo-container{height:100%;width: 100%;position: relative; overflow: hidden;}
                     .altvideo{width: 100%; height:100%; object-fit: fill; display: block;}
-                    .plyr{height: 100%;width:100%;position: absolute;}
+                    .plyr{height: 100%;width:100%;}
                     .plyr > .plyr__control--overlaid{display: none !important;}
                     [class*="-icn"] svg{width:87.5%;height:100%;}
                     [class*="-icn"] svg.square{width:87.5%;height:87.5%;}
@@ -426,21 +399,24 @@
                     .altvideo-container .bigplay-button:focus, .altplayer:hover span.bigplay-button{
                         color: rgba(255,255,255,1);
                     }
-                `;
 
-                css += `
-                    .altvideo-toolbar {position: absolute; top: 0 ; left: 0 ; right: 0; text-align: center; padding: 16px 8px;z-index: 9999; text-align: center;}
+                    .altvideo-toolbar {
+                        position: absolute; top: 0 ; left: 0 ; right: 0; z-index: 9999; text-align: center;
+                        text-align: center; padding: 16px 8px;
+                    }
                     .altvideo-toolbar [class*="-icn"]{vertical-align: middle; display: inline-block; width: 24px; height: 24px; margin:0 8px; line-height:0;}
                     .altvideo-toolbar .left{float:left;}
                     .altvideo-toolbar .right{float: right;}
                     .altvideo-toolbar .center{position: absolute;left: 50%;top: 16px;transform: translate(-50%);}
-                    .altvideo-toolbar, .altvideo-toolbar a, .altvideo-notifier {font-family: Arial,Helvetica,sans-serif; font-size: 16px; color:#FFF;line-height: 1.5;}
+                    .altvideo-toolbar, .altvideo-toolbar a, .altvideo-notifier {
+                        font-family: Arial,Helvetica,sans-serif; line-height: 1.5;
+                        font-size: 16px; color:#FFF;
+                    }
                     .altvideo-toolbar {background-color: rgba(0, 0, 0, 0.45);}
                     .altvideo-toolbar a {text-decoration: none; padding: 0 8px;}
                     .altvideo-toolbar a:hover {filter: drop-shadow(4px 4px 4px #fff);}
                     [disabled], .disabled, .altvideo-toolbar svg{pointer-events: none;}
-                `;
-                css += `
+
                     .altvideo-notifier {position: absolute; right: 32px; top: 40%; text-align: right;z-index: 9999;}
                     .altvideo-notifier > div{
                         display: block; text-align:center;padding:16px; border-radius: 4px; margin: 8px 0;
@@ -453,27 +429,21 @@
                     }
                     .fadeInRight {animation-name: fadeInRight;animation-duration: .5s;animation-fill-mode: both;}
                 `;
-
-
-                css += `#cms_player .altvideo-container{
-                       height: 675px;
-                }`;
+                css += `#cms_player .altvideo-container{height: 675px;position: absolute;}`;
 
                 css += `
-                        .hidden, .hidden *, [id*="jm_"],
-                        .altvideo-toolbar [class*="-bt"]:not(:hover) .bt-desc
-                        {
-                            position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-                            height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-                            display: inline !important;z-index: -1 !important;
-                        }
+                    .hidden, .hidden *, [id*="jm_"],
+                    .altvideo-toolbar [class*="-bt"]:not(:hover) .bt-desc
+                    {
+                        position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+                        height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+                        display: inline !important;z-index: -1 !important;
+                    }
                 `;
 
                 addstyle(css);
             }
         }
-
-
 
     }
 
@@ -482,38 +452,45 @@
     if (/zhuijukan/.test(location.host) && /^\/vplay\//.test(location.pathname)) {
 
 
-        find('#cms_player iframe.embed-responsive-item:not([id])', (el, obs) => {
-            let url = new URL(el.src), sp = new URLSearchParams(url.search), src = sp.get("url"), frame = el;
-            if(src === null) return ;
-            if (!(app instanceof AltVideoPlayer)) app = new AltVideoPlayer(el.parentElement);
+        return find('#cms_player iframe.embed-responsive-item:not([id])', (frame) => {
+            let url = new URL(frame.src),
+                sp = new URLSearchParams(url.search),
+                    src = sp.get("url");
+
+            app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 el.remove();
             });
-            //
             find('.play .container h2.text-nowrap > small', (el) => {
                 let matches, num = 0;
                 if ((matches = /第([0-9]+)/.exec(el.innerText))) num = parseInt(matches[1]);
                 app.number = num;
                 app.title = el.previousSibling.previousSibling.innerText;
-                if ((/\.m3u8/.test(src))) app.src = src;
-                else {
+
+                //tells streamgrabber to do some work
+                if (src === null || !(/\.m3u8/.test(src))) {
                     url.searchParams.set("jdtitle", app.videotitle + ".mp4");
-                    frame.src = url.href;
-                }
+                    let clone = frame.cloneNode(true);
+                    clone.src = url.href;
+                    frame.parentElement.insertBefore(clone, frame);
+                    frame.remove();
+                } else app.src = src;
+
             });
         });
 
     } else if (/16ys/.test(location.host) && /player\-/.test(location.pathname) && typeof now === s) {
 
-        find('.player > iframe', (frame)=>{
-            if (!(app instanceof AltVideoPlayer)) app = new AltVideoPlayer(frame.parentElement);
+        return find('.player > iframe', (frame) => {
+            app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 frame.remove();
             });
-             find('body > .wrap.textlink a:last-of-type', (el) => {
+            find('body > .wrap.textlink a:last-of-type', (el) => {
 
                 app.title = el.innerText;
-                let num = 0, txt, matches;
+                let num = 0,
+                    txt, matches;
                 if (el.nextSibling && (txt = el.nextSibling.nodeValue)) {
                     if ((matches = /第([0-9]+)/.exec(txt))) num = parseInt(matches[1]);
                 }
@@ -524,16 +501,19 @@
         });
     } else if (/5nj/.test(location.host) && /m=vod-play-id.*src.*num/.test(location.search)) {
 
-        find('#playleft iframe[src*="/m3u8/"]', (frame) => {
-            if (!(app instanceof AltVideoPlayer)) app = new AltVideoPlayer(frame.parentElement);
+        return find('#playleft iframe[src*="/m3u8/"]', (frame) => {
+            app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 frame.remove();
             });
-            let url = new URL(frame.src), sp = new URLSearchParams(url.search), src = sp.get('id');
-            if(src === null) return;
+            let url = new URL(frame.src),
+                sp = new URLSearchParams(url.search),
+                src = sp.get('id');
+            if (src === null) return;
             app.title = mac_name;
             find('.videourl li.selected a', (el) => {
-                let num = 0, matches;
+                let num = 0,
+                    matches;
                 if ((matches = /第([0-9]+)/.exec(el.title))) num = parseInt(matches[1]);
                 app.number = num;
                 app.src = src;
@@ -544,11 +524,13 @@
 
     //unified search module
     if (location.search.length > 0) {
-        let sp = new URLSearchParams(location.search), q = sp.get('q');
+        let sp = new URLSearchParams(location.search),
+            q = sp.get('q');
         if (typeof q === s) {
             if (/zhuijukan/.test(location.host)) {
                 find('form.ff-search', (form) => {
-                    let input = form.querySelector('input[name="wd"]'), btn = form.querySelector("button.search-button");
+                    let input = form.querySelector('input[name="wd"]'),
+                        btn = form.querySelector("button.search-button");
                     input.value = q;
                     btn.click();
                 });
@@ -557,20 +539,27 @@
             } else if (/16ys/.test(location.host)) {
                 find('#formsearch', (form) => {
                     form.target = "";
-                    let input = form.querySelector("#keyword"), btn = form.querySelector("#searchbutton");
+                    let input = form.querySelector("#keyword"),
+                        btn = form.querySelector("#searchbutton");
                     input.value = q;
                     btn.click();
                 });
 
             } else if (/5nj/.test(location.host)) {
                 find('ul.search form', (form) => {
-                    let input = form.querySelector('input[name="wd"]'), btn = form.querySelector('input[type="submit"]');
+                    let input = form.querySelector('input[name="wd"]'),
+                        btn = form.querySelector('input[type="submit"]');
                     input.value = q;
                     btn.click();
                 });
             }
         }
 
+    }
+
+    //shoupa 2nd tab select (if exists)
+    if (/zhuijukan/.test(location.host)) {
+        find('.detail-source ul#detail-tab a[data-target*="tab-2"]', a => a.click());
     }
 
 
