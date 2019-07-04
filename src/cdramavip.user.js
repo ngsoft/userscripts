@@ -1,11 +1,11 @@
 // ==UserScript==
-// @version      0.9.1.a
+// @version      0.2.a
 // @name         CDRAMA VIP Downloader
 // @description  FIX Stream + download stream (FFMPEG)
-// @namespace    https://github.com/ngsoft
+// @namespace    https://github.com/ngsoft/userscripts
 // @author       daedelus
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/archives@master/src/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -24,18 +24,14 @@
     /* jshint -W018 */
     /* jshint -W083 */
 
-    const GMinfo = (GM_info ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null));
-    const scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`,
-        uuid = GMinfo.script.uuid;
-
     //week
-    const cache = new LSCache(uuid, 604800);
+    const cache = new LSCache(UUID, 604800);
 
     //clear cache on upgrade
     (() => {
-        let last = localStorage.getItem(uuid);
+        let last = localStorage.getItem(UUID);
         if (last !== GMinfo.script.version) cache.clear();
-        localStorage.setItem(uuid, GMinfo.script.version);
+        localStorage.setItem(UUID, GMinfo.script.version);
     })();
 
 

@@ -3,15 +3,17 @@
  * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/gmutils.min.js
  */
 
-const s = "string",
-    b = "boolean",
-    f = "function",
-    o = "object",
-    u = "undefined",
-    n = "number",
-    doc = document;
+
+const GMinfo = (GM_info ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null));
+const scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`, UUID = GMinfo.script.uuid;
+
+// Scallar types
+const s = "string", b = "boolean", f = "function", o = "object", u = "undefined", n = "number", doc = document;
 
 let undef;
+
+//time
+const minute = 60 * 60, hour = minute * 60, day = hour * 24, week = day * 7, year = 365 * day, month = Math.round(year / 12);
 
 
 function isPlainObject(v) {
@@ -24,41 +26,70 @@ function isArray(v) {
 }
 
 
-
-function onBody(callback) {
+/**
+ * Run a callback
+ * @param {function} callback
+ * @returns {undefined}
+ */
+function on(callback) {
+    if (typeof callback === f) callback();
+}
+/**
+ * Run a Callback when body is created
+ * @param {function} callback
+ * @returns {undefined}
+ */
+on.body = function(callback) {
     if (typeof callback === f) {
-        let i = setInterval(function () {
+        let i = setInterval(() => {
             if (doc.body !== null) {
                 clearInterval(i);
-                callback();
+                on(callback);
             }
         }, 1);
     }
-}
 
-function onDocIddle(callback) {
+};
+
+/**
+ * Run a callback when page is loading DOMContentLoaded
+ * @param {function} callback
+ * @returns {undefined}
+ */
+on.load = function(callback) {
     if (typeof callback === f) {
         if (doc.readyState === "loading") {
-            return doc.addEventListener('DOMContentLoaded', function DOMContentLoaded() {
-                doc.removeEventListener('DOMContentLoaded', DOMContentLoaded);
-                callback();
+            doc.addEventListener("DOMContentLoaded", function load() {
+                doc.removeEventListener("DOMContentLoaded", load);
+                on(callback);
             });
-        }
-        callback();
+        } else on(callback);
     }
-}
+};
 
-function onDocEnd(callback) {
+/**
+ * Run a callback when page is completely loaded
+ * @param {function} callback
+ * @returns {undefined}
+ */
+on.loaded = function(callback) {
     if (typeof callback === f) {
         if (doc.readyState !== "complete") {
-            return addEventListener('load', function load() {
-                callback();
+            addEventListener("load", function load() {
+                removeEventListener("load", load);
+                on(callback);
             });
-        }
-        callback();
-    }
-}
 
+        } else on(callback);
+    }
+};
+
+
+/**
+ * Creates an HTMLElement from html code
+ * @param {string} html
+ * @returns {HTMLElement}
+ */
 function html2element(html) {
     if (typeof html === "string") {
         let template = doc.createElement('template');
@@ -68,18 +99,27 @@ function html2element(html) {
     }
 }
 
+/**
+ * Adds CSS to the bottom of the body
+ * @param {string} css
+ * @returns {undefined}
+ */
 function addcss(css) {
     if (typeof css === "string" && css.length > 0) {
         let s = doc.createElement('style');
         s.setAttribute('type', "text/css");
         s.appendChild(doc.createTextNode('<!-- ' + css + ' -->'));
-        onBody(function () {
+        on.body(() => {
             doc.body.appendChild(s);
         });
-
     }
 }
 
+/**
+ * Adds CSS to the bottom of the head
+ * @param {string} css
+ * @returns {undefined}
+ */
 function addstyle(css) {
     if (typeof css === "string" && css.length > 0) {
         let s = doc.createElement('style');
@@ -89,6 +129,11 @@ function addstyle(css) {
     }
 }
 
+/**
+ * Checks if url is valid
+ * @param {string} url
+ * @returns {boolean}
+ */
 function isValidUrl(url) {
     const weburl = new RegExp("^(?:(?:(?:https?|ftp):)?\\/\\/)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z0-9\\u00a1-\\uffff][a-z0-9\\u00a1-\\uffff_-]{0,62})?[a-z0-9\\u00a1-\\uffff]\\.)+(?:[a-z\\u00a1-\\uffff]{2,}\\.?))(?::\\d{2,5})?(?:[/?#]\\S*)?$", "i");
     if (typeof url === s && url.length > 0) {
@@ -98,6 +143,12 @@ function isValidUrl(url) {
 }
 
 
+
+/**
+ * Convert uri into full url
+ * @param {string} uri
+ * @returns {string|undefined}
+ */
 function getURL(uri) {
     let retval;
     if (typeof uri === s && uri.length > 0) {
@@ -117,6 +168,13 @@ function getURL(uri) {
 
 }
 
+/**
+ * Loads an external script
+ * @param {string} src
+ * @param {function} callback
+ * @param {boolean} defer
+ * @returns {undefined}
+ */
 function loadjs(src, callback, defer) {
     if (isValidUrl(src)) {
         let script = doc.createElement('script');
@@ -130,16 +188,25 @@ function loadjs(src, callback, defer) {
     }
 }
 
+/**
+ * Adds script to the bottom of the head
+ * @param {string} src
+ * @returns {undefined}
+ */
 function addscript(src) {
     if (typeof src === s && src.length > 0) {
         let s = doc.createElement("script");
         s.setAttribute("type", "text/javascript");
         s.appendChild(doc.createTextNode(src));
         doc.head.appendChild(s);
-        return s;
     }
 }
 
+/**
+ * Loads an external CSS
+ * @param {string} src
+ * @returns {undefined}
+ */
 function loadcss(src) {
     if (isValidUrl(src)) {
         let style = doc.createElement('link');
@@ -150,6 +217,11 @@ function loadcss(src) {
     }
 }
 
+/**
+ * Copy given text to clipboard
+ * @param {string} text
+ * @returns {boolean}
+ */
 function copyToClipboard(text) {
     let r = false;
     if (typeof text === "string" && text.length > 0) {
@@ -158,18 +230,26 @@ function copyToClipboard(text) {
         el.style.opacity = 0;
         doc.body.appendChild(el);
         el.select();
-        r = doc.execCommand("copy");
+        r = doc.execCommand("copy") === true;
         doc.body.removeChild(el);
     }
     return r;
 }
 
-
+/**
+ * Dispatches an Event
+ * @param {EventTarget} el
+ * @param {string} type
+ * @param {any} data
+ * @returns {undefined}
+ */
 function trigger(el, type, data) {
     if (el instanceof EventTarget) {
         if (typeof type === s) {
+            let event;
             type.split(" ").forEach((t) => {
-                let event = new Event(t, {bubbles: true, cancelable: true});
+                if (el.parentElement === null) event = new Event(type);
+                else event = new Event(t, {bubbles: true, cancelable: true});
                 event.data = data;
                 el.dispatchEvent(event);
             });
@@ -185,7 +265,10 @@ function trigger(el, type, data) {
  * @returns {Timer}
  */
 class Timer {
-
+    /**
+     * Starts the timer
+     * @returns {undefined}
+     */
     start() {
         if (this.started !== true && typeof this.params.callback === f) {
             const self = this;
@@ -201,6 +284,10 @@ class Timer {
         }
 
     }
+    /**
+     * Stops the timer
+     * @returns {undefined}
+     */
     stop() {
         if (this.started === true) {
             const self = this;
@@ -354,9 +441,10 @@ const find = (function () {
             });
             simpleobs = new SimpleObserver(runner, observer, params);
             simpleobs.start();
-            if (doc.readyState !== "complete") {
-                addEventListener('load', runner);
-            } else runner();
+
+            on.load(runner);
+            on.loaded(runner);
+
         }
 
     };
@@ -365,6 +453,9 @@ const find = (function () {
 
 /**
  * Small Event Wrapper
+ * @param {EventTarget} target
+ * @param {Object} binding
+ * @returns {Events}
  */
 function Events(target, binding) {
 
@@ -390,6 +481,13 @@ function Events(target, binding) {
 
 }
 Events.prototype = {
+    /**
+     * Add an event listener
+     * @param {string} type
+     * @param {function} listener
+     * @param {boolean|Object} options
+     * @returns {Events}
+     */
     on(type, listener, options) {
         if (typeof type === s && typeof listener === f) {
             const self = this,
@@ -414,6 +512,13 @@ Events.prototype = {
         }
         return this;
     },
+    /**
+     * Add an event listener that can be triggered once
+     * @param {string} type
+     * @param {function} listener
+     * @param {boolean} capture
+     * @returns {Events}
+     */
     one(type, listener, capture) {
         if (typeof type === s && typeof listener === f) this.on(type, listener, {
             once: true,
@@ -421,6 +526,13 @@ Events.prototype = {
         });
         return this;
     },
+    /**
+     * Removes an event listener
+     * @param {string} type
+     * @param {function} listener
+     * @param {boolean} capture
+     * @returns {Events}
+     */
     off(type, listener, capture) {
         if (typeof type === s) {
             const self = this,
@@ -458,6 +570,12 @@ Events.prototype = {
         }
         return this;
     },
+    /**
+     * Dispatches an event
+     * @param {string} type
+     * @param {any} data
+     * @returns {Events}
+     */
     trigger(type, data) {
         if (typeof type === s) {
             const self = this;
@@ -473,6 +591,7 @@ Events.prototype = {
                 self.target.dispatchEvent(event);
             });
         }
+        return this;
     }
 
 
@@ -680,9 +799,14 @@ class gmStore extends DataStore {
 
 /* jshint +W117 */
 
-
+/**
+ * Injects defaults settings into gmStore
+ */
 class UserSettings extends gmStore {
-
+    /**
+     * @param {Object} defaults a plain object containing defaults settings
+     * @returns {UserSettings}
+     */
     constructor(defaults) {
         super();
         if (isPlainObject(defaults)) {
@@ -703,7 +827,6 @@ class UserSettings extends gmStore {
  * Cache Item
  * @link https://www.php-fig.org/psr/psr-6/
  */
-
 class LSCacheItem {
 
     constructor(key, hit, value) {
@@ -1028,45 +1151,146 @@ class LSCache {
     }
 }
 
+/**
+ * Gets basename from path
+ * @param {string} path
+ * @returns {string|undefined}
+ */
+function basename(path) {
+    if (typeof path === s) {
+        return path.split('/').pop();
+    }
+}
 
-$.fn.dataset = function(k, v) {
-    let r = this;
 
-    if (typeof k === "string") {
-        //set
-        if (typeof v !== typeof undef) {
-            this.each(function() {
-                if (v === null) {
-                    delete(this.dataset[k]);
-                    return;
-                }
-                if (this.dataset) {
-                    this.dataset[k] = typeof v === "string" ? v : JSON.stringify(v);
-                }
+/**
+ * Resource Loader
+ * @param {string} prefix
+ * @param {number} ttl
+ * @returns {rloader}
+ */
+function rloader(prefix, ttl) {
+    if (!(this instanceof rloader)) return new rloader(cache, ttl);
+    prefix = typeof prefix === s ? prefix : "";
+    ttl = typeof ttl === n ? ttl : 5000;
+    this.__cache__ = new LSCache(prefix, ttl);
+}
 
-            });
-        } else if (arguments.length > 1) {
-            console.log('$.fn.dataset(' + k + ', undef) trying to set undefined value into dataset.', this);
-            return r;
-        } else if (this.length > 0) {
-            r = undef;
-            if (typeof this[0].dataset[k] !== typeof undef) {
-                try {
-                    r = JSON.parse(this[0].dataset[k]);
-                } catch (e) {
-                    r = this[0].dataset[k];
-                }
+rloader.prototype = {
+    /**
+     * Checks if key exists
+     * @param {string} key
+     * @returns {boolean}
+     */
+    has(key) {
+        return this.__cache__.hasItem(key);
+    },
+    /**
+     * Get a resource by key
+     * @param {string} key
+     * @returns {string|undefined}
+     */
+    get(key) {
+        let item = this.__cache__.getItem(key);
+        return item.get();
+    },
+    /**
+     * Loads a Ressource
+     * @param {string} [url] Must be set first if key is defined
+     * @param {function} [callback] a callback to load after
+     * @param {string} [key]
+     * @param {number} [expire]
+     * @param {Object} [options] overrides {url: 'https://...', onload(){}, key: "mykey", expire: 5000}
+     * @returns {rloader.prototype}
+     */
+    require() {
+        const params = {
+            expire: this.__cache__.ttl,
+            onload: null,
+            url: null,
+            key: null
+        }, self = this;
+        //parse arguments
+        for (let i = 0; i < arguments.length; i++) {
+            let arg = arguments[i];
+            switch (typeof arg) {
+                case n:
+                    params.expire = arg;
+                    break;
+                case s:
+                    if (typeof params.url === s) params.key = arg;
+                    else params.url = arg;
+                    break;
+                case f:
+                    params.onload = arg;
+                    break;
+                case o:
+                    if (isPlainObject(arg)) Object.assign(params, arg);
+                    break;
+                default :
+                    break;
             }
         }
-    } else if (typeof k === "object" && Object.keys(k).length > 0 && typeof v === typeof undef) {
 
-        for (let key of Object.keys(k)) {
-            let val = k[key];
-            this.dataset(key, val);
-        }
+        if (!isValidUrl(params.url)) throw new Error("Invalid Url.");
+        let url = new URL(getURL(params.url)), ext;
+        if (params.key === null) params.key = url.pathname.split("/").pop();
+        if (/\.js$/i.test(params.key)) ext = "js";
+        else if (/\.css$/i.test(params.key)) ext = "css";
+
+
+        let item = this.cache.getItem(params.key), load = () => {
+            switch (ext) {
+                case "css":
+                    addstyle(item.get());
+                    break;
+                case "js":
+                    addscript(item.get());
+                    break;
+                default :
+                    break;
+            }
+            if (typeof params.onload === f) params.onload(item.get());
+        };
+        if (!item.isHit()) {
+            fetch(url.href, {
+                method: "GET",
+                redirect: "follow",
+                cache: "no-store"
+            }).then(r => {
+                if (r.status === 200) return r.text();
+                else {
+                    console.warn(r);
+                    throw new Error("Cannot get the resource " + url.href);
+                }
+            }).then((text) => {
+                if (text.length > 0) {
+                    item.set(text);
+                    item.expiresAfter(params.ttl);
+                    self.__cache__.save(item);
+                    load();
+                }
+            }).catch(console.warn);
+        } else load();
+        return this;
     }
-    return r;
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Set or Get value from Element.dataset

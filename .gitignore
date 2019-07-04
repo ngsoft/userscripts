@@ -1,5 +1,5 @@
 .*
 !.gitignore
 /dev/
-/nbproject/private/
+/nbproject/*/
 *.dev.*
