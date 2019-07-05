@@ -269,6 +269,23 @@ function copyToClipboard(text) {
 }
 
 /**
+ * Download given text as a file
+ * @param {string} text
+ * @param {string} filename
+ * @returns {undefined}
+ * @link https://stackoverflow.com/questions/32225904/programmatical-click-on-a-tag-not-working-in-firefox
+ */
+function Text2File(text, filename){
+    if (typeof text === s && typeof filename === s) {
+        let link = doc.createElement("a"), blob = new Blob([text], {type: "application/octet-stream"});
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.dispatchEvent(new MouseEvent(`click`));
+    }
+}
+
+
+/**
  * Dispatches an Event
  * @param {EventTarget} el
  * @param {string} type
@@ -1180,17 +1197,6 @@ class LSCache {
         }
 
         return true;
-    }
-}
-
-/**
- * Gets basename from path
- * @param {string} path
- * @returns {string|undefined}
- */
-function basename(path) {
-    if (typeof path === s) {
-        return path.split('/').pop();
     }
 }
 

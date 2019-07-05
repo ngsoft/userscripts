@@ -1,6 +1,6 @@
 .*
 !.gitignore
-/dev/
+/deps/
 /nbproject/*/
 *.dev.*
 */*.bak.*
