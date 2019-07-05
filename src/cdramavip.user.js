@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      0.2.a
+// @version      1.0
 // @name         CDRAMA VIP Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -120,154 +120,7 @@
 
     class Settings {
         
-        static styles(){
-            if(this.loaded !== true){
-                this.loaded = true;
 
-                let css = "";
-                //switch
-                css += `
-                    /* switch */
-                    .switch,.switch .slider {position: relative;display: inline-block;}
-                    .switch [type="checkbox"] {opacity: 0;z-index: 2;}
-                    .switch [type="checkbox"],.switch .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
-                    .switch .slider:after,.switch .slider:before {-webkit-transition: 0.25s;transition: 0.25s;content: "";position: absolute;}
-                    .switch .slider {width: 4rem;height: 2rem;vertical-align: middle;}
-                    .switch .slider:before {z-index:1;height: 1.5rem;width: 1.5rem;left: .25rem;bottom: .25rem;}
-                    .switch [type="checkbox"]:checked + .slider:before {-webkit-transform: translateX(2rem);-ms-transform: translateX(2rem);transform: translateX(2rem);}
-                    .switch.round .slider:after{border-radius: 2rem;}
-                    .switch.round .slider:before {border-radius: 50%;}
-                    /** colors **/
-                    .switch [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
-                    .switch [type="checkbox"]:focus + .slider:after {box-shadow: 0 0 1px rgba(0, 123, 255, 1);}
-                    .switch .slider:before {background-color: rgba(255, 255, 255, 1);}
-                    .switch .slider:after {background-color: rgba(108, 117, 125, 1);}
-                    /** sizes **/
-                    .switch .slider{transform: scale(.75,.75);}
-                    .switch-sm .slider{transform: scale(.55,.55);}
-                    .switch-md .slider{transform: scale(.9,.9);}
-                    .switch-lg .slider{transform: scale(1.1,1.1);}
-                `;
-                //select
-                css += `
-                    .select-wrapper{display: inline-block;position: relative; width: 100%;}
-                    .select-wrapper:not(.custom) > *:not(select){position: absolute;width: 1px;height: 1px;padding: 0;overflow: hidden;clip: rect(0, 0, 0, 0);white-space: nowrap;border: 0;}
-                    .select-wrapper select, .search-wrapper [type="text"]{-webkit-appearance: none;-moz-appearance: none;-ms-appearance: none;-o-appearance: none;appearance: none;width: 100%!important;border: 1px solid;height: calc(2.25rem + 2px);display: inline-block;}
-                    .select-wrapper:not(.no-caret):after{content: "▼";position: absolute;right:.35rem;top: 50%;line-height:0;transform: translate(0, -50%);pointer-events: none;}
-                    .select-wrapper{color: #0D5995;}
-                    .select-wrapper select {min-width: 12.5rem; }
-                    .select-wrapper select:not(.form-control){ padding: .375rem .75rem;font-size: 1rem;text-align: center;color: inherit;border-color: #0D5995;background-color: rgba(255,255,255,1);}
-                    .select-wrapper.rounded select {padding-left: 1.5rem;padding-right: 1.5rem;}
-                    .select-wrapper.rounded:after{transform: translate(-.2rem, 50%);}
-                    .select-wrapper.rounded select {border-radius: 2rem;}
-                    .placeholder, ::placeholder{color: gray !important;opacity: 1;}
-                `;
-                //dialog
-                css += `
-                    .alt-dialog, .alt-dialog * {font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
-                    .alt-dialog{position: fixed; top:0;left:0; right:0; bottom:0; z-index: 2147483647; background-color: rgba(0, 0, 0, 0.45);}
-                    .alt-dialog .alt-container{position: relative;width: 80%; max-width: 960px; height: 100%; margin: 0 auto; overflow: hidden;}
-                    .alt-dialog .alt-body{
-                        position: relative; margin: 50px 0 0 0; min-height:128px;padding: 48px 24px 64px 24px;
-                        background-color: #FFF; border-radius: 6px;border: none;
-                    }
-                    .alt-dialog .alt-title{
-                        position: absolute; display: block; top:0;right: 0;left: 0;
-                        padding: 14px 16px 16px 56px;width: 100%;overflow: hidden;
-                        background-color: rgba(0,0,0,.03);border-bottom: 1px solid rgba(0,0,0,.125);
-                    }
-                    .alt-dialog .alt-title:before{
-                        content: "";display: inline-block;
-                        background: url('${GMinfo.script.icon}') no-repeat;background-size: cover;padding: 16px;
-                        position: absolute;top:10px;left:12px;
-                    }
-                    .alt-dialog .form-el{
-                        text-align: left; padding: 16px;margin: 16px 0;
-                    }
-                    .alt-dialog .form-el + .form-el{
-                        border-top: 1px solid rgba(0,0,0,.125);margin-top:0;
-                    }
-                    .alt-dialog .form-el .form-label{
-                        display: block;margin: 0 0 4px 0;
-                    }
-                    .alt-dialog .form-el .form-input{
-                        width: 100%;padding: 12px 20px;margin: 8px 0;box-sizing: border-box;
-                        border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-                        -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
-                    }
-                    .alt-dialog .form-el  .select-wrapper select{
-                        border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-                        padding: 12px 20px; height: 48px;
-                    }
-                    .alt-dialog .form-el .form-label + .form-input{
-                        margin-top:0;
-                    }
-                    .alt-dialog .form-el .form-input:focus, .alt-dialog .form-el .select-wrapper select:focus{
-                        border: 1px solid rgb(0, 153, 204);
-                    }
-                    .alt-dialog .alt-footer{
-                        display: block; margin:24px -24px 0 -24px; padding: 8px 24px 12px 24px; text-align: right;
-                        position: absolute; bottom: 0; left:0; right:0;
-                        background-color: rgba(0,0,0,.03);border-top: 1px solid rgba(0,0,0,.125);
-                    }
-                    .alt-dialog button{
-                        padding: 8px 24px;box-sizing: border-box;border-radius: 4px; border: 0;cursor: pointer;
-                        background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-                    }
-                    .alt-dialog .alt-footer button{
-                        margin-right: 16px;background-color: rgba(0,0,0,.125);
-                    }
-                    .alt-dialog button:hover{
-                        background-color: rgba(0,0,0,.125); border-color: rgba(0,0,0,.03);
-                    }
-                    .alt-dialog .close-bt{padding: 3px 16px;position: absolute;top: 10px;right: 12px;}
-                    .alt-dialog .bt-red{
-                        color: rgb(219, 40, 40);
-                    }
-                    .alt-dialog .bt-red:hover, .alt-dialog .bt-red:active{
-                        background-color: rgb(219, 40, 40); color: rgb(255, 255, 255);
-                    }
-                    .alt-dialog  .bt-blue{
-                        color: rgb(30, 130, 205);
-                    }
-                    .alt-dialog .bt-blue:hover, .alt-dialog .bt-blue:active{
-                        background-color: rgb(30, 130, 205);color: rgb(255, 255, 255);
-                    }
-                    .alt-dialog  .bt-black{
-                        color: rgb(28, 29, 30);
-                    }
-                    .alt-dialog .bt-black:hover, .alt-dialog .bt-black:active{
-                        background-color: rgb(28, 29, 30);color: rgb(255, 255, 255);
-                    }
-                    .alt-dialog .color-success{
-                        color: rgb(40, 167, 69);
-                    }
-                    .alt-dialog .color-error{
-                        color: rgb(220, 53, 69);
-                    }
-                    .alt-dialog [disabled]{
-                        pointer-events: none;color: gray;
-                    }
-                    @media (max-height: 480px) {
-                        .alt-dialog .alt-container{width: 100%; padding: 4px;}
-                        .alt-dialog .alt-body{height: 100%; margin: 0;}
-                    }
-                    @keyframes bounceOut {
-                        20% {-webkit-transform: scale3d(.9, .9, .9);transform: scale3d(.9, .9, .9);}
-                        50%, 55% {opacity: 1;-webkit-transform: scale3d(1.1, 1.1, 1.1);transform: scale3d(1.1, 1.1, 1.1);}
-                        100% {opacity: 0;-webkit-transform: scale3d(.3, .3, .3);transform: scale3d(.3, .3, .3);}
-                    }
-                    @keyframes fadeIn {from {opacity: 0;}to {opacity: 1;}}
-                    .bounceOut {animation-name: bounceOut;animation-duration: .75s;animation-fill-mode: both;}
-                    .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
-                    .no-select, .kodirpc-settings *:not(input){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
-                `;
-
-                addstyle(css);
-            }
-        }
-        
-        
         open(callback){
             if (typeof callback === f) this.one('settings.open', callback);
             this.elements.inputs.save.disabled = true;
@@ -587,7 +440,11 @@
 
             const evts = {
                 settings(e) {
-                    new Settings(videoplayer);
+                    new Settings(videoplayer, () => {
+                        self.video.pause();
+                    }, () => {
+                        self.trigger("update");
+                    });
                 },
                 clip(e) {
                     if (copyToClipboard(self.jdlink)) {
@@ -611,17 +468,17 @@
             self.elements.toolbar.appendChild(self.elements.buttons.code);
             self.elements.toolbar.appendChild(self.elements.buttons.clip);
 
-            self.elements.buttons.title.appendChild(document.createTextNode(self.title));
+
 
             videoplayer.on("play pause", (e) => {
                 if (e.type === "play") self.elements.toolbar.classList.add("hidden");
                 else self.elements.toolbar.classList.remove("hidden");
+                self.trigger("update");
             });
 
             self.on('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-
                 let target = e.target.closest('a[class*="-bt"]');
                 if (target instanceof HTMLElement) {
                     Object.keys(self.elements.buttons).forEach((btn) => {
@@ -629,7 +486,9 @@
 
                     });
                 }
-            });
+            }).on("update", () => {
+                self.elements.buttons.title.innerHTML = self.title;
+            }).trigger("update");
 
 
         }
@@ -897,80 +756,6 @@
                 onload();
             }
         }
-
-        static loadStyles() {
-            if (this.styles !== true) {
-                this.styles = true;
-
-                let css = `
-                    .altvideo-container{height:100%;width: 100%;position: relative; overflow: hidden;}
-                    .altvideo{width: 100%; height:100%; object-fit: fill; display: block;}
-                    .plyr{height: 100%;width:100%;}
-                    .plyr > .plyr__control--overlaid{display: none !important;}
-                    [class*="-icn"] svg{width:87.5%;height:100%;}
-                    [class*="-icn"] svg.square{width:87.5%;height:87.5%;}
-                    [class*="-icn"] img {width:100%;height:100%;}
-                    .altvideo-container [class*="-button"]{
-                        background-color: transparent;border: none; display: inline-block;color:#fff;
-                        width:32px;z-index: 10; cursor: pointer;border-radius: 3px;flex-shrink: 0;padding: 7px;transition: all .3s ease;
-                    }
-                    .altvideo-container [class*="-button"] svg{pointer-events: none;}
-                    .altvideo-container [class*="-button"]:not(.no-focus):focus, .altplayer-container [class*="-button"]:not(.no-focus):hover{
-                        box-shadow: 0 0 0 5px rgba(26,175,255,.5);background: #1aafff;outline: 0;
-                    }
-                    .altvideo-container .bigplay-button{
-                        position: absolute; top: 50%; left:50%; transform: translate(-50%, -50%);width: 128px;
-                        color: rgba(255,255,255,0.8);
-                    }
-                    .altvideo-container .bigplay-button:focus, .altplayer:hover span.bigplay-button{
-                        color: rgba(255,255,255,1);
-                    }
-
-                    .altvideo-toolbar {
-                        position: absolute; top: 0 ; left: 0 ; right: 0; z-index: 9999; text-align: center;
-                        text-align: center; padding: 16px 8px;
-                    }
-                    .altvideo-toolbar [class*="-icn"]{vertical-align: middle; display: inline-block; width: 24px; height: 24px; margin:0 8px; line-height:0;}
-                    .altvideo-toolbar .left{float:left;}
-                    .altvideo-toolbar .right{float: right;}
-                    .altvideo-toolbar .center{position: absolute;left: 50%;top: 16px;transform: translate(-50%);}
-                    .altvideo-toolbar, .altvideo-toolbar a, .altvideo-notifier {
-                        font-family: Arial,Helvetica,sans-serif; line-height: 1.5;
-                        font-size: 16px; color:#FFF;
-                    }
-                    .altvideo-toolbar {background-color: rgba(0, 0, 0, 0.45);}
-                    .altvideo-toolbar a {text-decoration: none; padding: 0 8px;}
-                    .altvideo-toolbar a:hover {filter: drop-shadow(4px 4px 4px #fff);}
-                    [disabled], .disabled, .altvideo-toolbar svg{pointer-events: none;}
-
-                    .altvideo-notifier {position: absolute; right: 32px; top: 40%; text-align: right;z-index: 9999;}
-                    .altvideo-notifier > div{
-                        display: block; text-align:center;padding:16px; border-radius: 4px; margin: 8px 0;
-                        min-width:256px;max-width:512px;
-                        color:rgb(0,0,0);background-color: rgba(255, 255, 255, .8);font-weight: bold;position: relative;
-                    }
-                    @keyframes fadeInRight {
-                        0% {opacity: 0;-webkit-transform: translate3d(100%, 0, 0);transform: translate3d(100%, 0, 0);}
-                        100% {opacity: 1;-webkit-transform: none;transform: none;}
-                    }
-                    .fadeInRight {animation-name: fadeInRight;animation-duration: .5s;animation-fill-mode: both;}
-                `;
-                css += `#cms_player .altvideo-container{height: 675px;position: absolute;}`;
-
-                css += `
-                    .hidden, .hidden *, [id*="jm_"],
-                    .altvideo-toolbar [class*="-bt"]:not(:hover) .bt-desc
-                    {
-                        position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-                        height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-                        display: inline !important;z-index: -1 !important;
-                    }
-                `;
-
-                addstyle(css);
-            }
-        }
-
     }
 
 
