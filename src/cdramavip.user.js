@@ -119,7 +119,10 @@
         open(callback){
             if (typeof callback === f) this.one('settings.open', callback);
             this.elements.inputs.save.disabled = true;
-            doc.body.insertBefore(this.elements.root, doc.body.firstChild);
+
+            //doc.body.insertBefore(this.elements.root, doc.body.firstChild);
+            this.player.plyr.elements.container.insertBefore(this.elements.root, this.player.plyr.elements.container.firstChild);
+
             this.elements.inputs.autoplay.focus();
             this.trigger('settings.open');
         }
@@ -142,6 +145,7 @@
         
         constructor(player, open, close){
             const self = this;
+            this.player = player;
             this.settings = player.settings;
             this.elements = {
                 root: html2element(
