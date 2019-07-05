@@ -1,6 +1,6 @@
 /**
  * Utilities for gm scripts
- * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.0/dist/gmutils.min.js
+ * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.1/dist/gmutils.min.js
  */
 
 
@@ -870,6 +870,85 @@ class UserSettings extends gmStore {
 
 }
 
+
+class LocalSettings extends DataStore {
+
+    get prefix(){
+        return UUID;
+    }
+
+
+    get(key){
+        let retval;
+        if (typeof key === s) {
+            let sval;
+            key = this.prefix + key;
+            if ((sval = localStorage.getItem(key)) !== null) {
+                try {
+                    retval = JSON.parse(sval);
+                } catch (e) {
+                    retval = sval;
+                }
+            }
+        }
+        return retval;
+    }
+    set(key, val){
+        if (typeof key === s && typeof val !== u) {
+            key = this.prefix + key;
+            let sval = val;
+            try {
+                val = JSON.stringify(sval);
+            } catch (e) {
+                val = sval;
+            }
+            localStorage.setItem(key, val);
+            return this;
+        } else if (isPlainObject(key)) {
+            Object.keys(key).forEach((k) => {
+                this.set(k, key[k]);
+            });
+        }
+        return this;
+    }
+    has(key){
+        return typeof key === s && typeof this.get(this.prefix + key) !== u;
+    }
+    remove(key){
+        if (typeof key === s) {
+            key = key.split(' ');
+        }
+        if (isArray(key)) {
+            key.forEach((k) => {
+                localStorage.removeItem(this.prefix + k);
+            });
+        }
+        return this;
+    }
+    clear(){
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            if (key.indexOf(this.prefix) === 0) {
+                localStorage.removeItem(key);
+            }
+        }
+        return this;
+    }
+
+
+
+    constructor(defaults){
+        super();
+        if (isPlainObject(defaults)) {
+            Object.keys(defaults).forEach((x) => {
+                if (typeof this.get(x) !== typeof defaults[x]) {
+                    this.set(x, defaults[x]);
+                }
+            }, this);
+        }
+    }
+
+}
 
 
 /**
