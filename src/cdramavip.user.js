@@ -351,7 +351,7 @@
 
 
             const btevents = {
-                close(e){
+                close(){
                     self.elements.body.classList.remove('fadeIn', 'bounceOut');
                     self.elements.body.classList.add('bounceOut');
                     setTimeout(() => {
@@ -431,12 +431,14 @@
                             default:
                                 break;
                         }
-                    },
-                    save(){
-                        btevents.close();
                     }
                 },
                 inputs: {
+                    save: {
+                        reset(){
+                            this.disabled = true;
+                        }
+                    },
                     ffmpeg: {
                         save(){
                             if (this.value.length > 0) {
@@ -521,6 +523,13 @@
                     self.elements.inputs[input].addEventListener(evt, evts.inputs[input][evt]);
                 });
             });
+
+            self.on('settings.saved', () => {
+                btevents.close();
+            });
+
+
+
 
             self.open(() => {
                 Object.keys(self.elements.inputs).forEach(name => {
