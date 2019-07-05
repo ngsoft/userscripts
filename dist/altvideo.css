@@ -97,7 +97,7 @@
 }
 .alt-dialog .alt-title:before{
     content: "";display: inline-block;
-    background: url('') no-repeat;background-size: cover;padding: 16px;
+    background: url('https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.png') no-repeat;background-size: cover;padding: 16px;
     position: absolute;top:10px;left:12px;
 }
 .alt-dialog .form-el{
