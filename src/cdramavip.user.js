@@ -14,7 +14,7 @@
 // @noframes
 //
 // @include     /^https?:\/\/(www\.)?(5nj\.com|zhuijukan\.com|16ys\.net)\//
-// @icon        https://www.zhuijukan.com/favicon.ico
+// @icon        https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.png
 // ==/UserScript==
 
 
