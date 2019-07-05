@@ -772,7 +772,6 @@
                 app.number = num;
                 let titleElement = el.previousSibling.previousSibling;
                 app.title = titleElement.innerText;
-                //tells streamgrabber to do some work
                 app.src = src;
             });
         });
@@ -814,6 +813,9 @@
                     matches;
                 if ((matches = /第([0-9]+)/.exec(el.title))) num = parseInt(matches[1]);
                 app.number = num;
+                app.one("altvideoplayer.ready", () => {
+                    app.elements.root.style = "max-height:550px;";
+                });
                 app.src = src;
             });
         });
