@@ -86,7 +86,8 @@
                 url: "",
                 description: "",
                 type: "",
-                year: 0
+                year: 0,
+                cover: ""
             });
 
             if (node instanceof HTMLElement) this.parse(node);
@@ -107,6 +108,7 @@
                     this.type = type.trim();
                     this.year = parseInt(year.split(',').shift().trim());
                 }
+                this.cover = getURL(node.querySelector('img').src);
             }
         }
     }
@@ -672,7 +674,8 @@
                             });
 
                             hls.attachMedia(self.video);
-                            new ToolBar(self);
+
+
                             self.__started__ = true;
                             self.trigger("altvideoplayer.ready");
                             console.debug(scriptname, " Started.");
@@ -716,7 +719,9 @@
                 })
             });
             new Events(this.video, this);
-
+            self.on("altvideoplayer.ready", () => {
+                new ToolBar(self);
+            });
 
         }
 

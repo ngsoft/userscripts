@@ -39,7 +39,7 @@
 }
 .altvideo-toolbar {background-color: rgba(0, 0, 0, 0.45);}
 .altvideo-toolbar a {text-decoration: none; padding: 0 8px;}
-.altvideo-toolbar a:hover {filter: drop-shadow(4px 4px 4px #fff);}
+.altvideo-toolbar a:hover {filter: drop-shadow(4px 4px 4px #fff);text-decoration: none;}
 [disabled], .disabled, .altvideo-toolbar svg{pointer-events: none;}
 
 .altvideo-notifier {position: absolute; right: 32px; top: 40%; text-align: right;z-index: 9999;}
