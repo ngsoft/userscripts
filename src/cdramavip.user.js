@@ -373,9 +373,6 @@
                 btevents.close();
             });
 
-
-
-
             self.open(() => {
                 Object.keys(self.elements.inputs).forEach(name => {
                     Events(self.elements.inputs[name]).trigger("init");
@@ -724,7 +721,7 @@
             if (self.loaded !== true) {
                 [
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/assets/altvideo.min.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.min.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
@@ -793,7 +790,7 @@
                     if ((matches = /第([0-9]+)/.exec(txt))) num = parseInt(matches[1]);
                 }
                 app.number = num;
-                if ((/\.m3u8/.test(now))) app.src = now;
+                app.src = now;
             });
 
         });
