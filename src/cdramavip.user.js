@@ -113,11 +113,6 @@
 
 
 
-
-
-
-
-
     class Settings {
         
 
@@ -145,10 +140,7 @@
         }
         
         
-        
-        
         constructor(player, open, close){
-            Settings.styles();
             const self = this;
             this.settings = player.settings;
             this.elements = {
@@ -731,12 +723,8 @@
             const self = this;
             if (self.loaded !== true) {
                 [
-                    {
-                        url: "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                        onload(){
-                            self.loadStyles();
-                        }
-                    },
+                    "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/assets/cdramavip.min.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
