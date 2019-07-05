@@ -724,7 +724,7 @@
             if (self.loaded !== true) {
                 [
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/assets/cdramavip.min.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/assets/altvideo.min.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
