@@ -112,7 +112,7 @@
 .alt-dialog .form-el .form-input{
     width: 100%;padding: 12px 20px;margin: 8px 0;box-sizing: border-box;
     border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-    -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
+    -moz-appearance: none;-webkit-appearance: none;-o-appearance: none;text-align: center;
 }
 .alt-dialog .form-el  .select-wrapper select{
     border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
