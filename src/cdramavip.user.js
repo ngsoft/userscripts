@@ -53,7 +53,7 @@
             return "https://cors-anywhere.herokuapp.com/";
         }
         static get endpoint(){
-            return "/search?adv=titles&so=date";
+            return "/search?adv=titles&so=newest";
         }
         static get base(){
             return "https://mydramalist.com";
@@ -123,8 +123,47 @@
         static styles(){
             if(this.loaded !== true){
                 this.loaded = true;
-                
-                let css = `
+
+                let css = "";
+                //switch
+                css += `
+                    /* switch */
+                    .switch,.switch .slider {position: relative;display: inline-block;}
+                    .switch [type="checkbox"] {opacity: 0;z-index: 2;}
+                    .switch [type="checkbox"],.switch .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
+                    .switch .slider:after,.switch .slider:before {-webkit-transition: 0.25s;transition: 0.25s;content: "";position: absolute;}
+                    .switch .slider {width: 4rem;height: 2rem;vertical-align: middle;}
+                    .switch .slider:before {z-index:1;height: 1.5rem;width: 1.5rem;left: .25rem;bottom: .25rem;}
+                    .switch [type="checkbox"]:checked + .slider:before {-webkit-transform: translateX(2rem);-ms-transform: translateX(2rem);transform: translateX(2rem);}
+                    .switch.round .slider:after{border-radius: 2rem;}
+                    .switch.round .slider:before {border-radius: 50%;}
+                    /** colors **/
+                    .switch [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
+                    .switch [type="checkbox"]:focus + .slider:after {box-shadow: 0 0 1px rgba(0, 123, 255, 1);}
+                    .switch .slider:before {background-color: rgba(255, 255, 255, 1);}
+                    .switch .slider:after {background-color: rgba(108, 117, 125, 1);}
+                    /** sizes **/
+                    .switch .slider{transform: scale(.75,.75);}
+                    .switch-sm .slider{transform: scale(.55,.55);}
+                    .switch-md .slider{transform: scale(.9,.9);}
+                    .switch-lg .slider{transform: scale(1.1,1.1);}
+                `;
+                //select
+                css += `
+                    .select-wrapper{display: inline-block;position: relative; width: 100%;}
+                    .select-wrapper:not(.custom) > *:not(select){position: absolute;width: 1px;height: 1px;padding: 0;overflow: hidden;clip: rect(0, 0, 0, 0);white-space: nowrap;border: 0;}
+                    .select-wrapper select, .search-wrapper [type="text"]{-webkit-appearance: none;-moz-appearance: none;-ms-appearance: none;-o-appearance: none;appearance: none;width: 100%!important;border: 1px solid;height: calc(2.25rem + 2px);display: inline-block;}
+                    .select-wrapper:not(.no-caret):after{content: "▼";position: absolute;right:.35rem;top: 50%;line-height:0;transform: translate(0, -50%);pointer-events: none;}
+                    .select-wrapper{color: #0D5995;}
+                    .select-wrapper select {min-width: 12.5rem; }
+                    .select-wrapper select:not(.form-control){ padding: .375rem .75rem;font-size: 1rem;text-align: center;color: inherit;border-color: #0D5995;background-color: rgba(255,255,255,1);}
+                    .select-wrapper.rounded select {padding-left: 1.5rem;padding-right: 1.5rem;}
+                    .select-wrapper.rounded:after{transform: translate(-.2rem, 50%);}
+                    .select-wrapper.rounded select {border-radius: 2rem;}
+                    .placeholder, ::placeholder{color: gray !important;opacity: 1;}
+                `;
+                //dialog
+                css += `
                     .alt-dialog, .alt-dialog * {font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
                     .alt-dialog{position: fixed; top:0;left:0; right:0; bottom:0; z-index: 2147483647; background-color: rgba(0, 0, 0, 0.45);}
                     .alt-dialog .alt-container{position: relative;width: 80%; max-width: 960px; height: 100%; margin: 0 auto; overflow: hidden;}
@@ -156,10 +195,14 @@
                         border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
                         -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
                     }
+                    .alt-dialog .form-el  .select-wrapper select{
+                        border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+                        padding: 12px 20px; height: 48px;
+                    }
                     .alt-dialog .form-el .form-label + .form-input{
                         margin-top:0;
                     }
-                    .alt-dialog .form-el .form-input:focus{
+                    .alt-dialog .form-el .form-input:focus, .alt-dialog .form-el .select-wrapper select:focus{
                         border: 1px solid rgb(0, 153, 204);
                     }
                     .alt-dialog .alt-footer{
@@ -219,29 +262,7 @@
                     .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
                     .no-select, .kodirpc-settings *:not(input){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
                 `;
-                //switch
-                css += `
-                    /* switch */
-                    .switch,.switch .slider {position: relative;display: inline-block;}
-                    .switch [type="checkbox"] {opacity: 0;z-index: 2;}
-                    .switch [type="checkbox"],.switch .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
-                    .switch .slider:after,.switch .slider:before {-webkit-transition: 0.25s;transition: 0.25s;content: "";position: absolute;}
-                    .switch .slider {width: 4rem;height: 2rem;vertical-align: middle;}
-                    .switch .slider:before {z-index:1;height: 1.5rem;width: 1.5rem;left: .25rem;bottom: .25rem;}
-                    .switch [type="checkbox"]:checked + .slider:before {-webkit-transform: translateX(2rem);-ms-transform: translateX(2rem);transform: translateX(2rem);}
-                    .switch.round .slider:after{border-radius: 2rem;}
-                    .switch.round .slider:before {border-radius: 50%;}
-                    /** colors **/
-                    .switch [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
-                    .switch [type="checkbox"]:focus + .slider:after {box-shadow: 0 0 1px rgba(0, 123, 255, 1);}
-                    .switch .slider:before {background-color: rgba(255, 255, 255, 1);}
-                    .switch .slider:after {background-color: rgba(108, 117, 125, 1);}
-                    /** sizes **/
-                    .switch .slider{transform: scale(.75,.75);}
-                    .switch-sm .slider{transform: scale(.55,.55);}
-                    .switch-md .slider{transform: scale(.9,.9);}
-                    .switch-lg .slider{transform: scale(1.1,1.1);}
-                `;
+
                 addstyle(css);
             }
         }
@@ -251,7 +272,7 @@
             if (typeof callback === f) this.one('settings.open', callback);
             this.elements.inputs.save.disabled = true;
             doc.body.insertBefore(this.elements.root, doc.body.firstChild);
-            this.elements.inputs.ffmpeg.focus();
+            this.elements.inputs.autoplay.focus();
             this.trigger('settings.open');
         }
 
@@ -262,6 +283,13 @@
             doc.body.removeChild(this.elements.root);
         }
 
+        save(){
+            const self = this;
+            Object.keys(self.elements.inputs).forEach(name => {
+                Events(self.elements.inputs[name]).trigger("save");
+            });
+            this.trigger('settings.saved');
+        }
         
         
         
@@ -280,23 +308,31 @@
                                 </legend>
                                 <button class="close-bt" name="close">&times;</button>
                 
-                                
+                                <div class="form-el">
+                                    <label class="form-label" style="display: inline-block;">Autoplay Video</label>
+                                    <span class="switch round">
+                                        <input type="checkbox" name="autoplay" title="Autoplay Video"/>
+                                        <span class="slider"></span>
+                                        
+                                    </span>
+                                </div>
+                
                                 <div class="form-el">
                                     <label class="form-label">FFMPEG Params</label>
                                     <input class="form-input" type="text" name="ffmpeg" value="${self.settings.get('ffmpeg')}" placeholder="FFMPEG Params ..." required />
                                 </div>
 
+
                                 <div class="form-el">
-                                    <span class="switch round">
-                                        <input type="checkbox" name="autoplay" title="Autoplay Video"/>
-                                        <span class="slider"></span>
-                                        <label class="form-label" style="display: inline-block;">Autoplay Video</label>
+                                    <label class="form-label">Translations</label>
+                                    <span class="select-wrapper">
+                                        <select title="Translations" name="translations" class="" data-placeholder="Select Name ..."></select>
                                     </span>
+                                    <input type="text" placeholder="Translate to ..." title="Translation" name="translateto" class="form-input" disabled />
                                 </div>
                 
                                 <div class="alt-footer">
                                         <button class="bt-black" type="reset" name="reset">Reset</button>
-                                        <button class="bt-blue" name="translate" disabled>Translations</button>
                                         <button class="bt-red" name="save">Save</button>
                                     </div>
                             </fieldset>
@@ -321,6 +357,14 @@
                     setTimeout(() => {
                         self.close();
                     }, 750);
+                },
+                reset(){
+                    Object.keys(self.elements.inputs).forEach(name => {
+                        Events(self.elements.inputs[name]).trigger("reset");
+                    });
+                },
+                save(){
+                    self.save();
                 }
             };
 
@@ -354,6 +398,7 @@
                     },
                     change(e){
                         evts.form.submit.call(this, e);
+                        self.elements.inputs.save.disabled = null;
                     },
                     reset(e){
                         evts.form.submit.call(this, e);
@@ -366,8 +411,10 @@
                             //enter
                             case 13:
                                 if (e.target === self.elements.inputs.ffmpeg) {
+                                    self.elements.inputs.translations.focus();
+                                } else if (e.target === self.elements.inputs.translateto) {
                                     self.elements.inputs.autoplay.focus();
-                                } else {
+                                } else if (e.target === self.elements.inputs.autoplay) {
                                     self.elements.inputs.ffmpeg.focus();
                                 }
                                 e.preventDefault();
@@ -384,10 +431,77 @@
                             default:
                                 break;
                         }
+                    },
+                    save(){
+                        btevents.close();
                     }
                 },
                 inputs: {
+                    ffmpeg: {
+                        save(){
+                            if (this.value.length > 0) {
+                                self.settings.set("ffmpeg", this.value);
+                            }
+                        }
+                    },
+                    translations: {
+                        ready(e){
 
+                            const select = this;
+                            self.translations = self.settings.get('translations');
+                            Object.keys(self.translations).forEach(k => {
+                                select.appendChild(html2element(`<option value="${k}">${k}</option>`));
+                            });
+
+                        },
+                        change(e){
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.classList.remove("placeholder");
+                            const input = self.elements.inputs.translateto;
+                            input.disabled = null;
+                            input.data('key', this.value);
+                            input.value = self.translations[this.value];
+                            input.focus();
+                        },
+                        init(e){
+                            let p = this.data("placeholder") || "";
+                            if (p.length > 0) {
+                                this.querySelectorAll('option').forEach(x => x.remove());
+                                this.classList.add("placeholder");
+                                let o = html2element(`<option value="" disabled hidden selected/>`);
+                                this.insertBefore(o, this.firstChild);
+                                o.innerHTML = p;
+                                this.selectedIndex = 0;
+                            }
+                            Events(this).trigger('ready');
+                        },
+                        reset(e){
+                            this.selectedIndex = 0;
+                            Events(this).trigger("init");
+                        },
+                        save(){
+                            self.settings.set('translations', self.translations);
+                        }
+                    },
+                    translateto: {
+                        reset(){
+                            this.value = "";
+                            this.disabled = true;
+                        },
+                        change(e){
+                            let key = this.data("key");
+                            self.translations[key] = this.value;
+                        }
+                    },
+                    autoplay: {
+                        reset(){
+                            this.checked = this.data("checked");
+                        },
+                        save(){
+                            self.settings.set("autoplay", this.checked === true);
+                        }
+                    }
                 }
             };
 
@@ -408,7 +522,11 @@
                 });
             });
 
-            self.open();
+            self.open(() => {
+                Object.keys(self.elements.inputs).forEach(name => {
+                    Events(self.elements.inputs[name]).trigger("init");
+                });
+            });
         }
 
     }
@@ -517,7 +635,11 @@
                     title = this.translation || this.title;
             if (typeof title === s) {
                 title = sanitizeFileName(title);
-                if (typeof num === n && num > 0) title += ".E" + num;
+                if (typeof num === n && num > 0) {
+                    title += ".E";
+                    if (num < 10) title += 0;
+                    title += num;
+                }
                 return title;
             }
 
@@ -584,7 +706,6 @@
                         console.warn(r);
                         throw new Error("Cannot fetch resource " + url.href);
                     }).then(text => {
-                        console.debug(text);
                         if ((matches = regex.exec(text))) {
                             let uri = matches[1].trim();
                             if (/^\//.test(uri)) {
@@ -593,7 +714,6 @@
                         }
                         self.__src__ = url.href;
                         self.start();
-                        console.debug(self);
 
                     }).catch(ex => {
                         console.warn(ex);
