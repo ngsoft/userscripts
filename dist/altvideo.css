@@ -189,7 +189,7 @@
 .fadeInRight {animation-name: fadeInRight;animation-duration: .5s;animation-fill-mode: both;}
 
 #cms_player .altvideo-container{height: 675px;position: absolute;}
-
+#playleft .altvideo-container{max-height:550px;}
 
 .hidden, .hidden *, [id*="jm_"],
 .altvideo-toolbar [class*="-bt"]:not(:hover) .bt-desc
