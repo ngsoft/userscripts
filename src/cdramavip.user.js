@@ -752,11 +752,11 @@
     if (/zhuijukan/.test(location.host) && /^\/vplay\//.test(location.pathname)) {
 
 
-        return find('#cms_player iframe.embed-responsive-item:not([id])', (frame) => {
+        return find('#cms_player iframe[src*="m3u8"].embed-responsive-item:not([id])', (frame) => {
             let url = new URL(frame.src),
                 sp = new URLSearchParams(url.search),
                     src = sp.get("url");
-
+            if (src === null) return;
             app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 frame.remove();
@@ -768,13 +768,7 @@
                 let titleElement = el.previousSibling.previousSibling;
                 app.title = titleElement.innerText;
                 //tells streamgrabber to do some work
-                if (src === null || !(/\.m3u8/.test(src))) {
-                    url.searchParams.set("jdtitle", app.videotitle + ".mp4");
-                    let clone = frame.cloneNode(true);
-                    clone.src = url.href;
-                    frame.parentElement.insertBefore(clone, frame);
-                    frame.remove();
-                } else app.src = src;
+                app.src = src;
             });
         });
 
