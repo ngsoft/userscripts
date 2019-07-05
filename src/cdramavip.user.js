@@ -44,6 +44,376 @@
     });
 
 
+    /**
+     * MDL Parser
+     */
+    class MyDramaList {
+
+        static get cors(){
+            return "https://cors-anywhere.herokuapp.com/";
+        }
+        static get endpoint(){
+            return "/search?adv=titles&so=date";
+        }
+        static get base(){
+            return "https://mydramalist.com";
+        }
+
+
+        static search(query, callback){
+
+            if (typeof query === s && typeof callback === f) {
+
+                let url = new URL(this.base + this.endpoint);
+                url.searchParams.set("q", query);
+
+                const results = [];
+                fetch(this.cors + url.href).then(r => {
+                    if (r.status === 200) return r.text();
+                }).then(text => html2doc(text)).then(page => page.querySelectorAll('[id*="mdl-"].box')).then(list => {
+                    list.forEach(node => {
+                        results.push(new MyDramaList(node));
+                    });
+                    callback(results);
+                }).catch(console.warn);
+            }
+        }
+
+        constructor(node){
+            Object.assign(this, {
+                title: "",
+                id: 0,
+                url: "",
+                description: "",
+                type: "",
+                year: 0
+            });
+
+            if (node instanceof HTMLElement) this.parse(node);
+        }
+
+        parse(node){
+            if (node instanceof HTMLElement) {
+                let el = node.querySelector('h6.title a'), matches;
+                this.url = new URL(MyDramaList.base + el.href);
+                this.title = el.innerText.trim();
+                this.description = node.querySelector('p+p').innerText.trim();
+                if ((matches = /(\d+)$/.exec(node.id)) !== null) {
+                    this.id = matches[1];
+                }
+                if ((el = node.querySelector('span.text-muted')) !== null) {
+                    let val = el.innerText.split('-'), type, year;
+                    [type, year] = val;
+                    this.type = type.trim();
+                    this.year = parseInt(year.split(',').shift().trim());
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+    class Settings {
+        
+        static styles(){
+            if(this.loaded !== true){
+                this.loaded = true;
+                
+                let css = `
+                    .alt-dialog, .alt-dialog * {font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
+                    .alt-dialog{position: fixed; top:0;left:0; right:0; bottom:0; z-index: 2147483647; background-color: rgba(0, 0, 0, 0.45);}
+                    .alt-dialog .alt-container{position: relative;width: 80%; max-width: 960px; height: 100%; margin: 0 auto; overflow: hidden;}
+                    .alt-dialog .alt-body{
+                        position: relative; margin: 50px 0 0 0; min-height:128px;padding: 48px 24px 64px 24px;
+                        background-color: #FFF; border-radius: 6px;border: none;
+                    }
+                    .alt-dialog .alt-title{
+                        position: absolute; display: block; top:0;right: 0;left: 0;
+                        padding: 14px 16px 16px 56px;width: 100%;overflow: hidden;
+                        background-color: rgba(0,0,0,.03);border-bottom: 1px solid rgba(0,0,0,.125);
+                    }
+                    .alt-dialog .alt-title:before{
+                        content: "";display: inline-block;
+                        background: url('${GMinfo.script.icon}') no-repeat;background-size: cover;padding: 16px;
+                        position: absolute;top:10px;left:12px;
+                    }
+                    .alt-dialog .form-el{
+                        text-align: left; padding: 16px;margin: 16px 0;
+                    }
+                    .alt-dialog .form-el + .form-el{
+                        border-top: 1px solid rgba(0,0,0,.125);margin-top:0;
+                    }
+                    .alt-dialog .form-el .form-label{
+                        display: block;margin: 0 0 4px 0;
+                    }
+                    .alt-dialog .form-el .form-input{
+                        width: 100%;padding: 12px 20px;margin: 8px 0;box-sizing: border-box;
+                        border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+                        -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
+                    }
+                    .alt-dialog .form-el .form-label + .form-input{
+                        margin-top:0;
+                    }
+                    .alt-dialog .form-el .form-input:focus{
+                        border: 1px solid rgb(0, 153, 204);
+                    }
+                    .alt-dialog .alt-footer{
+                        display: block; margin:24px -24px 0 -24px; padding: 8px 24px 12px 24px; text-align: right;
+                        position: absolute; bottom: 0; left:0; right:0;
+                        background-color: rgba(0,0,0,.03);border-top: 1px solid rgba(0,0,0,.125);
+                    }
+                    .alt-dialog button{
+                        padding: 8px 24px;box-sizing: border-box;border-radius: 4px; border: 0;cursor: pointer;
+                        background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+                    }
+                    .alt-dialog .alt-footer button{
+                        margin-right: 16px;background-color: rgba(0,0,0,.125);
+                    }
+                    .alt-dialog button:hover{
+                        background-color: rgba(0,0,0,.125); border-color: rgba(0,0,0,.03);
+                    }
+                    .alt-dialog .close-bt{padding: 3px 16px;position: absolute;top: 10px;right: 12px;}
+                    .alt-dialog .bt-red{
+                        color: rgb(219, 40, 40);
+                    }
+                    .alt-dialog .bt-red:hover, .alt-dialog .bt-red:active{
+                        background-color: rgb(219, 40, 40); color: rgb(255, 255, 255);
+                    }
+                    .alt-dialog  .bt-blue{
+                        color: rgb(30, 130, 205);
+                    }
+                    .alt-dialog .bt-blue:hover, .alt-dialog .bt-blue:active{
+                        background-color: rgb(30, 130, 205);color: rgb(255, 255, 255);
+                    }
+                    .alt-dialog  .bt-black{
+                        color: rgb(28, 29, 30);
+                    }
+                    .alt-dialog .bt-black:hover, .alt-dialog .bt-black:active{
+                        background-color: rgb(28, 29, 30);color: rgb(255, 255, 255);
+                    }
+                    .alt-dialog .color-success{
+                        color: rgb(40, 167, 69);
+                    }
+                    .alt-dialog .color-error{
+                        color: rgb(220, 53, 69);
+                    }
+                    .alt-dialog [disabled]{
+                        pointer-events: none;color: gray;
+                    }
+                    @media (max-height: 480px) {
+                        .alt-dialog .alt-container{width: 100%; padding: 4px;}
+                        .alt-dialog .alt-body{height: 100%; margin: 0;}
+                    }
+                    @keyframes bounceOut {
+                        20% {-webkit-transform: scale3d(.9, .9, .9);transform: scale3d(.9, .9, .9);}
+                        50%, 55% {opacity: 1;-webkit-transform: scale3d(1.1, 1.1, 1.1);transform: scale3d(1.1, 1.1, 1.1);}
+                        100% {opacity: 0;-webkit-transform: scale3d(.3, .3, .3);transform: scale3d(.3, .3, .3);}
+                    }
+                    @keyframes fadeIn {from {opacity: 0;}to {opacity: 1;}}
+                    .bounceOut {animation-name: bounceOut;animation-duration: .75s;animation-fill-mode: both;}
+                    .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
+                    .no-select, .kodirpc-settings *:not(input){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
+                `;
+                //switch
+                css += `
+                    /* switch */
+                    .switch,.switch .slider {position: relative;display: inline-block;}
+                    .switch [type="checkbox"] {opacity: 0;z-index: 2;}
+                    .switch [type="checkbox"],.switch .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
+                    .switch .slider:after,.switch .slider:before {-webkit-transition: 0.25s;transition: 0.25s;content: "";position: absolute;}
+                    .switch .slider {width: 4rem;height: 2rem;vertical-align: middle;}
+                    .switch .slider:before {z-index:1;height: 1.5rem;width: 1.5rem;left: .25rem;bottom: .25rem;}
+                    .switch [type="checkbox"]:checked + .slider:before {-webkit-transform: translateX(2rem);-ms-transform: translateX(2rem);transform: translateX(2rem);}
+                    .switch.round .slider:after{border-radius: 2rem;}
+                    .switch.round .slider:before {border-radius: 50%;}
+                    /** colors **/
+                    .switch [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
+                    .switch [type="checkbox"]:focus + .slider:after {box-shadow: 0 0 1px rgba(0, 123, 255, 1);}
+                    .switch .slider:before {background-color: rgba(255, 255, 255, 1);}
+                    .switch .slider:after {background-color: rgba(108, 117, 125, 1);}
+                    /** sizes **/
+                    .switch .slider{transform: scale(.75,.75);}
+                    .switch-sm .slider{transform: scale(.55,.55);}
+                    .switch-md .slider{transform: scale(.9,.9);}
+                    .switch-lg .slider{transform: scale(1.1,1.1);}
+                `;
+                addstyle(css);
+            }
+        }
+        
+        
+        open(callback){
+            if (typeof callback === f) this.one('settings.open', callback);
+            this.elements.inputs.save.disabled = true;
+            doc.body.insertBefore(this.elements.root, doc.body.firstChild);
+            this.elements.inputs.ffmpeg.focus();
+            this.trigger('settings.open');
+        }
+
+
+        close(callback){
+            if (typeof callback === f) this.one('settings.close', callback);
+            this.trigger('settings.close');
+            doc.body.removeChild(this.elements.root);
+        }
+
+        
+        
+        
+        
+        constructor(player, open, close){
+            Settings.styles();
+            const self = this;
+            this.settings = player.settings;
+            this.elements = {
+                root: html2element(
+                    `<div class="alt-dialog">
+                        <form class="alt-container">
+                            <fieldset class="alt-body">
+                                <legend class="alt-title">
+                                    ${GMinfo.script.name} Settings
+                                </legend>
+                                <button class="close-bt" name="close">&times;</button>
+                
+                                
+                                <div class="form-el">
+                                    <label class="form-label">FFMPEG Params</label>
+                                    <input class="form-input" type="text" name="ffmpeg" value="${self.settings.get('ffmpeg')}" placeholder="FFMPEG Params ..." required />
+                                </div>
+
+                                <div class="form-el">
+                                    <span class="switch round">
+                                        <input type="checkbox" name="autoplay" title="Autoplay Video"/>
+                                        <span class="slider"></span>
+                                        <label class="form-label" style="display: inline-block;">Autoplay Video</label>
+                                    </span>
+                                </div>
+                
+                                <div class="alt-footer">
+                                        <button class="bt-black" type="reset" name="reset">Reset</button>
+                                        <button class="bt-blue" name="translate" disabled>Translations</button>
+                                        <button class="bt-red" name="save">Save</button>
+                                    </div>
+                            </fieldset>
+                        </form>
+                    </div>`),
+                inputs: {}
+            };
+            this.elements.form = this.elements.root.querySelector('form.alt-container');
+            this.elements.body = this.elements.form.querySelector('.alt-body');
+            this.elements.form.querySelectorAll('[name]').forEach(input => {
+                self.elements.inputs[input.name] = input;
+            });
+
+            self.elements.inputs.autoplay.data("checked", self.settings.get("autoplay") === true);
+            self.elements.inputs.autoplay.checked = self.elements.inputs.autoplay.data("checked");
+
+
+            const btevents = {
+                close(e){
+                    self.elements.body.classList.remove('fadeIn', 'bounceOut');
+                    self.elements.body.classList.add('bounceOut');
+                    setTimeout(() => {
+                        self.close();
+                    }, 750);
+                }
+            };
+
+
+            const evts = {
+                root: {
+                    click(e){
+                        //if (e.button !== 0) return;
+                        let target = e.target, button, name;
+                        if ((button = target.closest('button')) !== null) {
+                            name = button.name;
+                            if (typeof btevents[name] === f) {
+                                btevents[name].call(this, e);
+                                //e.preventDefault();
+                                //e.stopPropagation();
+                                //return;
+                            }
+                        }
+                        else if (target.closest('.alt-body') !== null) return;
+
+                        e.preventDefault();
+                        e.stopPropagation();
+                        //self.elements.inputs.host.focus();
+                        //btevents.close();
+                    }
+                },
+                form: {
+                    submit(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+                    },
+                    change(e){
+                        evts.form.submit.call(this, e);
+                    },
+                    reset(e){
+                        evts.form.submit.call(this, e);
+                    },
+                    keydown(e){
+
+                        switch (e.keyCode) {
+                            //tab
+                            case 9:
+                            //enter
+                            case 13:
+                                if (e.target === self.elements.inputs.ffmpeg) {
+                                    self.elements.inputs.autoplay.focus();
+                                } else {
+                                    self.elements.inputs.ffmpeg.focus();
+                                }
+                                e.preventDefault();
+                                e.stopPropagation();
+
+                                break;
+                                //escape
+                            case 27:
+                                btevents.close();
+                                e.preventDefault();
+                                e.stopPropagation();
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                },
+                inputs: {
+
+                }
+            };
+
+            new Events(self.elements.form, self);
+            if (typeof open === f) self.one('settings.open', open);
+            if (typeof close === f) self.one('settings.close', close);
+
+            Object.keys(evts.root).forEach(evt => {
+                self.elements.root.addEventListener(evt, evts.root[evt]);
+            });
+            Object.keys(evts.form).forEach(evt => {
+                self.elements.form.addEventListener(evt, evts.form[evt]);
+            });
+
+            Object.keys(evts.inputs).forEach(input => {
+                Object.keys(evts.inputs[input]).forEach(evt => {
+                    self.elements.inputs[input].addEventListener(evt, evts.inputs[input][evt]);
+                });
+            });
+
+            self.open();
+        }
+
+    }
+
+
 
 
     class ToolBar {
@@ -90,7 +460,7 @@
 
             const evts = {
                 settings(e) {
-                    alert("To be continued...");
+                    new Settings(videoplayer);
                 },
                 clip(e) {
                     if (copyToClipboard(self.jdlink)) {
@@ -144,22 +514,54 @@
 
         get videotitle() {
             let num = this.number,
-                title = this.title;
+                    title = this.translation || this.title;
             if (typeof title === s) {
+                title = sanitizeFileName(title);
                 if (typeof num === n && num > 0) title += ".E" + num;
                 return title;
             }
 
         }
 
-        get title() {
+        get title(){
             return this.__title__;
         }
 
         set title(title) {
-            if (typeof title === s) this.__title__ = title;
-            this.start();
+            if (typeof title === s) {
+                this.__title__ = title;
+
+                if (!this.translation) {
+                    const self = this;
+                    MyDramaList.search(title, list => {
+                        if (list.length > 0) self.translation = list[0].title;
+                        else self.translation = title;
+                    });
+                } else this.start();
+            }
+            
         }
+
+        set translation(title){
+            if (typeof title === s && this.title) {
+                let translations = this.settings.get('translations');
+                if (typeof translations[this.title] === u) {
+                    translations[this.title] = title;
+                    this.settings.set('translations', translations);
+                }
+                this.start();
+            }
+        }
+
+        get translation(){
+            if (this.title) {
+                let translations = this.settings.get('translations');
+                if (typeof translations[this.title] === s) {
+                    return translations[this.title];
+                }
+            }
+        }
+
 
         get src(){
             return this.__src__;
@@ -202,8 +604,6 @@
                     self.__src__ = url.href;
                     self.start();
                 }
-
-
             }
         }
 
@@ -257,7 +657,7 @@
 
         start() {
             if (!this.__started__) {
-                if (this.title !== null && this.src !== null && this.number !== null) {
+                if (this.title !== undef && this.src !== undef && this.number !== undef && this.translation !== undef) {
                     const self = this;
                     AltVideoPlayer.loadDeps(x => {
                         self.elements.root.appendChild(self.video);
@@ -306,10 +706,7 @@
             if ((!(target instanceof HTMLElement))) throw new Error("Not an Element");
             const self = this;
             Object.assign(this, {
-                __started__: false,
-                __title__: null,
-                __number__: null,
-                __src__: null,
+
                 elements: {
                     root: html2element('<div class="altvideo-container" id="altvideo" />'),
                     notifier: html2element(`<div class="altvideo-notifier" />`),
@@ -459,14 +856,14 @@
 
             app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
-                el.remove();
+                frame.remove();
             });
             find('.play .container h2.text-nowrap > small', (el) => {
                 let matches, num = 0;
                 if ((matches = /第([0-9]+)/.exec(el.innerText))) num = parseInt(matches[1]);
                 app.number = num;
-                app.title = el.previousSibling.previousSibling.innerText;
-
+                let titleElement = el.previousSibling.previousSibling;
+                app.title = titleElement.innerText;
                 //tells streamgrabber to do some work
                 if (src === null || !(/\.m3u8/.test(src))) {
                     url.searchParams.set("jdtitle", app.videotitle + ".mp4");
@@ -475,7 +872,6 @@
                     frame.parentElement.insertBefore(clone, frame);
                     frame.remove();
                 } else app.src = src;
-
             });
         });
 

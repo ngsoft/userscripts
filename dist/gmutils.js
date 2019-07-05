@@ -100,6 +100,19 @@ function html2element(html) {
 }
 
 /**
+ * Creates a Document from html code
+ * @param {string} html
+ * @returns {documentElement}
+ */
+function html2doc(html){
+    let node = doc.implementation.createHTMLDocument().documentElement;
+    if (typeof html === s && html.length > 0) {
+        node.innerHTML = html;
+    }
+    return node;
+}
+
+/**
  * Adds CSS to the bottom of the body
  * @param {string} css
  * @returns {undefined}
@@ -167,6 +180,25 @@ function getURL(uri) {
     return retval;
 
 }
+
+/**
+ * Sanitize a given filename
+ * @param {string} input
+ * @param {string} replacement
+ * @returns {string}
+ */
+function sanitizeFileName(input, replacement){
+    replacement = typeof replacement === s ? replacement : "";
+    if (typeof input === s) return input
+                .replace(/[\/\?<>\\:\*\|":']/g, replacement)
+                .replace(/[\x00-\x1f\x80-\x9f]/g, replacement)
+                .replace(/^\.+$/, replacement)
+                .replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, replacement)
+                .replace(/[\. ]+$/, replacement)
+                .substring(0, 255);
+}
+
+
 
 /**
  * Loads an external script
@@ -1352,4 +1384,9 @@ NodeList.prototype.data = function(key, value) {
             el.data(key, value);
         });
 };
+
+
+
+
+
 
