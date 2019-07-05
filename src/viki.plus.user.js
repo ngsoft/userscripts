@@ -15,6 +15,18 @@
 
 ((doc, undef) => {
 
+    /* jshint expr: true */
+    /* jshint -W018 */
+    /* jshint -W083 */
+
+    const rload = new rloader(UUID, week);
+
+    //clear cache on upgrade
+    (() => {
+        let last = localStorage.getItem(UUID);
+        if (last !== GMinfo.script.version) rload.clear();
+        localStorage.setItem(UUID, GMinfo.script.version);
+    })();
 
     const resources = [
         "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
