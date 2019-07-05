@@ -1,6 +1,6 @@
 // ==UserScript==
-// @version	0.2.a
-// @name	CDRAMA VIP Downloader
+// @version	1.0
+// @name	CDRAMA Downloader
 // @description	FIX Stream + download stream (FFMPEG)
 // @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
@@ -9,5 +9,5 @@
 // @run-at	document-body
 // @noframes
 // @include	/^https?:\/\/(www\.)?(5nj\.com|zhuijukan\.com|16ys\.net)\//
-// @icon	https://www.zhuijukan.com/favicon.ico
+// @icon	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.png
 // ==/UserScript==
