@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name	ViKi+
-// @namespace	https://github.com/ngsoft/userscripts
 // @version	1.0
-// @description	Viki+
+// @name	ViKi+
+// @description	Download Subtitles on Viki
+// @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
-// @noframes
-// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/gmutils.min.js
+// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/gmutils.min.js
 // @grant	none
+// @noframes
 // @include	/^https?:\/\/(www\.)?viki.com\//
 // @icon	https://www.viki.com/favicon.ico
 // ==/UserScript==
