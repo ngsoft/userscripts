@@ -190,7 +190,7 @@ function getURL(uri) {
 function sanitizeFileName(input, replacement){
     replacement = typeof replacement === s ? replacement : "";
     if (typeof input === s) return input
-                .replace(/[\/\?<>\\:\*\|":']/g, replacement)
+                .replace(/[\/\?<>\\:\*\|":\'\`\’]/g, replacement)
                 .replace(/[\x00-\x1f\x80-\x9f]/g, replacement)
                 .replace(/^\.+$/, replacement)
                 .replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, replacement)
@@ -705,20 +705,23 @@ class xStore extends DataStore {
     }
     set(key, val) {
         if (typeof key === s && typeof val !== u) {
-            let sval = val;
-            try {
-                val = JSON.stringify(sval);
-            } catch (e) {
-                val = sval;
+            if(typeof val !== s){
+                let sval = val;
+                try {
+                    val = JSON.stringify(sval);
+                } catch (e) {
+                    val = sval;
+                }
             }
             this._storage.setItem(key, val);
-            return this;
+
         } else if (isPlainObject(key)) {
             Object.keys(key).forEach((k) => {
                 this.set(k, key[k]);
             });
         }
         return this;
+
     }
     has(key) {
         return typeof this.get(key) !== u;
@@ -870,87 +873,6 @@ class UserSettings extends gmStore {
 
 }
 
-
-class LocalSettings extends DataStore {
-
-    get prefix(){
-        return UUID;
-    }
-
-
-    get(key){
-        let retval;
-        if (typeof key === s) {
-            let sval;
-            key = this.prefix + key;
-            if ((sval = localStorage.getItem(key)) !== null) {
-                try {
-                    retval = JSON.parse(sval);
-                } catch (e) {
-                    retval = sval;
-                }
-            }
-        }
-        return retval;
-    }
-    set(key, val){
-        if (typeof key === s && typeof val !== u) {
-            key = this.prefix + key;
-            let sval = val;
-            try {
-                val = JSON.stringify(sval);
-            } catch (e) {
-                val = sval;
-            }
-            localStorage.setItem(key, val);
-            return this;
-        } else if (isPlainObject(key)) {
-            Object.keys(key).forEach((k) => {
-                this.set(k, key[k]);
-            });
-        }
-        return this;
-    }
-    has(key){
-        return typeof key === s && typeof this.get(this.prefix + key) !== u;
-    }
-    remove(key){
-        if (typeof key === s) {
-            key = key.split(' ');
-        }
-        if (isArray(key)) {
-            key.forEach((k) => {
-                localStorage.removeItem(this.prefix + k);
-            });
-        }
-        return this;
-    }
-    clear(){
-        for (let i = 0; i < localStorage.length; i++) {
-            let key = localStorage.key(i);
-            if (key.indexOf(this.prefix) === 0) {
-                localStorage.removeItem(key);
-            }
-        }
-        return this;
-    }
-
-
-
-    constructor(defaults){
-        super();
-        if (isPlainObject(defaults)) {
-            Object.keys(defaults).forEach((x) => {
-                if (typeof this.get(x) !== typeof defaults[x]) {
-                    this.set(x, defaults[x]);
-                }
-            }, this);
-        }
-    }
-
-}
-
-
 /**
  * Cache Item
  * @link https://www.php-fig.org/psr/psr-6/
@@ -1081,7 +1003,7 @@ class LSCache {
 
     get expire() {
         if (typeof this.__expire__ === u) {
-            let key = this.prefix + "_itemexpire";
+            let key = this.prefix + "LSCache";
             this.__expire__ = this.storage.get(key) || {};
         }
 
@@ -1091,13 +1013,13 @@ class LSCache {
     set expire(obj) {
         if (isPlainObject(obj)) {
             this.__expire__ = obj;
-            let key = this.prefix + "_itemexpire";
+            let key = this.prefix + "LSCache";
             this.storage.set(key, obj);
         }
     }
 
     get prefix() {
-        return this.__prefix__;
+        return this.__prefix__ + ":";
     }
 
     /**
