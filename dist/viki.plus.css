@@ -1,0 +1,96 @@
+/**
+ * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/viki.plus.min.css
+ */
+
+/** switch **/
+[class*="switch"],[class*="switch"] .slider {position: relative;display: inline-block;}
+[class*="switch"] [type="checkbox"] {opacity: 0;z-index: 2;}
+[class*="switch"] [type="checkbox"],
+[class*="switch"] .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
+[class*="switch"] .slider:after,[class*="switch"] .slider:before {transition: 0.25s;content: "";position: absolute;}
+[class*="switch"] .slider {width: 64px;height: 32px;vertical-align: middle;}
+[class*="switch"] .slider:before {z-index:1;height: 24px;width: 24px;left: 4px;bottom: 4px;}
+[class*="switch"] [type="checkbox"]:checked + .slider:before {transform: translateX(32px);}
+[class*="switch"][class*="-round"] .slider:after{border-radius: 32px;}
+[class*="switch"][class*="-round"] .slider:before{border-radius: 50%;}
+[class*="switch"][class*="-big"] .slider:before{width:40px;height:40px;transform: translate(-8px,8px);}
+[class*="switch"][class*="-big"] [type="checkbox"]:checked + .slider:before {transform: translate(32px,8px);}
+/** colors **/
+[class*="switch"] [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
+[class*="switch"] [type="checkbox"]:focus + .slider:after {box-shadow: 0 0 1px rgba(0, 123, 255, 1);}
+[class*="switch"] .slider:before {background-color: rgba(255, 255, 255, 1);}
+[class*="switch"] .slider:after {background-color: rgba(108, 117, 125, 1);}
+/** sizes **/
+[class*="switch"] .slider{transform: scale(.75,.75);}
+[class*="switch"][class*="-sm"] .slider{transform: scale(.55,.55);}
+[class*="switch"][class*="-md"] .slider{transform: scale(.9,.9);}
+[class*="switch"][class*="-lg"] .slider{transform: scale(1.1,1.1);}
+ /* form */
+ .form-body, .form-body *{line-height: 1.5;font-weight: 600;color:#333;font-size: 16px;}
+ .form-body, .form-el, .form-el .form-input, .form-el .caret{position: relative;}
+ .form-body, .form-el { margin: 0; padding: 0;border: none;}
+ .form-body .form-title{
+     display: block; padding: 0 0 16px 0; width: 100%;overflow: hidden;font-family: "Open Sans Condensed", sans-serif;
+     background-color: transparent;border: none;cursor: pointer;font-size: 24px;font-weight:600;
+ }
+ .form-body .form-title:hover{color: rgb(0, 127, 216);}
+ .form-el{padding: 0 0 8px 0;display: inline-block;vertical-align: middle;}
+ .form-el + .form-el{margin-left:8px;}
+ .form-el .form-label{display: inline-block;}
+ .form-el .form-label + .form-input{display: inline-block;margin-left: 8px;}
+ .form-el .caret:after{content: "▼";position: absolute;right:.35rem;top: 50%;line-height:0;transform: translate(0, -50%);pointer-events: none;}
+ .form-body input:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+ .form-body select, .form-body textarea{
+     padding: 4px 12px;margin: 0; -moz-appearance: none;-webkit-appearance: none;-o-appearance: none;
+     text-align: center; text-align-last: center;width: 100%;min-width: 256px;height: 32px;
+     box-sizing: border-box;border-radius: 4px;background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+ }
+ .form-body button, .form-body [class*="bt-"]{
+     height: 32px;padding: 4px 12px;box-sizing: border-box;border-radius: 4px; cursor: pointer;
+     background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+ }
+ .form-body input:focus:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+ .form-body input:hover:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+ .form-body select:focus, .form-body textarea:focus, .form-body select:hover, .form-body textarea:hover,
+ .form-body button:focus, .form-body [class*="bt-"]:focus, .form-body button:hover, .form-body [class*="bt-"]:hover
+ {border: 1px solid rgb(0, 153, 204);background-color: rgba(0,0,0,.125);color: rgb(30, 130, 205);}
+ .form-body button:focus [class*="icon-"], .form-body [class*="bt-"]:focus [class*="icon-"], .form-body button:hover [class*="icon-"], .form-body [class*="bt-"]:hover [class*="icon-"]
+ {color: rgb(30, 130, 205);}
+ .form-body .vkp-toggle + [type="checkbox"] {z-index: 2; position: absolute;top:0;left:0;width:100%;height:100%;cursor:pointer;opacity:0;}
+ .form-body .vkp-toggle:not(.vkp-toggle-on) .vkp-toggle-bar{background-color: rgba(108, 117, 125, 1);}
+ .form-body .vkp-toggle{background:rgba(255,255,255,.8);}
+ .form-body .bt-square{line-height:0; padding: 4px 8px;vertical-align: top;}
+ .form-body .form-select .form-label + .form-input{margin:0;}
+ .form-body [class*="icon-"]{font-size: 12px;}
+ .form-body .form-label + [class*="switch"].form-input {margin:0;}
+ .form-el .form-label + [class*="switch"]{position: initial;}
+
+
+ .viki-plus .form-fedit{
+     max-width: 470px;padding:0 16px 16px 16px;border: 1px solid rgba(0,0,0,.125);border-radius: 4px;
+     background: rgba(255,255,255,.8);
+ }
+ .viki-plus .form-fedit ul, .viki-plus .form-fedit ul + div{
+     padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);
+ }
+ .viki-plus .form-fedit ul li, .viki-plus .form-fedit ul + div div{
+    height: 40px;text-align: center;
+    border: 0;padding: 4px;
+ }
+ .viki-plus .form-fedit ul{
+     border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom:0;
+ }
+ .viki-plus .form-fedit ul + div{
+     border-top-left-radius: 0; border-top-right-radius: 0;
+     padding: 0 4px;
+ }
+ .viki-plus .form-fedit ul li +li, .viki-plus .form-fedit ul{
+     border-top: 1px solid rgba(0,0,0,.125);
+ }
+ .viki-plus .form-fedit ul:empty,.viki-plus .form-fedit ul:empty + div {display:none;}
+
+ .form-block{display: block;padding:8px 0 16px 0;}
+ .form-body [disabled] {pointer-events: none;opacity: .45;}
+ .form-body [hidden],.form-body .form-el.form-select .form-label{display:none;}
+ div.ads, div.ad, div.ad-1, div[id*="-ad-"]{position: fixed; top:-100%;right: -100%; height:1px; width:1px; opacity: 0; z-index: -1;}
+ .viki-plus{background: rgb(235, 238, 242); padding: 8px 16px;border-radius: 8px;}

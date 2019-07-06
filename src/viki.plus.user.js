@@ -21,10 +21,7 @@
     /* jshint -W083 */
 
 
-    const resources = [
-        "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.css",
-        "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js"
-    ], newsession = sessionStorage.getItem(UUID + "session") === null;
+    let newsession = sessionStorage.getItem(UUID + "session") === null;
 
     sessionStorage.setItem(UUID + "session", +new Date());
 
@@ -76,8 +73,13 @@
         static set filters(arr){
             if (isArray(arr)) this.store.set(this.prefix + "filters", arr.filter(x => /^[\w]{2}$/.test(x)).sort());
         }
-
     }
+
+
+    /**
+     * Loads Stylesheet
+     */
+    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/viki.plus.min.css")
 
 
     /**
@@ -246,8 +248,6 @@
                             Events(this).trigger("change");
                         },
                         change(){
-                            this.previousElementSibling.classList.remove("vkp-toggle-on");
-                            if (this.checked) this.previousElementSibling.classList.add("vkp-toggle-on");
                             Settings.convert = this.checked === true;
                         }
                     },
@@ -381,17 +381,10 @@
                                 </div>
                                 <div class="form-el">
                                     <label class="form-label">SRT</label>
-                                    <span class="form-input">
-                                        <div class="vkp-toggle">
-                                            <div class="vkp-toggle-box">
-                                                <div class="vkp-toggle-bar"></div><div class="vkp-toggle-knob"></div>
-                                            </div>
-                                        </div>
-                                        <input type="checkbox" name="convert" title="Convert to SRT" />
-                                    </span>
-                                    <span class="form-input switch round">
 
-                                        <input type="checkbox" name="convert2" title="Convert to SRT" />
+                                    <span class="form-input switch-round">
+
+                                        <input type="checkbox" name="convert" title="Convert to SRT" />
                                         <span class="slider"></span>
 
                                     </span>
@@ -474,106 +467,12 @@
 
 
 
+
+
     /**
      * Subtitles
      */
     if (/^\/videos\//.test(location.pathname) && typeof parsedSubtitles !== u && typeof video_json !== u) {
-        
-        
-        addstyle(`
-        .form-body, .form-body *{line-height: 1.5;font-weight: 600;color:#333;font-size: 16px;}
-        .form-body, .form-el, .form-el .form-input, .form-el .caret{position: relative;}
-        .form-body, .form-el { margin: 0; padding: 0;border: none;}
-        .form-body .form-title{
-            display: block; padding: 0 0 16px 0; width: 100%;overflow: hidden;font-family: "Open Sans Condensed", sans-serif;
-            background-color: transparent;border: none;cursor: pointer;font-size: 24px;font-weight:600;
-        }
-        .form-body .form-title:hover{color: rgb(0, 127, 216);}
-        .form-el{padding: 0 0 8px 0;display: inline-block;}
-        .form-el + .form-el{margin-left:8px;}
-        .form-el .form-label{display: inline-block;}
-        .form-el .form-label + .form-input{display: inline-block;margin-left: 8px;}
-        .form-el .caret:after{content: "▼";position: absolute;right:.35rem;top: 50%;line-height:0;transform: translate(0, -50%);pointer-events: none;}
-        .form-body input:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
-        .form-body select, .form-body textarea{
-            padding: 4px 12px;margin: 0; -moz-appearance: none;-webkit-appearance: none;-o-appearance: none;
-            text-align: center; text-align-last: center;width: 100%;min-width: 256px;height: 32px;
-            box-sizing: border-box;border-radius: 4px;background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-        }
-        .form-body button, .form-body [class*="bt-"]{
-            height: 32px;padding: 4px 12px;box-sizing: border-box;border-radius: 4px; cursor: pointer;
-            background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-        }
-        .form-body input:focus:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
-        .form-body input:hover:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
-        .form-body select:focus, .form-body textarea:focus, .form-body select:hover, .form-body textarea:hover,
-        .form-body button:focus, .form-body [class*="bt-"]:focus, .form-body button:hover, .form-body [class*="bt-"]:hover
-        {border: 1px solid rgb(0, 153, 204);background-color: rgba(0,0,0,.125);color: rgb(30, 130, 205);}
-        .form-body button:focus [class*="icon-"], .form-body [class*="bt-"]:focus [class*="icon-"], .form-body button:hover [class*="icon-"], .form-body [class*="bt-"]:hover [class*="icon-"]
-        {color: rgb(30, 130, 205);}
-        .form-body .vkp-toggle + [type="checkbox"] {z-index: 2; position: absolute;top:0;left:0;width:100%;height:100%;cursor:pointer;opacity:0;}
-        .form-body .vkp-toggle:not(.vkp-toggle-on) .vkp-toggle-bar{background-color: rgba(108, 117, 125, 1);}
-        .form-body .vkp-toggle{background:rgba(255,255,255,.8);}
-        .form-body .bt-square{line-height:0; padding: 4px 8px;vertical-align: top;}
-        .form-body .form-select .form-label + .form-input{margin:0;}
-        .form-body [class*="icon-"]{font-size: 12px;}
-
-
-        
-        .viki-plus .form-fedit{
-            max-width: 470px;padding:0 16px 16px 16px;border: 1px solid rgba(0,0,0,.125);border-radius: 4px;
-        }
-        .viki-plus .form-fedit ul, .viki-plus .form-fedit ul + div{
-            padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);
-        }
-        .viki-plus .form-fedit ul li, .viki-plus .form-fedit ul + div div{
-           height: 40px;text-align: center;
-           border: 0;padding: 4px;
-        }
-        .viki-plus .form-fedit ul{
-            border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom:0;
-        }
-        .viki-plus .form-fedit ul + div{
-            border-top-left-radius: 0; border-top-right-radius: 0;
-            padding: 0 4px;
-        }
-        .viki-plus .form-fedit ul li +li, .viki-plus .form-fedit ul{
-            border-top: 1px solid rgba(0,0,0,.125);
-        }
-        .viki-plus .form-fedit ul:empty,.viki-plus .form-fedit ul:empty + div {display:none;}
-
-        .form-block{display: block;padding:8px 0 16px 0;}
-        .form-body [disabled] {pointer-events: none;opacity: .45;}
-        .form-body [hidden],.form-body .form-el.form-select .form-label{display:none;}
-        div.ads, div.ad, div.ad-1, div[id*="-ad-"]{position: fixed; top:-100%;right: -100%; height:1px; width:1px; opacity: 0; z-index: -1;}
-        .viki-plus{background: rgb(235, 238, 242); padding: 8px 16px;border-radius: 8px;}
-        `);
-
-
-        addstyle(`
-        /* switch */
-       .switch,.switch .slider {position: relative;display: inline-block;}
-       .switch [type="checkbox"] {opacity: 0;z-index: 2;}
-       .switch [type="checkbox"],
-        .switch .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
-       .switch .slider:after,.switch .slider:before {transition: 0.25s;content: "";position: absolute;}
-       .switch .slider {width: 64px;height: 32px;vertical-align: middle;}
-       .switch .slider:before {z-index:1;height: 24px;width: 24px;left: 4px;bottom: 4px;}
-       .switch [type="checkbox"]:checked + .slider:before {transform: translateX(32px);}
-       .switch.round .slider:after{border-radius: 32px;}
-       .switch.round .slider:before{border-radius: 50%;}
-       /** colors **/
-       .switch [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
-       .switch [type="checkbox"]:focus + .slider:after {box-shadow: 0 0 1px rgba(0, 123, 255, 1);}
-       .switch .slider:before {background-color: rgba(255, 255, 255, 1);}
-       .switch .slider:after {background-color: rgba(108, 117, 125, 1);}
-       /** sizes **/
-       .switch .slider{transform: scale(.75,.75);}
-       .switch-sm .slider{transform: scale(.55,.55);}
-       .switch-md .slider{transform: scale(.9,.9);}
-       .switch-lg .slider{transform: scale(1.1,1.1);}
-        `);
-
         new VikiSubs(video_json, parsedSubtitles);
 
     }
