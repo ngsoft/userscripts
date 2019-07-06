@@ -1,11 +1,11 @@
 // ==UserScript==
-// @version      1.0.1
+// @version      1.0.2
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
 // @author       daedelus
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.1/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -730,7 +730,7 @@
             if (self.loaded !== true) {
                 [
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/altvideo.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
