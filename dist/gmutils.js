@@ -1,6 +1,6 @@
 /**
  * Utilities for gm scripts
- * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.1/dist/gmutils.min.js
+ * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/gmutils.min.js
  */
 
 
