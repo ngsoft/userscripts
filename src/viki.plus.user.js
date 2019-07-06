@@ -79,7 +79,7 @@
     /**
      * Loads Stylesheet
      */
-    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/viki.plus.min.css")
+    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/viki.plus.min.css");
 
 
     /**
