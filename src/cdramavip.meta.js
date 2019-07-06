@@ -4,7 +4,7 @@
 // @description	FIX Stream + download stream (FFMPEG)
 // @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
-// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/gmutils.min.js
+// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.1/dist/gmutils.min.js
 // @grant	GM_listValues
 // @run-at	document-body
 // @noframes
