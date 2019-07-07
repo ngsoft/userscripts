@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.0
+// @version      1.0.1
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -484,7 +484,7 @@
             }).on("update", () => {
                 self.elements.buttons.title.innerHTML = self.title;
             }).trigger("update");
-
+            console.debug(scriptname, " Started.");
 
         }
 
@@ -678,7 +678,7 @@
 
                             self.__started__ = true;
                             self.trigger("altvideoplayer.ready");
-                            console.debug(scriptname, " Started.");
+
                         });
 
                     });
@@ -719,7 +719,7 @@
                 })
             });
             new Events(this.video, this);
-            self.on("altvideoplayer.ready", () => {
+            this.onReady(() => {
                 new ToolBar(self);
             });
 
@@ -757,7 +757,8 @@
     if (/zhuijukan/.test(location.host) && /^\/vplay\//.test(location.pathname)) {
 
 
-        return find('#cms_player iframe[src*="m3u8"].embed-responsive-item:not([id])', (frame) => {
+        return find('#cms_player iframe[src*="m3u8"].embed-responsive-item:not([id])', (frame, obs) => {
+            obs.stop();
             let url = new URL(frame.src),
                 sp = new URLSearchParams(url.search),
                     src = sp.get("url");
@@ -778,7 +779,8 @@
 
     } else if (/16ys/.test(location.host) && /player\-/.test(location.pathname) && typeof now === s) {
 
-        return find('.player > iframe', (frame) => {
+        return find('.player > iframe', (frame, obs) => {
+            obs.stop();
             app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 frame.remove();
@@ -798,7 +800,8 @@
         });
     } else if (/5nj/.test(location.host) && /m=vod-play-id.*src.*num/.test(location.search)) {
 
-        return find('#playleft iframe[src*="/m3u8/"]', (frame) => {
+        return find('#playleft iframe[src*="/m3u8/"]', (frame, obs) => {
+            obs.stop();
             app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 frame.remove();
@@ -813,7 +816,7 @@
                     matches;
                 if ((matches = /第([0-9]+)/.exec(el.title))) num = parseInt(matches[1]);
                 app.number = num;
-                app.one("altvideoplayer.ready", () => {
+                app.onReady(() => {
                     app.elements.root.style = "max-height:550px;";
                 });
                 app.src = src;
