@@ -132,10 +132,7 @@
                     const a = li.querySelector('a.img'), title=a.querySelector('.title').innerText;
                     b.forEach((x) => {
                         if (x.title === title) li.classList.add('bked');
-                        });
-
-
-                    
+                    });
                 });
                 
             });
