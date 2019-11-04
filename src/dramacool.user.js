@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.0.2
+// @version      1.0.3
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -12,7 +12,6 @@
 //
 // @icon         https://watchasian.to/favicon.png
 // @include     /^https?:\/\/(\w+\.)?(dramacool|watchasian)(\w+)?\.\w+\//
-//
 // ==/UserScript==
 
 
@@ -195,6 +194,7 @@
         .details .info {font-size: 14px;line-height: 1.2;}
         .hidden, .hidden *,
         [class*="ads"]:not(.ads-evt), [class*="ads"]:not(.ads-evt) *,
+        [id*="ScriptRoot"], [id*="ScriptRoot"] *,
         .content-right .tab .right-tab-1, .content-right [data-tab="right-tab-1"]
         {
             position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
