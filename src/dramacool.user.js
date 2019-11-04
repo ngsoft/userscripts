@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.0
+// @version      1.0.1
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -11,7 +11,7 @@
 // run-at       document-body
 //
 // @icon         https://watchasian.to/favicon.png
-// @include     /^https?:\/\/(\w+\.)?(dramacool|watchasian)\.\w+\//
+// @include     /^https?:\/\/(\w+\.)?(dramacool|watchasian)(\w+)?\.\w+\//
 //
 // ==/UserScript==
 
@@ -72,7 +72,7 @@
                                         slug: /\/([\w\-]+)$/.exec(a.href)[1]
                                     });
                                 });
-                                return data
+                                return data;
                             })
                             .then((x) => {
                                 session.set(username, x);
@@ -160,7 +160,7 @@
                                 return page.querySelector('.watch-drama .category a');
                             })
                             .then(el => {
-                                location.href = el.href
+                                location.href = el.href;
                             })
                             .catch(ex => console.warn(ex));
                 }
