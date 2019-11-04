@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.0.1
+// @version      1.0.2
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -188,14 +188,11 @@
         .list-episode-item li{ padding-top: 33%;width: calc(25% - 12px); border: 1px solid #333;}
         li.bked{border: 1px solid #FDB813; }
         .list-episode-item li.bked:after{
-            content:""; display:block;border: 24px solid rgba(253, 184, 19, .8);
-            position: absolute;top:0; left:0;z-index: 4;
+            content:""; display:block;border: 16px solid rgba(253, 184, 19, .8);
+            position: absolute;top:-4px; left:-4px;z-index: 4;
             border-right-color: transparent;border-bottom-color: transparent;
         }
         .details .info {font-size: 14px;line-height: 1.2;}
-    `;
-
-    stylesheet += `
         .hidden, .hidden *,
         [class*="ads"]:not(.ads-evt), [class*="ads"]:not(.ads-evt) *,
         .content-right .tab .right-tab-1, .content-right [data-tab="right-tab-1"]
