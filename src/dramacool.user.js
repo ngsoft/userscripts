@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.0.4
+// @version      1.1
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -165,8 +165,9 @@
             }
 
         }).on('click', function(e){
-            e.preventDefault();
-
+            if (e.target.closest('.list-episode-item li a') !== null) {
+                e.preventDefault();
+            }
         });
         
         /**
