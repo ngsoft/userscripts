@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.0.3
+// @version      1.0.4
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -138,14 +138,12 @@
         }
 
         /**
-         * Redirect do drama, not last episode
+         * Redirect to drama, not last episode
          */
-        Events(doc.body).on('click', function(e){
-
+        Events(doc.body).on('mousedown', function(e){
             let target = e.target.closest('.list-episode-item li a');
             if (target !== null) {
                 if (!(/drama\-detail/.test(target.href))) {
-                    e.preventDefault();
                     let addr = target.href;
                     fetch(addr, {cache: "no-store", redirect: 'follow'})
                             .then(r => {
@@ -159,11 +157,15 @@
                                 return page.querySelector('.watch-drama .category a');
                             })
                             .then(el => {
-                                location.href = el.href;
+                                target.href = el.href;
+                                if (e.button === 0) location.href = el.href;
                             })
                             .catch(ex => console.warn(ex));
                 }
             }
+
+        }).on('click', function(e){
+            e.preventDefault();
 
         });
         
@@ -182,8 +184,9 @@
 
     /**
      * Loads CSS
+     * Hides ads, show bookmarked dramas, resize posters
      */
-    let stylesheet = `
+    addstyle(`
         .list-episode-item li{ padding-top: 33%;width: calc(25% - 12px); border: 1px solid #333;}
         li.bked{border: 1px solid #FDB813; }
         .list-episode-item li.bked:after{
@@ -201,9 +204,7 @@
             height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
             display: inline !important;z-index: -1 !important;
         }
-    `;
-
-    addstyle(stylesheet);
+    `);
 
     console.debug(scriptname, "started");
 
