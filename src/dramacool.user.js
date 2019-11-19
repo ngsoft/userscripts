@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.1
+// @version      1.2
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -27,7 +27,7 @@
      */
     if (/watchasian/.test(location.host)) {
         let url = new URL(location.href);
-        url.host = "dramacool.video";
+        url.host = "dramacool.movie";
         location.replace(url.href);
     }
 
