@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         DramaCool 2.0
+// @name         DramaCool2
 // @namespace    https://github.com/ngsoft
-// @version      1.2
+// @version      2.0
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -23,7 +23,7 @@
 
 
     /**
-     * auto redirect to dramacool.video
+     * auto redirect to dramacool.movie
      */
     if (/watchasian/.test(location.host)) {
         let url = new URL(location.href);
@@ -137,14 +137,21 @@
             });
         }
 
+
+
         /**
          * Redirect to drama, not last episode
          */
-        Events(doc.body).on('mousedown', function(e){
-            let target = e.target.closest('.list-episode-item li a');
-            if (target !== null) {
+        find('.list-episode-item li a', function(node) /* :EventTarget */{
+
+            Events(node).one('touchstart mouseenter', function(e){
+                let target = e.target;
+                target.data({
+                    src: target.href,
+                    ready: false
+                });
                 if (!(/drama\-detail/.test(target.href))) {
-                    let addr = target.href;
+                 let addr = target.href;
                     fetch(addr, {cache: "no-store", redirect: 'follow'})
                             .then(r => {
                                 if (r.status === 200) return r.text();
@@ -158,9 +165,29 @@
                             })
                             .then(el => {
                                 target.href = el.href;
-                                if (e.button === 0) location.href = el.href;
+                                target.data('ready', true);
                             })
                             .catch(ex => console.warn(ex));
+                } else target.data('ready', true);
+
+            });
+
+        });
+
+        Events(doc.body).on('mousedown', function(e){
+            let target = e.target.closest('.list-episode-item li a');
+            if (target !== null) {
+                if (e.button === 0) {
+                    if (target.data('timer') !== true) {
+                        target.data('timer', true);
+                        new Timer(function(t){
+                        if(target.data('ready') === true){
+                                t.stop();
+                                location.href = target.href;
+                            }
+                    });
+
+                    }
                 }
             }
 
@@ -181,6 +208,75 @@
         
     });
 
+    /**
+     * Creates a button with iframe link on the streaming page
+     */
+
+    find('.watch-drama .block-tab .report2', function(r){
+        const p = r.parentElement;
+
+        let code = `<div class="plugins2">
+                        <ul>
+                            <li class="direction">
+                                <a href="" data-src="" target="_blank">
+                                    Frame Link
+                                </a>
+                            </li>
+                        </ul>
+                    </div>`,
+                node = html2element(code),
+                button = node.querySelector('a');
+
+        p.insertBefore(node, r);
+        p.removeChild(r);
+        console.debug(button);
+        Events(button).on('click', function(e){
+            e.preventDefault();
+            let ifrm = doc.querySelector('#block-tab-video .watch-iframe iframe');
+            if (ifrm !== null) {
+                //create and click a link
+                let src = getURL(ifrm.src), link = doc.createElement('a');
+                link.target = "_blank";
+                link.href = src;
+                link.style.opacity = 0;
+                doc.body.appendChild(link);
+                link.click();
+                doc.body.removeChild(link);
+            }
+
+        });
+
+    });
+
+
+    /**
+     * Adds other site links
+     */
+    find('.details .info', function(div){
+        const container = html2element(`<p><span>Search:</span>&nbsp;</p>`);
+        div.appendChild(container);
+        let title = div.querySelector('h1').innerText;
+        //remove year: title (2020)
+        title = title.replace(/\ \(.*$/, "");
+        const plugins = {
+            'MyDramaList': 'https://mydramalist.com/search',
+            'ViKi': 'https://www.viki.com/search',
+            'KissAsian': 'https://kissasian.sh/',
+            'MediaRSS': 'http://daedelus.us.to/search.html'
+        };
+
+
+        Object.keys(plugins).forEach(function(ptitle){
+            let uri = plugins[ptitle];
+            let a = html2element(`<a target="_blank">${ptitle}</a>`), link;
+            link = new URL(uri);
+            link.searchParams.set('q', title);
+            a.href = link.href;
+            container.append(a);
+            container.append(html2element(`;&nbsp;`));
+        });
+
+    });
 
 
     /**
