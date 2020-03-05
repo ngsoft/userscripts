@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         DramaCool2
+// @name         DramaCool v3
 // @namespace    https://github.com/ngsoft
-// @version      2.0
+// @version      3.0
 // @description  Dramacool site remaster
 // @author       daedelus
 //
