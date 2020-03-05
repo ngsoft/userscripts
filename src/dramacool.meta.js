@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name	DramaCool v3
+// @name	DramaCool 3.0
 // @namespace	https://github.com/ngsoft/userscripts
 // @version	3.0
 // @description	Dramacool site remaster
