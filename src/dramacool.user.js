@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 3.0
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      3.0.1
+// @version      3.0.2
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -142,16 +142,18 @@
         /**
          * Redirect to drama, not last episode
          */
-        find('.list-episode-item li a', function(node) /* :EventTarget */{
+        find('.list-episode-item li a', function(node){
 
             Events(node).one('touchstart mouseenter', function(e){
                 let target = e.target;
-                target.data({
-                    src: target.href,
-                    ready: false
-                });
+
                 if (!(/drama\-detail/.test(target.href))) {
-                 let addr = target.href;
+                    target.data({
+                        src: target.href,
+                        ready: false
+                    });
+                    let url = new URL(target.href), addr = url.pathname;
+                    console.debug(addr);
                     fetch(addr, {cache: "no-store", redirect: 'follow'})
                             .then(r => {
                                 if (r.status === 200) return r.text();
@@ -170,32 +172,28 @@
                             .catch(ex => console.warn(ex));
                 } else target.data('ready', true);
 
-            });
+            }).on('mousedown', function(e){
+                let target = e.target.closest('.list-episode-item li a');
+                if (target !== null) {
+                    if (e.button === 0) {
+                        if (target.data('timer') !== true) {
+                            target.data('timer', true);
+                            new Timer(function(t){
+                                if (target.data('ready') === true) {
+                                    t.stop();
+                                    location.href = target.href;
+                                }
+                            });
 
-        });
-
-        Events(doc.body).on('mousedown', function(e){
-            let target = e.target.closest('.list-episode-item li a');
-            if (target !== null) {
-                if (e.button === 0) {
-                    if (target.data('timer') !== true) {
-                        target.data('timer', true);
-                        new Timer(function(t){
-                        if(target.data('ready') === true){
-                                t.stop();
-                                location.href = target.href;
-                            }
-                    });
-
+                        }
                     }
                 }
-            }
 
-        }).on('click', function(e){
-            if (e.target.closest('.list-episode-item li a') !== null) {
+            }).on('click', function(e){
                 e.preventDefault();
-            }
+            });
         });
+
         
         /**
          * Clear bookmarks
