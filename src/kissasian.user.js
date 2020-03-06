@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.0a
+// @version      1.0b
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -40,29 +40,6 @@
     }
 
     /**
-     * Hide ads and more
-     */
-    let css = `
-        .hidden, .hidden *,
-        .bigBarContainer + div:not(.bigBarContainer),
-        [id*="ads"]:not(.bigBarContainer), [id*="ads"]:not(.bigBarContainer) *,
-        [id*="Ads"], [id*="Ads"] *,[class*="Ads"], [class*="Ads"] *,
-        [src*="/Ads"], [src*="/Ads"] *,
-        .episodeList div:not(.arrow-general) div:not([id]),
-        #subcontent > div:not([id])
-        {
-            position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-            height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-            display: inline !important;z-index: -1 !important;
-        }
-        [class*="clear"]{ height: 0 !important;max-height: 0 !important;}
-        #centerDivVideo{ margin-top: 15px;}
-    `;
-
-    addstyle(css);
-
-
-    /**
      * Some Alterations
      */
     find('[src*="firefox.png"]', (node) => {
@@ -84,21 +61,44 @@
             else list.push(tr);
             tr.remove();
         });
-        console.debug(header, list);
         list = list.reverse();
         header.forEach(tr => node.appendChild(tr));
         list.forEach(tr => node.appendChild(tr));
+    });
+    /**
+     * Same for mobile
+     */
+    find('.shifter-page .main ul.list', (ul) => {
 
-
+        let list = Array.from(ul.querySelectorAll('li')).map((li) => {
+            li.remove();
+            return li;
+        }).reverse();
+        list.forEach(li => ul.appendChild(li));
 
     });
 
+    /**
+     * Hide ads and more
+     */
+    addstyle(`
+        .hidden, .hidden *,
+        .bigBarContainer + div:not(.bigBarContainer),
+        [id*="ads"]:not(.bigBarContainer), [id*="ads"]:not(.bigBarContainer) *,
+        [id*="Ads"], [id*="Ads"] *,[class*="Ads"], [class*="Ads"] *,
+        [src*="/Ads"], [src*="/Ads"] *,
+        .episodeList div:not(.arrow-general) div:not([id]),
+        #subcontent > div:not([id]),
+        [id*="mgi"]
+        {
+            position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+            height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+            display: inline !important;z-index: -1 !important;
+        }
+        [class*="clear"]{ height: 0 !important;max-height: 0 !important;}
+        #centerDivVideo{ margin-top: 15px;}
+    `);
 
     console.debug(scriptname, 'started');
-
-
-
-
-
 
 })(document);
