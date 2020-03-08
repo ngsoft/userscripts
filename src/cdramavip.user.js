@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.0.2
+// @version      1.1
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -13,7 +13,7 @@
 // @run-at      document-body
 // @noframes
 //
-// @include     /^https?:\/\/(www\.)?(5nj\.com|zhuijukan\.cc|16ys\.net)\//
+// @include     /^https?:\/\/(\w+\.)?(5nj|zhuijukan|16ys|duboku)\.\w+\//
 // @icon        https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/altvideo.png
 // ==/UserScript==
 
@@ -730,7 +730,7 @@
             if (self.loaded !== true) {
                 [
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/altvideo.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
@@ -823,7 +823,31 @@
             });
         });
 
+    } else if (/duboku/.test(location.host) && /^\/vodplay\//.test(location.pathname) && typeof MacPlayer !== u && typeof MacPlayer.PlayUrl === s) {
+        console.debug(MacPlayer);
+        return find('.embed-responsive .MacPlayer', (player, obs) => {
+            obs.stop();
+            console.debug();
+            app = new AltVideoPlayer(player.parentElement.parentElement);
+            app.onReady(() => {
+                player.parentElement.remove();
+                app.elements.root.style['z-index'] = "2147483640";
+            });
+            let m3u8 = MacPlayer.PlayUrl;
+            find('h2.title', (h2) => {
+                app.title = h2.querySelector('a').innerText.trim();
+                let num = 0, small = h2.querySelector('small'), matches;
+                if (small instanceof Element && (matches = /第([0-9]+)/.exec(small.innerText))){
+                    num = parseInt(matches[1]);
+                }
+                app.number = num;
+
+            });
+            app.src = MacPlayer.PlayUrl;
+        });
+
     }
+
 
     //unified search module
     if (location.search.length > 0) {
@@ -855,7 +879,16 @@
                     input.value = q;
                     btn.click();
                 });
+            } else if (/duboku/.test(location.host)) {
+                find('form#search', (form) => {
+                    let input = form.querySelector('input[name="wd"]'),
+                            btn = form.querySelector('button[type="submit"]');
+                    input.value = q;
+                    btn.click();
+                });
+
             }
+
         }
 
     }
