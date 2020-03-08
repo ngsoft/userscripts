@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.1
+// @version      1.1.1
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -633,7 +633,9 @@
             }
         }
 
-        resize() {
+        resize(){
+
+            //console.debug(this.plyr);
             this.video.style.height = this.plyr.elements.container.clientHeight + "px";
         }
 
@@ -832,6 +834,9 @@
             app.onReady(() => {
                 player.parentElement.remove();
                 app.elements.root.style['z-index'] = "2147483640";
+                app.elements.root.style['max-height'] = "438px";
+                app.elements.root.parentElement.style = "max-height: 438px; height:438px;";
+                console.debug(app);
             });
             let m3u8 = MacPlayer.PlayUrl;
             find('h2.title', (h2) => {
