@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.0b
+// @version      1.0
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -51,6 +51,14 @@
         node.style.height = "552px";
     });
 
+    find('#rightside .rightBox .barTitle', (div) => {
+        let title = div.innerText;
+        if(/ads/.test(title) || /Like me/.test(title)){
+            div.parentElement.classList.add('hidden');
+        }
+    });
+
+
     /**
      * Reverse Episode List
      */
@@ -89,7 +97,8 @@
         [src*="/Ads"], [src*="/Ads"] *,
         .episodeList div:not(.arrow-general) div:not([id]),
         #subcontent > div:not([id]),
-        [id*="mgi"]
+        [id*="mgi"], [style*="fixed"], [style*="fixed"] *,
+        [style*="width: 610px"], [style*="width: 610px"] *
         {
             position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
             height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
