@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.1.1
+// @version      1.1.2
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -834,8 +834,8 @@
             app.onReady(() => {
                 player.parentElement.remove();
                 app.elements.root.style['z-index'] = "2147483640";
-                app.elements.root.style['max-height'] = "438px";
-                app.elements.root.parentElement.style = "max-height: 438px; height:438px;";
+                app.elements.root.style['max-height'] = "668px";
+                app.elements.root.parentElement.style = "max-height: 668px; height:668px;";
                 console.debug(app);
             });
             let m3u8 = MacPlayer.PlayUrl;
