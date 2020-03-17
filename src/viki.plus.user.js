@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.0
+// @version     2.0
 // @name        ViKi+
 // @description Download Subtitles on Viki
 // @namespace   https://github.com/ngsoft/userscripts
@@ -79,7 +79,7 @@
     /**
      * Loads Stylesheet
      */
-    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/viki.plus.min.css");
+    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/viki.plus.min.css");
 
 
     /**
@@ -121,7 +121,7 @@
     class VikiSubs {
 
         get target(){
-            return doc.querySelector('.video-meta');
+            return doc.querySelector('.viki-plus-container');
         }
 
         get tracks(){
@@ -199,7 +199,7 @@
                     },
                     title: {
                         init(){
-                            this.innerHTML = self.target.querySelector('.video-title a').innerText;
+                            //this.innerHTML = doc.querySelector('.vkp-pos-container-title').innerText;
                         }
                     },
                     filters: {
@@ -259,14 +259,13 @@
                                     self.events[key].init.call(el, e);
                                 }
                             });
-                            this.previousElementSibling.hidden = true;
                         },
                         click(e){
                             let target, iso;
                             if ((target = e.target.closest('button')) !== null) {
                                 e.preventDefault();
                                 if (target.matches('[name="rmiso"]')) {
-                                    if((iso = target.parentElement.data("isocode"))){
+                                    if ((iso = target.parentElement.data("isocode"))) {
                                         Settings.filters = Settings.filters.filter(x => x !== iso);
                                         Events(self.elements.inputs.subtitles).trigger("init");
                                         target.parentElement.remove();
@@ -281,7 +280,7 @@
             }
             return this._events;
         }
-        
+
         /**
          * Add iso code to ul list
          * @param {string} iso
@@ -309,7 +308,7 @@
          */
         convert(vtt, callback){
             if (typeof vtt === s && vtt.length > 0 && typeof callback === f) {
-                this.one("converter.ready",()=>{
+                this.one("converter.ready", () => {
                     callback(Subtitle.stringify(Subtitle.parse(vtt)));
                 });
                 if (typeof Subtitle === u) {
@@ -358,13 +357,13 @@
                         })
                         .catch(ex => console.warn(ex));
             }
- 
+
         }
 
 
         constructor(json, subs){
             const self = this;
-            
+
             const template = html2element(
                     `<form class="viki-plus form-block">
                         <fieldset class="form-body">
@@ -405,40 +404,82 @@
                                 <div><div><strong class="left">ALL</strong><span>Remove All</span>
                                 <button title="Remove language" name="rmisoall" class="bt-square right">
                                 <i class="icon-minus"></i></button></div></div>
-                                
+
 
                             </div>
                         </fieldset>
                     </form>`);
+
+            let modal = html2element(
+                    `<div class="viki-plus-modal" aria-hidden="true" id="viki-plus">
+                        <div tabindex="-1" data-micromodal-close>
+                            <div role="dialog" aria-modal="true" aria-labelledby="viki-plus-modal-title" class="viki-plus-container">
+
+
+
+                            </div>
+                        </div>
+                    </div>`
+                    );
+
+
             this.json = json || {};
             this.subtitles = subs || [];
-            
-            if(typeof this.json.id !== u && this.subtitles.length > 0){
-                this.elements = {
+
+            if (typeof self.json.id !== u && self.subtitles.length > 0) {
+                self.elements = {
                     root: template,
+                    modal: modal,
                     inputs: {}
                 };
 
-                this.elements.root.querySelectorAll('[name]').forEach(input => {
-                    this.elements.inputs[input.name] = input;
+                find('#playerSettings > .vjs-menu > .vjs-menu-content', 50000, (menu) => {
+
+                    menu.appendChild(html2element(`<li class="vkp-menu-item vjs-menu-item vkp-menu-separator"></li>`));
+                    let button = html2element(
+                            `<li class="vkp-menu-item vjs-menu-item">
+                                <div class="vkp-menu-label">
+                                    <div class="vkp-menu-title">Download</div>
+                                </div>
+                                <div class="vkp-submenu-label">
+                                    <span class="vkp-submenu-title">Select</span>
+                                    <i class="vkp-menu-arrow vkp-icon-arrow-right"></i>
+                                </div>
+                                <div class="vjs-menu" role="presentation">
+                                    <ul class="vjs-menu-content" role="menu"></ul>
+                                </div>
+                            </li>`
+                            );
+
+                    menu.appendChild(button);
+
+                    Events(button).on('click', () => {
+                        modal.classList.add('open');
+                    });
+
+                });
+                doc.body.appendChild(modal);
+
+                self.elements.root.querySelectorAll('[name]').forEach(input => {
+                    self.elements.inputs[input.name] = input;
                 });
                 ["title", "body", "fedit"].forEach(key => {
-                    this.elements[key] = this.elements.root.querySelector('.form-' + key);
+                    self.elements[key] = self.elements.root.querySelector('.form-' + key);
                 });
 
-                Object.keys(this.events).forEach(key => {
-                    let elem = this.elements[key] || this.elements.inputs[key];
+                Object.keys(self.events).forEach(key => {
+                    let elem = self.elements[key] || this.elements.inputs[key];
                     if (elem instanceof EventTarget) {
-                        Object.keys(this.events[key]).forEach(evt => {
-                            Events(elem).on(evt, this.events[key][evt]);
+                        Object.keys(self.events[key]).forEach(evt => {
+                            Events(elem).on(evt, self.events[key][evt]);
                         });
                     }
                 });
 
-                this.target.appendChild(template);
-                new Events(this.elements.root, this);
+                self.target.appendChild(template);
+                new Events(self.elements.root, self);
 
-                this.on('init', () => {
+                self.on('init', () => {
                     self.elements.root.querySelectorAll('.form-input select').forEach(select => {
                         //basic init  for placeholder
                         select.querySelectorAll('option:not([value]), option[value=""]').forEach(el => el.remove());
@@ -455,28 +496,47 @@
                     });
                 });
 
-                this.trigger('init');
+                self.trigger('init');
+
+
+                Events(modal).on('click', (e) => {
+                    let target = e.target;
+                    if (target.closest('.viki-plus-container') === null) {
+                        modal.classList.remove('open');
+                    }
+                });
+
+
                 console.debug(scriptname, "started");
             }
-            
+
 
         }
 
     }
 
 
-
-
-
-
     /**
-     * Subtitles
+     * API Load data
      */
-    if (/^\/videos\//.test(location.pathname) && typeof parsedSubtitles !== u && typeof video_json !== u) {
-        new VikiSubs(video_json, parsedSubtitles);
+    let matches;
+    if ((matches = /^\/videos\/(\w+)\-/.exec(location.pathname)) !== null) {
+        let id = matches[1], api = 'https://www.viki.com/api/videos/' + id;
+
+        fetch(api, {cache: "no-store", redirect: 'follow', credentials: "same-origin"})
+                .then((r) => {
+                    if (r.status === 200) return r.json();
+                    throw new Error("Cannot Fetch", api);
+                })
+                .then((json) => {
+                    let subtitles = json.subtitles, video = json.video;
+                    new VikiSubs(video, subtitles);
+                })
+                .catch((err) => {
+                    console.warn(err);
+                });
 
     }
-
 
 
 })(document);

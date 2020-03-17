@@ -94,3 +94,11 @@
  .form-body [hidden],.form-body .form-el.form-select .form-label{display:none;}
  div.ads, div.ad, div.ad-1, div[id*="-ad-"]{position: fixed; top:-100%;right: -100%; height:1px; width:1px; opacity: 0; z-index: -1;}
  .viki-plus{background: rgb(235, 238, 242); padding: 8px 16px;border-radius: 8px;}
+ .viki-plus-modal{
+    z-index: 2147483640;position:fixed;display: none;
+    top: 0;left: 0;width: 100%;height: 100%;
+}
+.viki-plus-modal.open{display: block;}
+.viki-plus-modal .viki-plus-container{
+    transform: translate(-50%,-50%);max-width: 80%;top: 50%;position: absolute;left: 50%;
+}
