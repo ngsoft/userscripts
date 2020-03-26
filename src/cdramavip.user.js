@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.1.2
+// @version      1.2
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -229,17 +229,12 @@
                             name = button.name;
                             if (typeof btevents[name] === f) {
                                 btevents[name].call(this, e);
-                                //e.preventDefault();
-                                //e.stopPropagation();
-                                //return;
                             }
                         }
                         else if (target.closest('.alt-body') !== null) return;
 
                         e.preventDefault();
                         e.stopPropagation();
-                        //self.elements.inputs.host.focus();
-                        //btevents.close();
                     }
                 },
                 form: {
@@ -634,8 +629,6 @@
         }
 
         resize(){
-
-            //console.debug(this.plyr);
             this.video.style.height = this.plyr.elements.container.clientHeight + "px";
         }
 
@@ -653,13 +646,8 @@
                         self.plyr = new Plyr(self.video, self.plyropts);
 
                         self.plyr.on('ready', e => {
-
-                            self.plyr.elements.container.insertBefore(self.elements.bigplay, self.plyr.elements.container.firstChild);
                             self.plyr.elements.container.insertBefore(self.elements.notifier, self.plyr.elements.container.firstChild);
-                            Events(self.elements.bigplay).on('click', e => self.video.play());
-                            self.one('play', e => self.elements.bigplay.hidden = true);
                             self.on('click', e => self.playpause());
-
                             let hls = self.hls = new Hls();
                             hls.on(Hls.Events.MANIFEST_PARSED, (e, data) => {
                                 self.resize();
@@ -674,9 +662,16 @@
                             self.on("play", () => {
                                 self.resize();
                             });
-
                             hls.attachMedia(self.video);
 
+                            Events(self.video).on('mousedown', (e) => {
+                                console.debug(e);
+                                if (e.button === 0) {
+                                    self.plyr.togglePlay();
+                                }
+
+
+                            });
 
                             self.__started__ = true;
                             self.trigger("altvideoplayer.ready");
@@ -695,8 +690,8 @@
 
                 elements: {
                     root: html2element('<div class="altvideo-container" id="altvideo" />'),
-                    notifier: html2element(`<div class="altvideo-notifier" />`),
-                    bigplay: html2element(`<span class="bigplay-button no-focus" tabindex="-1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="bigplay-icn"><path fill="currentColor" d="M424.4 214.7L72.4 6.6C43.8-10.3 0 6.1 0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1 0-82.6z"></path></svg></span>`)
+                    notifier: html2element(`<div class="altvideo-notifier" />`)
+
                 },
                 video: html2element('<video preload="none" controls tabindex="-1" src="" class="altvideo" data-src="" />'),
                 target: target,
