@@ -102,3 +102,10 @@
 .viki-plus-modal .viki-plus-container{
     transform: translate(-50%,-50%);max-width: 80%;top: 50%;position: absolute;left: 50%;
 }
+
+.hidden, .hidden *, 
+[id*="hola_"]{
+    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+    display: inline !important;z-index: -1 !important;
+}
