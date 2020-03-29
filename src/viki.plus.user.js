@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     2.2
+// @version     2.2.1
 // @name        ViKi+
 // @description Download Subtitles on Viki
 // @namespace   https://github.com/ngsoft/userscripts
@@ -79,7 +79,7 @@
     /**
      * Loads Stylesheet
      */
-    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/viki.plus.css");
+    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/viki.plus.min.css");
 
 
     /**
