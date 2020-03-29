@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.2
+// @version      1.2.1
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -665,12 +665,9 @@
                             hls.attachMedia(self.video);
 
                             Events(self.video).on('mousedown', (e) => {
-                                console.debug(e);
                                 if (e.button === 0) {
                                     self.plyr.togglePlay();
                                 }
-
-
                             });
 
                             self.__started__ = true;
