@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     2.1
+// @version     2.2
 // @name        ViKi+
 // @description Download Subtitles on Viki
 // @namespace   https://github.com/ngsoft/userscripts
@@ -87,12 +87,20 @@
      */
     (() => {
 
-        const locales = Array.from(doc.querySelectorAll('link[hreflang][href*="locale="]')).map(x => x.hreflang);
+        const locales = Array.from(doc.querySelectorAll('[data-locale], a.pad.inline-block[href*="locale="]')).map((el) => {
+            let locale = el.data('locale');
+            if (locale === undef) {
+                let url = new URL(el.href);
+                locale = url.searchParams.get('locale');
+            }
+            return locale;
+        });
 
         function switchLocale(locale){
             if (typeof locale === s && locales.includes(locale)) {
                 Settings.locale = locale;
                 let url = new URL(location.href);
+                console.debug(url);
                 url.searchParams.set("locale", locale);
                 location.replace(url.pathname + url.search);
             }
@@ -101,6 +109,7 @@
         Events(doc.body).on('click', event => {
             let target = event.target.closest('div[data-react-class="modalApp.ModalSiteLanguage"] a.pad.inline-block');
             if (target instanceof Element) {
+                console.debug(target);
                 event.preventDefault();
                 let url = new URL(getURL(target.href)), locale = url.searchParams.get("locale");
                 switchLocale(locale);
