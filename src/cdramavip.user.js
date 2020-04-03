@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.2.1
+// @version      1.3
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -639,6 +639,8 @@
                     const self = this;
                     AltVideoPlayer.loadDeps(x => {
                         self.elements.root.appendChild(self.video);
+                        self.elements.root.appendChild(self.elements.stselect);
+
 
                         self.target.insertBefore(self.elements.root, self.target.firstChild);
                         self.video.data("src", self.src);
@@ -670,10 +672,55 @@
                                 }
                             });
 
+
+                            self.on("languagechange", e => {
+                                let c = e.detail.plyr.captions.currentTrackNode;
+                                if (c.id === "local-subtitles") self.elements.stselect.click();
+
+                            });
+
+
+                            Events(self.elements.stselect).on("change", e => {
+                                const list = e.target.files;
+                                if (list.length > 0) {
+
+                                    let c = list[0], r = new FileReader();
+
+                                    Events(r).one('load', (x) => {
+
+                                        let text = x.target.result,
+                                                vtt = Subtitle.stringifyVtt(Subtitle.parse(text)),
+                                                blob = new Blob([vtt], {type: "text/vtt"}),
+                                                url = URL.createObjectURL(blob);
+
+                                        let track = doc.createElement('track');
+                                        Object.assign(track, {
+                                            label: c.name,
+                                            kind: "captions",
+                                            srclang: "und",
+                                            src: url
+                                        });
+                                        self.video.appendChild(track);
+                                        setTimeout(() => {
+                                            let n = self.video.textTracks.length - 1;
+                                            self.plyr.captions.currentTrack = n;
+                                            doc.querySelectorAll('[id*="plyr-settings"].plyr__menu__container > div').forEach((el) => {
+                                                el.style = "";
+                                            });
+                                        },700);
+                                    });
+                                    r.readAsText(c);
+
+                                }
+                            });
+
+
+
                             self.__started__ = true;
                             self.trigger("altvideoplayer.ready");
 
                         });
+
 
                     });
                 }
@@ -687,10 +734,11 @@
 
                 elements: {
                     root: html2element('<div class="altvideo-container" id="altvideo" />'),
-                    notifier: html2element(`<div class="altvideo-notifier" />`)
+                    notifier: html2element(`<div class="altvideo-notifier" />`),
+                    stselect: html2element(`<input type="file" accept=".srt,.vtt" style="opacity:0; z-index:-1;position: absolute; top:-100%; left:-100%;"/>`)
 
                 },
-                video: html2element('<video preload="none" controls tabindex="-1" src="" class="altvideo" data-src="" />'),
+                video: html2element('<video preload="none" controls tabindex="-1" src="" class="altvideo" data-src=""><track kind="captions" src="" id="local-subtitles" label="Upload Subtitles"></track></video>'),
                 target: target,
                 hls: null,
                 plyr: null,
@@ -723,6 +771,7 @@
             const self = this;
             if (self.loaded !== true) {
                 [
+                    "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
                     "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
@@ -818,17 +867,13 @@
         });
 
     } else if (/duboku/.test(location.host) && /^\/vodplay\//.test(location.pathname) && typeof MacPlayer !== u && typeof MacPlayer.PlayUrl === s) {
-        console.debug(MacPlayer);
         return find('.embed-responsive .MacPlayer', (player, obs) => {
             obs.stop();
-            console.debug();
             app = new AltVideoPlayer(player.parentElement.parentElement);
             app.onReady(() => {
                 player.parentElement.remove();
-                app.elements.root.style['z-index'] = "2147483640";
-                app.elements.root.style['max-height'] = "668px";
-                app.elements.root.parentElement.style = "max-height: 668px; height:668px;";
-                console.debug(app);
+                app.elements.root.style = "position: absolute; top: 0; height: calc(100% - 32px);";
+                app.elements.root.parentElement.style = "padding-top: 56.25%";
             });
             let m3u8 = MacPlayer.PlayUrl;
             find('h2.title', (h2) => {
@@ -895,7 +940,9 @@
         find('.detail-source ul#detail-tab a[data-target*="tab-2"]', a => a.click());
     }
 
-
+    addstyle(`[id*="plyr-settings"] > div{
+        width: auto !important;height: auto !important;
+    }`);
 
 
 })(document);
