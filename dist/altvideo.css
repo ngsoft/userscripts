@@ -17,13 +17,6 @@
 .altvideo-container [class*="-button"]:not(.no-focus):focus, .altplayer-container [class*="-button"]:not(.no-focus):hover{
     box-shadow: 0 0 0 5px rgba(26,175,255,.5);background: #1aafff;outline: 0;
 }
-.altvideo-container .bigplay-button{
-    position: absolute; top: 50%; left:50%; transform: translate(-50%, -50%);width: 128px;
-    color: rgba(255,255,255,0.8);
-}
-.altvideo-container .bigplay-button:focus, .altplayer:hover span.bigplay-button{
-    color: rgba(255,255,255,1);
-}
 
 .altvideo-toolbar {
     position: absolute; top: 0 ; left: 0 ; right: 0; z-index: 9999; text-align: center;
@@ -197,4 +190,24 @@
     position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
     height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
     display: inline !important;z-index: -1 !important;
+}
+
+
+.altvideo-container  .plyr__captions{
+    transform: translate(0, -60px);
+}
+.altvideo-container .plyr__caption{
+    -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
+     font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
+     background: rgba(0,0,0,.25); font-size: 24px;
+}
+.altvideo-container .plyr--captions-enabled .altvideo::cue{
+    color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
+    display: none;
+}
+@media (min-width: 768px) {
+    .altplayer  .plyr__caption{font-size: 32px;}
+}
+@media (min-width: 992px) {
+    .altplayer  .plyr__caption{font-size: 40px;}
 }
