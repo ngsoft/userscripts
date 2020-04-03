@@ -940,9 +940,4 @@
         find('.detail-source ul#detail-tab a[data-target*="tab-2"]', a => a.click());
     }
 
-    addstyle(`[id*="plyr-settings"] > div{
-        width: auto !important;height: auto !important;
-    }`);
-
-
 })(document);
