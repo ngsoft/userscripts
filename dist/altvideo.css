@@ -206,8 +206,8 @@
     display: none;
 }
 @media (min-width: 768px) {
-    .altplayer  .plyr__caption{font-size: 32px;}
+    .altvideo-container  .plyr__caption{font-size: 32px;}
 }
 @media (min-width: 992px) {
-    .altplayer  .plyr__caption{font-size: 40px;}
+    .altvideo-container .plyr__caption{font-size: 40px;}
 }
