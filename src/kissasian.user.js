@@ -193,6 +193,7 @@
         #centerDivVideo{ margin-top: 15px;}
         #headnav #navsubbar p a [type="checkbox"]{vertical-align: top; margin: 4px;}
         #headnav #navsubbar p label{cursor: pointer;}
+        span.server-name:not(:empty):before{display: inline; content: ": ";}
     `);
 
 
@@ -217,19 +218,19 @@
                 if((Settings.enabled === true) && (Settings.name.length > 0)){
                     span.innerHTML = Settings.name;
                     //update all links
-                    doc.querySelectorAll('a[href*="id="]').forEach((a) => {
+                    find('a[href*="id="]', (a) => {
                         let url = new URL(a.href);
                         url.searchParams.set('s', Settings.server);
                         a.href = url.href;
 
-                    });
+                    }, 5000);
 
-                    doc.querySelectorAll('select#selectEpisode option').forEach((opt) => {
+                    find('select#selectEpisode option', (opt) => {
                         let url = new URL(getURL(opt.value));
                         url.searchParams.set('s', Settings.server);
                         let split = url.pathname.split('/'), newval = split.pop() + url.search;
                         opt.value = newval;
-                    });
+                    }, 5000);
 
                 }
 
