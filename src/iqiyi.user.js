@@ -56,6 +56,7 @@
         obs.stop();
         setVideoSize();
         addstyle(style);
+        console.debug(scriptname, "started.");
     });
 
 
