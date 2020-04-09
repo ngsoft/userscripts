@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.3.1
+// @version      1.4
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -773,7 +773,7 @@
                 [
                     "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.3/dist/altvideo.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.4/dist/altvideo.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
