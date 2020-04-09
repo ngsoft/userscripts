@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DramaCool 3.0
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      3.0.2
+// @version      3.1
 // @description  Dramacool site remaster
 // @author       daedelus
 //
@@ -91,6 +91,43 @@
         };
 
         /**
+         *  Use session storage to cache drama links
+         */
+        session.getDramaLink = (episodeuri, callback) => {
+
+            if ((typeof episodeuri === s) && (typeof callback === f)) {
+                // loads data
+                let data = session.get('dramas') || {};
+                
+                if(typeof data[episodeuri] !== u){
+                    callback(data[episodeuri]);
+                }else{
+                    fetch(episodeuri, {cache: "no-store", redirect: 'follow'})
+                            .then(r => {
+                                if (r.status === 200) return r.text();
+                                throw new Error("Cannot Fetch " + addr);
+                            })
+                            .then(text => {
+                                return html2doc(text);
+                            })
+                            .then(page => {
+                                return page.querySelector('.watch-drama .category a');
+                            })
+                            .then(el => {
+                                // store data
+                                data[episodeuri] = el.href;
+                                session.set('dramas', data);
+                                callback(el.href);
+                            })
+                            .catch(ex => console.warn(ex));
+                }
+            }
+
+        };
+
+
+
+        /**
          * Ongoing right tab
          */
         doc.querySelectorAll('.content-right .tab [data-tab="right-tab-3"]').forEach((x) => {
@@ -142,7 +179,7 @@
         /**
          * Redirect to drama, not last episode
          */
-        find('.list-episode-item li a', function(node){
+        find('[class*="list-episode-item"]:not(.all-episode) li a', function(node){
 
             Events(node).one('touchstart mouseenter', function(e){
                 let target = e.target;
@@ -153,27 +190,21 @@
                         ready: false
                     });
                     let url = new URL(target.href), addr = url.pathname;
-                    console.debug(addr);
-                    fetch(addr, {cache: "no-store", redirect: 'follow'})
-                            .then(r => {
-                                if (r.status === 200) return r.text();
-                                throw new Error("Cannot Fetch " + addr);
-                            })
-                            .then(text => {
-                                return html2doc(text);
-                            })
-                            .then(page => {
-                                return page.querySelector('.watch-drama .category a');
-                            })
-                            .then(el => {
-                                target.href = el.href;
-                                target.data('ready', true);
-                            })
-                            .catch(ex => console.warn(ex));
+                    
+                    target.querySelectorAll('h3').forEach((h3) => {
+                        h3.onclick = () => {
+                        };
+                    });
+
+                    session.getDramaLink(addr, (link) => {
+                        target.href = link;
+                        target.data('ready', true);
+
+                    });
                 } else target.data('ready', true);
 
             }).on('mousedown', function(e){
-                let target = e.target.closest('.list-episode-item li a');
+                let target = e.target.closest('[class*="list-episode-item"] li a');
                 if (target !== null) {
                     if (e.button === 0) {
                         if (target.data('timer') !== true) {
@@ -203,8 +234,26 @@
                 session.remove(username);
             });
         });
-        
+
     });
+
+/**
+         * Reverse Episode List
+         */
+
+    find('body ul.all-episode', (ul) => {
+
+        const list = Array.from(ul.querySelectorAll('li')).map((li) => {
+            li.remove();
+            return li;
+        }).reverse();
+        list.forEach((li) => {
+            ul.appendChild(li);
+        });
+    });
+
+
+
 
     /**
      * Creates a button with iframe link on the streaming page
@@ -227,7 +276,6 @@
 
         p.insertBefore(node, r);
         p.removeChild(r);
-        console.debug(button);
         Events(button).on('click', function(e){
             e.preventDefault();
             let ifrm = doc.querySelector('#block-tab-video .watch-iframe iframe');
@@ -276,7 +324,6 @@
 
     });
 
-
     /**
      * Loads CSS
      * Hides ads, show bookmarked dramas, resize posters
@@ -290,6 +337,7 @@
             border-right-color: transparent;border-bottom-color: transparent;
         }
         .details .info {font-size: 14px;line-height: 1.2;}
+        .all-episode li a:visited h3 {color: #FDB813;}
         .hidden, .hidden *,
         [class*="ads"]:not(.ads-evt), [class*="ads"]:not(.ads-evt) *,
         [id*="ScriptRoot"], [id*="ScriptRoot"] *,
