@@ -1,11 +1,11 @@
 // ==UserScript==
-// @version     1.0
+// @version     1.1
 // @name        iQiyi Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.5/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.6/dist/gmutils.min.js
 // @grant       none
 // @noframes
 //
@@ -19,7 +19,11 @@
     /* jshint -W018 */
     /* jshint -W083 */
     
-    
+
+
+
+
+
     class QiyiCustomPlayer{
         
         static setVideoSize(video){
@@ -38,26 +42,58 @@
 
         static applyStyle(){
             if (this.ready !== true) {
-
-                addstyle(this.style);
                 this.ready = true;
+                addstyle(`
+                    video{object-fit: cover;}
+                    .iqp-logo-box{display: none;}
+                    .iqp-subtitle{
+                        bottom: 10% !important; text-shadow: 5px 5px 5px #000 !important;
+                        min-width: 60% !important; background: rgba(0,0,0,.55) !important;
+                        padding: 2% 0 !important;text-align: center !important;font-size: 16px !important;
+                    }
+                    .video-m .iqp-subtitle{font-size: 24px !important;}
+                    .video-l .iqp-subtitle{font-size: 28px !important;}
+                    .video-xl .iqp-subtitle{font-size: 40px !important;}
+                `);
+
             }
         }
 
-        static get style(){
-            return `
-                video{object-fit: cover;}
-                .iqp-logo-box{display: none;}
-                .iqp-subtitle{
-                    bottom: 10% !important; text-shadow: 5px 5px 5px #000 !important;
-                    min-width: 60% !important; background: rgba(0,0,0,.55) !important;
-                    padding: 2% 0 !important;text-align: center !important;font-size: 16px !important;
-                }
-                .video-m .iqp-subtitle{font-size: 24px !important;}
-                .video-l .iqp-subtitle{font-size: 28px !important;}
-                .video-xl .iqp-subtitle{font-size: 40px !important;}
-            `;
+        static applyEvents(self){
+            if (this.events !== true) {
+                Events(doc).on('keydown', (e) => {
+
+                    if (e.target.closest('input') !== null) return;
+
+                    let prevent = false;
+
+                    switch (e.keyCode) {
+                        case 32: //space
+                            prevent = true;
+                            self.trigger('video_playpause');
+                            break;
+                        case 13: //Enter
+                            prevent = true;
+                            self.trigger('video_fullscreen');
+                            break;
+                        case 78: //n
+                            prevent = true;
+                            self.trigger('video_next');
+                            break;
+                        case 80: //p
+                            prevent = true;
+                            self.trigger('video_prev');
+                            break;
+                    }
+                    if (prevent === true) e.preventDefault();
+                });
+
+                this.events = true;
+
+            }
         }
+
+
         
         
         
@@ -75,14 +111,19 @@
                 root: video.closest('.iqp-player'),
                 events: {
                     root: {
-                        video_fullscreen(){
-                            Events('.iqp-btn-fullscreen').trigger('click');
-
-
-                        },
                         video_playpause(){
                             if (self.video.paused === true) self.video.play();
                             else self.video.pause();
+                        },
+                        video_prev(){
+                            QiyiPlayerLoaderIbd.manager.players.flashbox.switchPreVideo();
+                        },
+                        video_next(){
+                            QiyiPlayerLoaderIbd.manager.players.flashbox.switchNextVideo();
+                        },
+                        video_fullscreen(){
+                            let btn = doc.querySelector('.iqp-btn-fullscreen');
+                            if (btn !== null) btn.dispatchEvent(new MouseEvent('click'));
                         }
                     }
                 }
@@ -90,22 +131,6 @@
             });
             addEventListener('resize', () => {
                 QiyiCustomPlayer.setVideoSize(self.video);
-            });
-
-            Events(doc).on('keydown', (e) => {
-
-                switch (e.keyCode) {
-                    case 70:
-                        self.trigger('video_fullscreen');
-                        console.debug("fullscreen key");
-                        break;
-                    case 32:
-                        self.trigger('video_playpause');
-                        break;
-                }
-
-
-                console.debug(e);
             });
 
             new Events(self.root, self);
@@ -116,7 +141,7 @@
                 });
             });
 
-
+            QiyiCustomPlayer.applyEvents(self);
             QiyiCustomPlayer.applyStyle();
             QiyiCustomPlayer.setVideoSize(self.video);
             console.debug(scriptname, "started.");
@@ -124,7 +149,6 @@
         }
     }
     
-
 
     find('video', (video, obs) => {
         obs.stop();
