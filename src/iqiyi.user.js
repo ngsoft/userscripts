@@ -93,14 +93,6 @@
             }
         }
 
-
-        
-        
-        
-        
-        
-        
-        
         constructor(video){
             if(!(video instanceof Element)){
                 throw new Error('Video not an Element');
