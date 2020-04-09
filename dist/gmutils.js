@@ -511,6 +511,7 @@ function Events(target, binding) {
     if (this instanceof Events) {
         const self = this;
         binding = binding instanceof Object ? binding : target;
+        if (typeof target === s) target = doc.querySelector(target);
         if (!(target instanceof EventTarget)) target = doc.createElement('div');
         if (!(binding instanceof EventTarget)) {
             ["on", "off", "one", "trigger"].forEach(method => {

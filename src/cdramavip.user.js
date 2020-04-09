@@ -113,7 +113,17 @@
         }
     }
 
+    function setVideoSize(){
+        let video = doc.querySelector('video');
+        if (video instanceof Element) {
+            let width = video.offsetWidth, player = doc.body;
+            player.classList.remove('video-m', 'video-l', 'video-xl');
+            if (width > 1900) player.classList.add('video-xl');
+            else if (width > 1100) player.classList.add('video-l');
+            else if (width > 615) player.classList.add('video-m');
 
+        }
+    }
 
     class Settings {
         
@@ -630,6 +640,7 @@
 
         resize(){
             this.video.style.height = this.plyr.elements.container.clientHeight + "px";
+            setVideoSize();
         }
 
 
