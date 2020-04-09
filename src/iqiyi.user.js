@@ -5,7 +5,7 @@
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.1/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.5/dist/gmutils.min.js
 // @grant       none
 // @noframes
 //
@@ -76,10 +76,9 @@
                 events: {
                     root: {
                         video_fullscreen(){
-                            Events().trigger('click');
-                            doc.querySelector('.iqp-btn-fullscreen').click();
-                            
-                            //console.debug(self.root);
+                            Events('.iqp-btn-fullscreen').trigger('click');
+
+
                         },
                         video_playpause(){
                             if (self.video.paused === true) self.video.play();
