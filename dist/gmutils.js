@@ -527,7 +527,7 @@ function Events(target, binding) {
             events: []
         });
         return this;
-    } else if (target instanceof EventTarget) return new Events(...arguments);
+    } else if ((target instanceof EventTarget) || (typeof target === s)) return new Events(...arguments);
 
 }
 Events.prototype = {
