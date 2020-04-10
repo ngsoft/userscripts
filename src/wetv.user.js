@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.0
+// @version     1.0.1
 // @name        WETV Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -179,7 +179,7 @@
                     },
                     video_next(e){
                         let ci = this.CurrentEpisodeIndex, list = this.EpisodeList, next = ci + 1;
-                        if ((next >= 0) && (typeof list[next] !== u)) {
+                        if ((next > 0) && (typeof list[next] !== u)) {
                             list[next].dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
                         }
 
