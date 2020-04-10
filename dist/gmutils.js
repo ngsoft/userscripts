@@ -506,12 +506,13 @@ const find = (function () {
  * @param {Object} binding
  * @returns {Events}
  */
-function Events(target, binding) {
+function Events(target, binding){
+
+    if (typeof target === s) target = doc.querySelector(target);
 
     if (this instanceof Events) {
         const self = this;
         binding = binding instanceof Object ? binding : target;
-        if (typeof target === s) target = doc.querySelector(target);
         if (!(target instanceof EventTarget)) target = doc.createElement('div');
         if (!(binding instanceof EventTarget)) {
             ["on", "off", "one", "trigger"].forEach(method => {
@@ -527,7 +528,7 @@ function Events(target, binding) {
             events: []
         });
         return this;
-    } else if ((target instanceof EventTarget) || (typeof target === s)) return new Events(...arguments);
+    } else if ((target instanceof EventTarget)) return new Events(...arguments);
 
 }
 Events.prototype = {
