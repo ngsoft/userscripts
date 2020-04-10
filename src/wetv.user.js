@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.0.1
+// @version     1.1
 // @name        WETV Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -18,6 +18,63 @@
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
+
+
+    class MDLSearch {
+        static applyStyle(){
+            if (this.style === true) return;
+            this.style = true;
+            addstyle(`
+                .mdl-search {
+                    padding: 0px;margin: 8px 8px 8px 0;display: inline-block;color: rgb(255, 255, 255);
+                    border-radius: 2px;float: left;width: 32px;height: 32px;background-color: rgba(0, 0, 0, 0.3);
+                    box-sizing: border-box;position: relative;cursor:pointer;
+                }
+                .mdl-search:hover{background: #ffb821 none repeat scroll 0% 0%;}
+                .mdl-search img{position: absolute; top:50%;left: 50%;transform: translate(-50%,-50%);}
+            `);
+        }
+
+
+        search(query){
+            if (typeof query === s) {
+                let url = new URL('https://mydramalist.com/search');
+                url.searchParams.set('q', query);
+                let link = doc.createElement('a');
+                Object.assign(link, {
+                    target: "_blank",
+                    style: "opacity: 0;",
+                    href: url.href
+                });
+                doc.body.appendChild(link);
+                setTimeout(() => {
+                    doc.body.removeChild(link);
+                }, 10);
+                link.click();
+            }
+
+        }
+
+
+
+        constructor(title){
+            MDLSearch.applyStyle();
+            Object.assign(this, {
+                title: title.innerText.trim(),
+                btn: html2element('<a class="mdl-search" title="MyDramaList Search" href="#"><img src="https://mydramalist.com/favicon.ico" /></a>')
+            });
+            const self = this;
+            title.appendChild(self.btn);
+
+            Events(self.btn).on('click', (e) => {
+                e.preventDefault();
+                self.search(self.title);
+
+            });
+
+        }
+
+    }
 
 
     class SubtitleDownloader {
@@ -56,7 +113,7 @@
             let filename = self.drama;
             if ((typeof self.drama === s) && (typeof self.episode === s)) {
                 filename += self.episode;
-                filename += ".srt";
+                filename += ".en.srt";
             }
             return filename;
         }
@@ -75,6 +132,7 @@
                         .catch(ex => console.warn(ex));
             } else throw new Error("Cannot download subtitles");
         }
+
         
         
 
@@ -200,23 +258,11 @@
             WETVCustomPlayer.applyEvents();
             WETVCustomPlayer.applyStyles();
 
-
-            /* Object.defineProperty(txp_player, 'CustomPlayer', {
-                value: self, configurable: true
-            });*/
-
-
-
-
-
-
-
         }
 
-
-
-
     }
+
+
 
     find({
         selector: `.txp_right_controls .txp_btn[data-role*="txp-ui-control-subtitle-btn"]`,
@@ -235,6 +281,17 @@
         onload(el){
             let player = el.closest('.txp_player');
             if (player !== null) new WETVCustomPlayer(player);
+        }
+
+    });
+
+
+    find({
+        selector: `h2.cover_title`,
+        timeout: 0,
+        interval: 100,
+        onload(el){
+            new MDLSearch(el);
         }
 
     });

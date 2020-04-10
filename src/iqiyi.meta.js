@@ -1,10 +1,10 @@
 // ==UserScript==
-// @version	1.1.1
+// @version	1.2
 // @name	iQiyi Video Player
 // @description	Video Player modificatons
 // @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
-// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.8/dist/gmutils.min.js
+// @require	https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js
 // @grant	none
 // @noframes
 // @include	/^https?:\/\/(www\.)?iqiyi.com\/intl\/play\//

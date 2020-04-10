@@ -1,11 +1,12 @@
 // ==UserScript==
-// @version     1.1.1
+// @version     1.2
 // @name        iQiyi Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
 //
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.8/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js
 // @grant       none
 // @noframes
 //
@@ -19,6 +20,170 @@
     /* jshint -W018 */
     /* jshint -W083 */
     
+
+
+
+
+    class MDLSearch {
+        static applyStyle(){
+            if (this.style === true) return;
+            this.style = true;
+            addstyle(`
+                .mdl-search {
+                    padding: 0px;margin: 8px 8px 8px 0;display: inline-block;color: rgb(255, 255, 255);
+                    border-radius: 2px;float: left;width: 32px;height: 32px;background-color: rgba(0, 0, 0, 0.3);
+                    box-sizing: border-box;position: relative;cursor:pointer;
+                }
+                .mdl-search:hover{background: rgb(0, 0, 0) none repeat scroll 0% 0%;}
+                .mdl-search img{position: absolute; top:50%;left: 50%;transform: translate(-50%,-50%);}
+            `);
+        }
+
+
+        search(query){
+            if (typeof query === s) {
+                let url = new URL('https://mydramalist.com/search');
+                url.searchParams.set('q', query);
+                let link = doc.createElement('a');
+                Object.assign(link, {
+                    target: "_blank",
+                    style: "opacity: 0;",
+                    href: url.href
+                });
+                doc.body.appendChild(link);
+                setTimeout(() => {
+                    doc.body.removeChild(link);
+                }, 10);
+                link.click();
+            }
+
+        }
+
+
+
+        constructor(title){
+            MDLSearch.applyStyle();
+            Object.assign(this, {
+                title: title.innerText.trim(),
+                btn: html2element('<a class="mdl-search" title="MyDramaList Search" href="#"><img src="https://mydramalist.com/favicon.ico" /></a>')
+            });
+            const self = this;
+            title.appendChild(self.btn);
+
+            Events(self.btn).on('click', (e) => {
+                e.preventDefault();
+                self.search(self.title);
+
+            });
+
+        }
+
+    }
+
+
+
+    class SubtitleDownloader {
+
+        get drama(){
+
+            let el = doc.querySelector('h1.intl-play-title');
+            if (el instanceof Element) {
+                return sanitizeFileName(el.innerText.trim(), " ");
+            }
+            return null;
+
+        }
+
+        get episode(){
+            let el = doc.querySelector('ul.intl-episodes-list li.selected > span.drama-item');
+            if (el instanceof Element) {
+                let num = el.innerText.trim(), matches;
+                if (/^[0-9]+$/.test(num)) {
+                    num = parseInt(num);
+                    if (num < 10) num = "0" + num;
+                    return `.E${num}`;
+                }
+            }
+            return "";
+        }
+
+        get src(){
+            let data;
+
+            try {
+                data = QiyiPlayerLoaderIbd.manager.players.flashbox.package.engine.pingback._core.movieinfo.current.subtitlesUrlMap;
+            } catch (e) {
+                console.error(e.message);
+            }
+
+            if (typeof data !== u) {
+                let origin = location.protocol + data.prefix, pathname;
+
+                data.list.forEach(item => {
+                    if (/English/i.test(item._name)) pathname = item.srt;
+                });
+
+                if (typeof pathname === s) return origin + pathname;
+            }
+            return null;
+        }
+
+        get filename(){
+            const self = this;
+            let filename = self.drama;
+            if ((typeof self.drama === s) && (typeof self.episode === s)) {
+                filename += self.episode;
+                filename += ".en.srt";
+            }
+            return filename;
+        }
+
+
+        getsubs(src, filename){
+            if ((typeof src === s) && (typeof filename === s)) {
+                const self = this;
+                fetch(src, {cache: "no-store", redirect: 'follow'})
+                        .then(r => {
+                            if (r.status === 200) return r.text();
+                            throw new Error("Cannot Fetch " + src);
+                        })
+                        .then(text => {
+                            return self.convert(text) || "";
+                        })
+                        .then(text => {
+                            if ((typeof text === s) && (text.length > 0)) Text2File(text, filename);
+                        })
+                        .catch(ex => console.warn(ex));
+            } else throw new Error("Cannot download subtitles");
+        }
+
+
+
+        convert(text){
+            if (typeof text === s) return Subtitle.stringify(Subtitle.parse(text));
+            return null;
+        }
+
+
+        constructor(nextelement){
+
+            if (!(nextelement instanceof Element) || nextelement.parentElement === null) throw new Error("Invalid Control.");
+
+            const self = this, btn = html2element(`<iqpdiv class="iqp-btn iqp-btn-srt"><iqp class="iqp-label">SRT</iqp></iqpdiv>`);
+            
+            Events(btn).on("click", (e) => {
+                e.preventDefault();
+
+                if ((self.filename !== null) && (self.src !== null)) {
+                    self.getsubs(self.src, self.filename);
+                }
+            });
+            
+            nextelement.parentElement.insertBefore(btn, nextelement.nextElementSibling);
+
+
+        }
+    }
 
 
 
@@ -108,10 +273,20 @@
                             else self.video.pause();
                         },
                         video_prev(){
-                            QiyiPlayerLoaderIbd.manager.players.flashbox.switchPreVideo();
+                            try {
+                                QiyiPlayerLoaderIbd.manager.players.flashbox.switchPreVideo();
+                            } catch (e) {
+                                console.error(e.message);
+                            }
+
                         },
                         video_next(){
-                            QiyiPlayerLoaderIbd.manager.players.flashbox.switchNextVideo();
+                            try {
+                                QiyiPlayerLoaderIbd.manager.players.flashbox.switchNextVideo();
+                            } catch (e) {
+                                console.error(e.message);
+                            }
+
                         },
                         video_fullscreen(){
                             let btn = doc.querySelector('.iqp-btn-fullscreen');
@@ -147,6 +322,31 @@
         new QiyiCustomPlayer(video);
 
     });
+
+
+
+    find({
+        selector: `.iqp-btn-subtitle`,
+        timeout: 0,
+        interval: 100,
+        onload(el){
+            new SubtitleDownloader(el);
+        }
+
+    });
+
+
+    find({
+        selector: `h1.intl-play-title`,
+        timeout: 0,
+        interval: 100,
+        onload(el){
+            new MDLSearch(el);
+        }
+
+    });
+
+
 
 
 })(document);
