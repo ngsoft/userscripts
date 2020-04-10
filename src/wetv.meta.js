@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version	1.0
+// @version	1.0.1
 // @name	WETV Video Player
 // @description	Video Player modificatons
 // @namespace	https://github.com/ngsoft/userscripts
