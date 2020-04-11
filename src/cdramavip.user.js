@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.5.1
+// @version      1.6
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -14,7 +14,7 @@
 // @noframes
 //
 // @include     /^https?:\/\/(\w+\.)?(5nj|zhuijukan|16ys|duboku)\.\w+\//
-// @icon        https://cdn.jsdelivr.net/gh/ngsoft/userscripts@latest/dist/altvideo.png
+// @icon        https://cdn.jsdelivr.net/gh/ngsoft/userscripts/dist/altvideo.png
 // ==/UserScript==
 
 
@@ -133,7 +133,9 @@
             this.elements.inputs.save.disabled = true;
 
             //doc.body.insertBefore(this.elements.root, doc.body.firstChild);
-            this.player.plyr.elements.container.insertBefore(this.elements.root, this.player.plyr.elements.container.firstChild);
+            //this.player.plyr.elements.container.insertBefore(this.elements.root, this.player.plyr.elements.container.firstChild);
+
+            doc.body.appendChild(this.elements.root);
 
             this.elements.inputs.autoplay.focus();
             this.trigger('settings.open');
@@ -765,7 +767,9 @@
                     keyboard: {
                         focused: true,
                         global: true
-                    }
+                    },
+                    invertTime: false
+
                 },
                 settings: new UserSettings({
                     autoplay: false,
@@ -776,6 +780,7 @@
             new Events(this.video, this);
             this.onReady(() => {
                 new ToolBar(self);
+                console.debug(self);
             });
 
         }
@@ -786,7 +791,7 @@
                 [
                     "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.7/dist/altvideo.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.9/dist/altvideo.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
@@ -808,9 +813,10 @@
         }
     }
 
-
     let app;
     if (/zhuijukan/.test(location.host) && /^\/vplay\//.test(location.pathname)) {
+
+        find('.detail-source ul#detail-tab a[data-target*="tab-2"]', a => a.click());
 
 
         return find('#cms_player iframe[src*="m3u8"].embed-responsive-item:not([id])', (frame, obs) => {
@@ -948,9 +954,7 @@
 
     }
 
-    //shoupa 2nd tab select (if exists)
-    if (/zhuijukan/.test(location.host)) {
-        find('.detail-source ul#detail-tab a[data-target*="tab-2"]', a => a.click());
-    }
+
+
 
 })(document);

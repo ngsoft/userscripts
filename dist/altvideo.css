@@ -48,10 +48,10 @@
 .switch [type="checkbox"] {opacity: 0;z-index: 2;}
 .switch [type="checkbox"],.switch .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
 .switch .slider:after,.switch .slider:before {-webkit-transition: 0.25s;transition: 0.25s;content: "";position: absolute;}
-.switch .slider {width: 4rem;height: 2rem;vertical-align: middle;}
-.switch .slider:before {z-index:1;height: 1.5rem;width: 1.5rem;left: .25rem;bottom: .25rem;}
-.switch [type="checkbox"]:checked + .slider:before {-webkit-transform: translateX(2rem);-ms-transform: translateX(2rem);transform: translateX(2rem);}
-.switch.round .slider:after{border-radius: 2rem;}
+.switch .slider {width: 64px;height: 32px;vertical-align: middle;}
+.switch .slider:before {z-index:1;height: 24px;width: 24px;left: 4px;bottom: 2px;}
+.switch [type="checkbox"]:checked + .slider:before {-webkit-transform: translateX(32px);-ms-transform: translateX(32px);transform: translateX(32px);}
+.switch.round .slider:after{border-radius: 32px;}
 .switch.round .slider:before {border-radius: 50%;}
 /** colors **/
 .switch [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
@@ -66,14 +66,14 @@
 
 .select-wrapper{display: inline-block;position: relative; width: 100%;}
 .select-wrapper:not(.custom) > *:not(select){position: absolute;width: 1px;height: 1px;padding: 0;overflow: hidden;clip: rect(0, 0, 0, 0);white-space: nowrap;border: 0;}
-.select-wrapper select, .search-wrapper [type="text"]{-webkit-appearance: none;-moz-appearance: none;-ms-appearance: none;-o-appearance: none;appearance: none;width: 100%!important;border: 1px solid;height: calc(2.25rem + 2px);display: inline-block;}
-.select-wrapper:not(.no-caret):after{content: "▼";position: absolute;right:.35rem;top: 50%;line-height:0;transform: translate(0, -50%);pointer-events: none;}
+.select-wrapper select, .search-wrapper [type="text"]{-webkit-appearance: none;-moz-appearance: none;-ms-appearance: none;-o-appearance: none;appearance: none;width: 100%!important;border: 1px solid;height: calc(36px + 2px);display: inline-block;}
+.select-wrapper:not(.no-caret):after{content: "▼";position: absolute;right:5.6px;top: 50%;line-height:0;transform: translate(0, -50%);pointer-events: none;}
 .select-wrapper{color: #0D5995;}
-.select-wrapper select {min-width: 12.5rem; }
-.select-wrapper select:not(.form-control){ padding: .375rem .75rem;font-size: 1rem;text-align: center;color: inherit;border-color: #0D5995;background-color: rgba(255,255,255,1);}
-.select-wrapper.rounded select {padding-left: 1.5rem;padding-right: 1.5rem;}
-.select-wrapper.rounded:after{transform: translate(-.2rem, 50%);}
-.select-wrapper.rounded select {border-radius: 2rem;}
+.select-wrapper select {min-width: 200px; }
+.select-wrapper select:not(.form-control){ padding: 5.2px 12px;font-size: 16px;text-align: center;color: inherit;border-color: #0D5995;background-color: rgba(255,255,255,1);}
+.select-wrapper.rounded select {padding-left: 24px;padding-right: 24px;}
+.select-wrapper.rounded:after{transform: translate(-3.2px, 50%);}
+.select-wrapper.rounded select {border-radius: 32px;}
 .placeholder, ::placeholder{color: gray !important;opacity: 1;}
 
 .alt-dialog, .alt-dialog * {font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
@@ -90,7 +90,7 @@
 }
 .alt-dialog .alt-title:before{
     content: "";display: inline-block;
-    background: url('https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/altvideo.png') no-repeat;background-size: cover;padding: 16px;
+    background: url('https://cdn.jsdelivr.net/gh/ngsoft/userscripts/dist/altvideo.png') no-repeat;background-size: cover;padding: 16px;
     position: absolute;top:10px;left:12px;
 }
 .alt-dialog .form-el{
@@ -205,6 +205,8 @@
      font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
      background: rgba(0,0,0,.25); font-size: 16px !important;
 }
+
+.altvideo-container .plyr__controls, .altvideo-container .plyr__controls [type="range"] {cursor: pointer;}
 
 .video-m .altvideo-container .plyr__caption{font-size: 24px !important;}
 .video-l .altvideo-container .plyr__caption{font-size: 28px !important;}
