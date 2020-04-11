@@ -35,6 +35,7 @@
         if (last !== GMinfo.script.version) rload.clear();
         localStorage.setItem(UUID, GMinfo.script.version);
     })();
+
     
     //disables KodiRPC (m3u8 hangs severely)
     on.body(() => {
@@ -309,10 +310,16 @@
 
                             const select = this;
                             self.translations = self.settings.get('translations');
-                            Object.keys(self.translations).forEach(k => {
-                                select.appendChild(html2element(`<option value="${k}">${k}</option>`));
-                            });
+                            let title = self.player.title, index = -1;
 
+                            Object.keys(self.translations).forEach((k, i) => {
+                                select.appendChild(html2element(`<option value="${k}">${k}</option>`));
+                                if (k === title) index = i + 1;
+                            });
+                            if (index != -1) {
+                                select.selectedIndex = index;
+                                Events(select).trigger('change');
+                            }
                         },
                         change(e){
                             e.preventDefault();
@@ -729,6 +736,27 @@
                                 }
                             });
 
+                            //more keyboard shortcuts
+
+                            const codes = {
+                                13: 'video_fullscreen',
+                                78: 'video_next',
+                                80: 'video_prev'
+                            };
+                            Events(doc.body).on('keydown keyup', (e) => {
+                                let prevent = true;
+                                if ((e.target.closest('input') !== null)) return;
+                                let key = e.keyCode;
+                                if (typeof codes[key] === s) {
+                                    e.preventDefault();
+                                    if (e.type === "keyup") trigger(self.elements.root, codes[key]);
+                                }
+                            });
+
+                            Events(self.elements.root).on('video_fullscreen', e => {
+                                self.elements.root.querySelector('button[data-plyr="fullscreen"]').dispatchEvent(new MouseEvent('click'));
+                            });
+
 
 
                             self.__started__ = true;
@@ -769,7 +797,6 @@
                         global: true
                     },
                     invertTime: false
-
                 },
                 settings: new UserSettings({
                     autoplay: false,
@@ -780,7 +807,6 @@
             new Events(this.video, this);
             this.onReady(() => {
                 new ToolBar(self);
-                console.debug(self);
             });
 
         }
@@ -791,7 +817,7 @@
                 [
                     "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.9/dist/altvideo.css",
+                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1/dist/altvideo.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
                 ].forEach(params => {
@@ -813,6 +839,52 @@
         }
     }
 
+
+    //unified search module
+    if (location.search.length > 0) {
+        let sp = new URLSearchParams(location.search),
+                q = sp.get('q');
+        if (typeof q === s) {
+            if (/zhuijukan/.test(location.host)) {
+                find('form.ff-search', (form) => {
+                    let input = form.querySelector('input[name="wd"]'),
+                            btn = form.querySelector("button.search-button");
+                    input.value = q;
+                    btn.click();
+                });
+
+
+            } else if (/16ys/.test(location.host)) {
+                find('#formsearch', (form) => {
+                    form.target = "";
+                    let input = form.querySelector("#keyword"),
+                            btn = form.querySelector("#searchbutton");
+                    input.value = q;
+                    btn.click();
+                });
+
+            } else if (/5nj/.test(location.host)) {
+                find('ul.search form', (form) => {
+                    let input = form.querySelector('input[name="wd"]'),
+                            btn = form.querySelector('input[type="submit"]');
+                    input.value = q;
+                    btn.click();
+                });
+            } else if (/duboku/.test(location.host)) {
+                find('form#search', (form) => {
+                    let input = form.querySelector('input[name="wd"]'),
+                            btn = form.querySelector('button[type="submit"]');
+                    input.value = q;
+                    btn.click();
+                });
+
+            }
+
+        }
+
+    }
+
+    //Application (Custom Video Player)
     let app;
     if (/zhuijukan/.test(location.host) && /^\/vplay\//.test(location.pathname)) {
 
@@ -828,6 +900,36 @@
             app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 frame.remove();
+
+                Events(app.elements.root).on('video_prev video_next', (e) => {
+                    let type = e.type.split('_').pop(), current, playlist, index, prev, next, url;
+
+                    current = doc.querySelector('ul.detail-play-list .active');
+
+                    if (current !== null) {
+                        playlist = Array.from(current.closest('ul').querySelectorAll('li[data-id]')).map((li, i) => {
+                            if (li.classList.contains('active')) index = i;
+                            return li.querySelector('a').href;
+
+                        });
+                        if (!(typeof index === n)) return;
+                        prev = index - 1;
+                        next = index + 1;
+
+                        switch (type) {
+                            case 'prev':
+                                url = (typeof playlist[prev] === s) ? playlist[prev] : null;
+                                break;
+                            default :
+                                url = (typeof playlist[next] === s) ? playlist[next] : null;
+                                break;
+
+                        }
+
+                        if (url !== null) location.replace(url);
+                    }
+                });
+                
             });
             find('.play .container h2.text-nowrap > small', (el) => {
                 let matches, num = 0;
@@ -846,6 +948,32 @@
             app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
                 frame.remove();
+                Events(app.elements.root).on('video_prev video_next', (e) => {
+                    let type = e.type.split('_').pop(), current, playlist, index, prev, next, url;
+                    current = doc.querySelector(`ul.dslist-group a[href="${location.pathname}"]`);
+                    if (current !== null) {
+                        playlist = Array.from(current.closest('ul').querySelectorAll('li')).map((li, i) => {
+                            let a = li.querySelector('a');
+                            if (a.getAttribute('href') === location.pathname) index = i;
+                            return a.href;
+
+                        });
+                        if (!(typeof index === n)) return;
+                        prev = index - 1;
+                        next = index + 1;
+
+                        switch (type) {
+                            case 'prev':
+                                url = (typeof playlist[prev] === s) ? playlist[prev] : null;
+                                break;
+                            default :
+                                url = (typeof playlist[next] === s) ? playlist[next] : null;
+                                break;
+
+                        }
+                        if (url !== null) location.replace(url);
+                    }
+                });
             });
             find('body > .wrap.textlink a:last-of-type', (el) => {
 
@@ -880,6 +1008,35 @@
                 app.number = num;
                 app.onReady(() => {
                     app.elements.root.style = "max-height:550px;";
+
+                    Events(app.elements.root).on('video_prev video_next', (e) => {
+                        let type = e.type.split('_').pop(), current, playlist, index, prev, next, url;
+
+                        current = el;
+
+                        if (current !== null) {
+                            playlist = Array.from(current.closest('ul').querySelectorAll('li')).map((li, i) => {
+                                let a = li.querySelector('a');
+                                if (li.classList.contains('selected')) index = i;
+                                return a.href;
+
+                            });
+                            if (!(typeof index === n)) return;
+                            prev = index - 1;
+                            next = index + 1;
+
+                            switch (type) {
+                                case 'prev':
+                                    url = (typeof playlist[prev] === s) ? playlist[prev] : null;
+                                    break;
+                                default :
+                                    url = (typeof playlist[next] === s) ? playlist[next] : null;
+                                    break;
+
+                            }
+                            if (url !== null) location.replace(url);
+                        }
+                    });
                 });
                 app.src = src;
             });
@@ -893,6 +1050,38 @@
                 player.parentElement.remove();
                 app.elements.root.style = "position: absolute; top: 0; height: calc(100% - 32px);";
                 app.elements.root.parentElement.style = "padding-top: 56.25%";
+
+                Events(app.elements.root).on('video_prev video_next', (e) => {
+                    let type = e.type.split('_').pop(), current, playlist, index, prev, next, url;
+
+                    current = doc.querySelector('[id*="playlist"] ul.sort-list a.btn-warm');
+
+                    if (current !== null) {
+                        playlist = Array.from(current.closest('ul').querySelectorAll('li')).map((li, i) => {
+                            let a = li.querySelector('a');
+                            if (a.classList.contains('btn-warm')) index = i;
+                            return a.href;
+
+                        });
+                        if (!(typeof index === n)) return;
+                        prev = index - 1;
+                        next = index + 1;
+
+                        switch (type) {
+                            case 'prev':
+                                url = (typeof playlist[prev] === s) ? playlist[prev] : null;
+                                break;
+                            default :
+                                url = (typeof playlist[next] === s) ? playlist[next] : null;
+                                break;
+
+                        }
+                        if (url !== null) location.replace(url);
+                    }
+                });
+
+
+
             });
             let m3u8 = MacPlayer.PlayUrl;
             find('h2.title', (h2) => {
@@ -908,53 +1097,5 @@
         });
 
     }
-
-
-    //unified search module
-    if (location.search.length > 0) {
-        let sp = new URLSearchParams(location.search),
-            q = sp.get('q');
-        if (typeof q === s) {
-            if (/zhuijukan/.test(location.host)) {
-                find('form.ff-search', (form) => {
-                    let input = form.querySelector('input[name="wd"]'),
-                        btn = form.querySelector("button.search-button");
-                    input.value = q;
-                    btn.click();
-                });
-
-
-            } else if (/16ys/.test(location.host)) {
-                find('#formsearch', (form) => {
-                    form.target = "";
-                    let input = form.querySelector("#keyword"),
-                        btn = form.querySelector("#searchbutton");
-                    input.value = q;
-                    btn.click();
-                });
-
-            } else if (/5nj/.test(location.host)) {
-                find('ul.search form', (form) => {
-                    let input = form.querySelector('input[name="wd"]'),
-                        btn = form.querySelector('input[type="submit"]');
-                    input.value = q;
-                    btn.click();
-                });
-            } else if (/duboku/.test(location.host)) {
-                find('form#search', (form) => {
-                    let input = form.querySelector('input[name="wd"]'),
-                            btn = form.querySelector('button[type="submit"]');
-                    input.value = q;
-                    btn.click();
-                });
-
-            }
-
-        }
-
-    }
-
-
-
 
 })(document);
