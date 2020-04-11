@@ -69,7 +69,7 @@
 .select-wrapper select, .search-wrapper [type="text"]{-webkit-appearance: none;-moz-appearance: none;-ms-appearance: none;-o-appearance: none;appearance: none;width: 100%!important;border: 1px solid;height: calc(36px + 2px);display: inline-block;}
 .select-wrapper:not(.no-caret):after{content: "▼";position: absolute;right:5.6px;top: 50%;line-height:0;transform: translate(0, -50%);pointer-events: none;}
 .select-wrapper{color: #0D5995;}
-.select-wrapper select {min-width: 200px; }
+.select-wrapper select {min-width: 200px; box-sizing: border-box;}
 .select-wrapper select:not(.form-control){ padding: 5.2px 12px;font-size: 16px;text-align: center;color: inherit;border-color: #0D5995;background-color: rgba(255,255,255,1);}
 .select-wrapper.rounded select {padding-left: 24px;padding-right: 24px;}
 .select-wrapper.rounded:after{transform: translate(-3.2px, 50%);}
