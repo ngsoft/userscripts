@@ -192,7 +192,49 @@
         }
 
 
+        RPCsend(server, method, params, success, error){
 
+            params = params || {};
+            error = (typeof error === f) ? error : x => x;
+            if (!(server instanceof KodiRPCServer)) {
+                throw new Error("server not instance of KodiRPCServer");
+            }
+            if (typeof method !== s) throw new Error("Invalid Method");
+            if (!(params instanceof Object)) throw new Error("Invalid Params");
+            if (typeof success !== f) throw new Error("No Callback on RPC Success");
+            let request = JSON.RPCRequest(method, params, Math.floor(Math.random() * (99 - 1) + 1));
+            if (typeof request === s) {
+
+                GM_xmlhttpRequest({
+                    method: 'POST',
+                    url: server.address,
+                    data: request,
+                    headers: server.headers,
+                    onload(xhr){
+                        let response;
+                        if (xhr.status === 200) {
+                            try {
+                                response = JSON.parse(xhr.response);
+                                if (typeof response.error !== u) return error.call(self, response.error.code, server);
+                                else return success.call(self, response, server);
+
+                            } catch (e) {
+                            }
+                        }
+                        error.call(self, xhr.status, server);
+
+                    },
+                    onerror(xhr){
+                        error.call(self, xhr.status, server);
+                    }
+                });
+
+
+            }
+
+
+
+        }
 
 
         send(method, params, ...args){
@@ -227,37 +269,9 @@
 
             if (clients.length < 1) return;
 
-
             if (typeof method === s) {
-                let request = JSON.RPCRequest(method, params, Math.floor(Math.random() * (99 - 1) + 1));
                 if ((typeof request === s) && (typeof success === f)) {
-                    clients.forEach(c => {
-                        GM_xmlhttpRequest({
-                            method: 'POST',
-                            url: c.address,
-                            data: request,
-                            headers: c.headers,
-                            onload(xhr){
-                                let response;
-                                if (xhr.status === 200) {
-                                    try {
-                                        response = JSON.parse(xhr.response);
-                                        if (typeof response.error !== u) return error.call(self, response.error.code, c);
-                                        else return success.call(self, response, c);
-
-                                    } catch (e) {
-                                    }
-                                }
-                                error.call(self, xhr.status, c);
-
-                            },
-                            onerror(xhr){
-                                error.call(self, xhr.status, c);
-                            }
-                        });
-
-                    });
-
+                    clients.forEach(server => self.sendRPC(server, method, params, success, error));
                 }
             }
         }
@@ -332,6 +346,32 @@
                     background-size: 5px 5px, 5px 5px, 1px calc(100% - 8px);
                     background-repeat: no-repeat;
                 }
+                        
+                .gm-dialog .flash-message {
+                    position: relative;
+                    padding: .75rem 1.25rem;
+                    margin-bottom: 1rem;
+                    border: 1px solid transparent;
+                        border-top-color: transparent;
+                        border-right-color: transparent;
+                        border-bottom-color: transparent;
+                        border-left-color: transparent;
+                    border-radius: .25rem;
+                    color: #1b1e21;
+                    background-color: #d6d8d9;
+                    border-color: #c6c8ca;
+                }
+                .gm-dialog .flash-message.success{
+                    color: #155724;
+                    background-color: #d4edda;
+                    border-color: #c3e6cb;
+                 }
+                .gm-dialog .flash-message.error{
+                    color: #721c24;
+                    background-color: #f8d7da;
+                    border-color: #f5c6cb;
+                 }
+
                 .gm-dialog *:not(input):not(textarea){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
                 .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
                 .gm-dialog [hidden], .gm-dialog .hidden{display:none;}
@@ -727,15 +767,26 @@
                     self.elements.config.classList.add('hidden');
                     self.elements.selection.classList.remove('hidden');
                     self.elements.buttons.rm.disabled = self.elements.buttons.select.disabled = self.elements.buttons.check.disabled = true;
+                },
+                check(){
+
+                    let server = self.servers[self.current];
+
+                    self.client.RPCsend(server, "Playlist.GetPlaylists", {}, (json) => {
+                        console.debug(json);
+                    }, (errcode) => {
+                        console.error(errcode);
+                    });
+
+
+
+
                 }
             };
 
             new Events(self.root, self);
 
             Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
-
-
-
 
             self.dialog.title = self.title;
             self.dialog.body = self.root;
