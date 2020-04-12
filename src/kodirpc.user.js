@@ -169,8 +169,7 @@
                     servers: [
                         {name: 'localhost', host: "127.0.0.1"}
                     ],
-                    blacklist: [],
-                    selector: `video[src^="http"], video source[src^="http"]`
+                    blacklist: []
 
                 });
             }
@@ -350,7 +349,7 @@
                             </form>`;
             const self = this;
             Object.assign(this, {
-                title: "KodiRPC Settings",
+                title: GMinfo.script.name + " Settings",
                 root: html2element(template),
                 dialog: new gmDialog(doc.body, {
                     buttons: {
@@ -437,6 +436,7 @@
                 config: self.root.querySelector('.kodirpc-server-config'),
                 toolbar: self.root.querySelector('.kodirpc-server-toolbar'),
                 flash: html2element(`<div class="kodirpc-server-flash" style="cursor:pointer;overflow:hidden;position: absolute; bottom:12px; right: 12px;width:400px;text-align: center;"></div>`),
+                vinfo: html2element(`<small class="kodirpc-server-version" style="position: absolute;bottom:16px;left:16px;" />`),
                 inputs: {},
                 buttons: {
                     save: self.dialog.elements.buttons.yes,
@@ -576,20 +576,15 @@
             self.dialog.title = self.title;
             self.dialog.body = self.root;
             self.dialog.root.appendChild(self.elements.flash);
+            self.dialog.elements.footer.appendChild(self.elements.vinfo);
+            self.elements.vinfo.innerHTML = GMinfo.script.version;
 
             //keyboard shortcuts
             self.on('keyup keydown', e => {
-                
-                /* if ((e.target.closest('input') !== null)) return;
-                                let key = e.keyCode;
-                                if (typeof codes[key] === s) {
-                                    e.preventDefault();
-                                    if (e.type === "keyup") trigger(self.elements.root, codes[key]);
-                                }*/
                 let target = e.target.closest('input[name]');
                 if (([13, 9].includes(e.keyCode)) && (target !== null)) {
                     e.preventDefault();
-                    if (e.type === "keyup") {
+                    if ((e.type === "keyup")) {
                         let index = -1, list = target.parentElement.querySelectorAll('input[name]'), next;
                         list.forEach((input, i) => {
                             if (input === target) next = i + 1;
