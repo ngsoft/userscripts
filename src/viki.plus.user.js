@@ -1,11 +1,11 @@
 // ==UserScript==
-// @version     2.2.1
+// @version     2.3
 // @name        ViKi+
 // @description Download Subtitles on Viki
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.0.1/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.3/dist/gmutils.min.js
 // @grant       none
 // @noframes
 //
@@ -79,7 +79,10 @@
     /**
      * Loads Stylesheet
      */
-    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/viki.plus.min.css");
+    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.3/dist/viki.plus.min.css");
+
+
+
 
 
     /**
@@ -131,7 +134,6 @@
                 }
             });
 
-            // location.hash = "#modal-site-language";
         } else if (newsession === true) {
             switchLocale(locale);
 
@@ -219,11 +221,6 @@
                             if (Settings.filters.includes(this.value)) self.elements.inputs.addiso.disabled = true;
                         }
                     },
-                    title: {
-                        init(){
-                            //this.innerHTML = doc.querySelector('.vkp-pos-container-title').innerText;
-                        }
-                    },
                     filters: {
                         click(e){
                             self.elements.fedit.hidden = self.elements.fedit.hidden === true ? null : true;
@@ -292,6 +289,7 @@
                                         Events(self.elements.inputs.subtitles).trigger("init");
                                         target.parentElement.remove();
                                     }
+                                    e.stopPropagation();
                                 }
                             }
 
@@ -312,7 +310,7 @@
             if (typeof iso === s && /^[\w]{2}$/.test(iso)) {
                 const ul = this.elements.fedit.querySelector('ul');
                 let entry = isoCode(iso);
-                let li = html2element(`<li data-isocode="${iso}"><strong class="left">${iso.toUpperCase()}</strong><span>${entry.langword}</span><button title="Remove language" name="rmiso" class="bt-square right"><i class="icon-minus"></i></button></li>`);
+                let li = html2element(`<li data-isocode="${iso}"><strong>${iso.toUpperCase()}</strong><span>${entry.langword}</span><button title="Remove language" name="rmiso" class="gm-btn gm-btn-no bt-square right"><i class="icon-minus"></i></button></li>`);
                 ul.appendChild(li);
             }
 
@@ -387,63 +385,46 @@
             const self = this;
 
             const template = html2element(
-                    `<form class="viki-plus form-block">
-                        <fieldset class="form-body">
-                            <legend class="form-title"></legend>
-                            <div class="form-block">
-                                <div class="form-el form-select">
-                                    <label class="form-label">Subtitles</label>
-                                    <span class="form-input caret">
-                                        <select title="Select Subtitles" name="subtitles">
-                                            <option>Select Subtitles</option>
-                                        </select>
-                                    </span>
-
-                                </div>
-                                <div class="form-el">
-                                    <label class="form-label">SRT</label>
-
-                                    <span class="form-input switch-round">
-
+                    `<form class="viki-plus">
+                        <fieldset style="position:relative;">
+                            <label>Convert to SRT
+                                <span class="switch-round-sm">
                                         <input type="checkbox" name="convert" title="Convert to SRT" />
                                         <span class="slider"></span>
+                                </span>
+                            </label>
+                            <button class="gm-btn gm-btn-yes" name="filters" style="position: absolute;right: 0;top: -12px;">Edit filters</button>
+                        </fieldset>
+                        <fieldset class="viki-plus-fedit" hidden>
+                            <label class="form-label">Add a language</label>
+                            <button class="gm-btn bt-square right" title="Add a language" name="addiso" disabled><i class="icon-plus"></i></button>
+                            <select title="Select your language" name="isolist"></select>
+                            <ul></ul>
+                            <div><div><strong>ALL</strong><span>Remove All</span>
+                            <button title="Remove language" name="rmisoall" class="gm-btn gm-btn-no bt-square right">
+                            <i class="icon-minus"></i></button></div></div>
 
-                                    </span>
-                                </div>
-                                <div class="form-el">
-                                    <button class="" name="filters">Edit filters</button>
-                                </div>
-                            </div>
-                            <div class="form-block form-fedit" hidden>
-                                <div class="form-el form-block">
-                                    <label class="form-label">Add a language</label>
-                                    <span class="form-input caret">
-                                        <select title="Select your language" name="isolist"></select>
-                                    </span>
-                                    <button class="bt-square right" title="Add a language" name="addiso" disabled><i class="icon-plus"></i></button>
-                                </div>
-                                <ul></ul>
-                                <div><div><strong class="left">ALL</strong><span>Remove All</span>
-                                <button title="Remove language" name="rmisoall" class="bt-square right">
-                                <i class="icon-minus"></i></button></div></div>
-
-
-                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <label>Subtitles</label>
+                            <select title="Select Subtitles" name="subtitles">
+                                <option>Select Subtitles</option>
+                            </select>
                         </fieldset>
                     </form>`);
 
-            let modal = html2element(
-                    `<div class="viki-plus-modal" aria-hidden="true" id="viki-plus">
-                        <div tabindex="-1" data-micromodal-close>
-                            <div role="dialog" aria-modal="true" aria-labelledby="viki-plus-modal-title" class="viki-plus-container">
 
+            const dialog = new gmDialog(doc.body, {
+                overlayclickclose: true,
+                buttons: {
+                    yes: "Close",
+                    no: "Close"
+                }
+            });
 
-
-                            </div>
-                        </div>
-                    </div>`
-                    );
-
+            dialog.body = template;
+            dialog.title = GMinfo.script.name;
+            dialog.elements.buttons.no.remove();
 
             this.json = json || {};
             this.subtitles = subs || [];
@@ -451,11 +432,12 @@
             if (typeof self.json.id !== u && self.subtitles.length > 0) {
                 self.elements = {
                     root: template,
-                    modal: modal,
                     inputs: {}
                 };
 
-                find('#playerSettings > .vjs-menu > .vjs-menu-content', 50000, (menu) => {
+                find('#playerSettings > .vjs-menu > .vjs-menu-content', 50000, (menu, obs) => {
+
+                    if (menu.parentElement !== null) obs.stop();
 
                     menu.appendChild(html2element(`<li class="vkp-menu-item vjs-menu-item vkp-menu-separator"></li>`));
                     let button = html2element(
@@ -476,17 +458,18 @@
                     menu.appendChild(button);
 
                     Events(button).on('click', () => {
-                        modal.classList.add('open');
+
+                        dialog.open();
                     });
 
                 });
-                doc.body.appendChild(modal);
+
 
                 self.elements.root.querySelectorAll('[name]').forEach(input => {
                     self.elements.inputs[input.name] = input;
                 });
-                ["title", "body", "fedit"].forEach(key => {
-                    self.elements[key] = self.elements.root.querySelector('.form-' + key);
+                ["fedit"].forEach(key => {
+                    self.elements[key] = self.elements.root.querySelector('.viki-plus-' + key);
                 });
 
                 Object.keys(self.events).forEach(key => {
@@ -498,7 +481,9 @@
                     }
                 });
 
-                self.target.appendChild(template);
+                //self.target.appendChild(template);
+
+
                 new Events(self.elements.root, self);
 
                 self.on('init', () => {
@@ -520,13 +505,6 @@
 
                 self.trigger('init');
 
-
-                Events(modal).on('click', (e) => {
-                    let target = e.target;
-                    if (target.closest('.viki-plus-container') === null) {
-                        modal.classList.remove('open');
-                    }
-                });
 
 
                 console.debug(scriptname, "started");
