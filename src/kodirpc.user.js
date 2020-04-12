@@ -311,7 +311,7 @@
                 .gm-btn{
                     padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;
                     background-color: rgba(0,0,0,.125);border: 1px solid rgba(255,255,255,.25);color: rgb(28, 29, 30);
-                    font-size: 16px;font-weight: 700;min-width: 96px;
+                    font-size: 16px;font-weight: 700;min-width: 96px;margin: 8px 4px;
                 }
                 .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
                 .gm-btn + .gm-btn{margin-left: 16px;}
@@ -324,7 +324,7 @@
                 .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;}
                 .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
                 .gm-dialog-header{background-color: rgba(0,0,0,.03);}
-                .gm-dialog-body{min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;padding: 24px;color: #333;}
+                .gm-dialog-body{min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;padding: 24px;color: #333;position:relative;}
                 .gm-dialog-body > *{margin: -24px; padding: 8px 24px;text-align: left;font-size: 20px;}
                 .gm-dialog-footer{ text-align: right;}
                 .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
@@ -348,29 +348,11 @@
                 }
                         
                 .gm-dialog .flash-message {
-                    position: relative;
-                    padding: .75rem 1.25rem;
-                    margin-bottom: 1rem;
-                    border: 1px solid transparent;
-                        border-top-color: transparent;
-                        border-right-color: transparent;
-                        border-bottom-color: transparent;
-                        border-left-color: transparent;
-                    border-radius: .25rem;
-                    color: #1b1e21;
-                    background-color: #d6d8d9;
-                    border-color: #c6c8ca;
+                    padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;
+                    color: #1b1e21;background-color: #d6d8d9;border-color: #c6c8ca;
                 }
-                .gm-dialog .flash-message.success{
-                    color: #155724;
-                    background-color: #d4edda;
-                    border-color: #c3e6cb;
-                 }
-                .gm-dialog .flash-message.error{
-                    color: #721c24;
-                    background-color: #f8d7da;
-                    border-color: #f5c6cb;
-                 }
+                .gm-dialog .flash-message.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
+                .gm-dialog .flash-message.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
 
                 .gm-dialog *:not(input):not(textarea){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
                 .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
@@ -505,6 +487,117 @@
         }
     }
 
+    class gmFlash {
+
+
+        static applyStyles(){
+            if (this.styles === true) return;
+            this.styles = true;
+            addstyle(`
+                .gm-flash{font-family: Arial,Helvetica,sans-serif;font-size: 16px; font-weight: normal;line-height: 1.5;box-sizing: border-box;padding:0;margin:0;}
+                .gm-flash {padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;}
+                .gm-flash {color: #383d41; background-color: #e2e3e5; border-color: #d6d8db;}
+                .gm-flash.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
+                .gm-flash.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
+                .gm-flash.warning {color: #856404;background-color: #fff3cd;border-color: #ffeeba;}
+                .gm-flash.info {color: #0c5460;background-color: #d1ecf1;border-color: #bee5eb;}
+                @keyframes fadeInFlash {from {opacity: 0;}to {opacity: 1;}}
+                @keyframes fadeOutFlash {from {opacity: 1;}to {opacity: 0;}}
+                .fadeInFlash {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
+                .fadeOutFlash {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
+            `);
+        }
+        _create(message, classname, onshow, onhide){
+            classname = classname || "";
+            if (typeof message === s) {
+                const self = this;
+                let el = doc.createElement('div');
+                el.classList.add('gm-flash');
+                if (classname.length > 0) el.classList.add(...classname.split(' '));
+                el.innerHTML = message;
+                const evts = Events(el);
+                if (typeof onshow === f) evts.one('show', onshow);
+                if (typeof onhide === f) evts.one('hide', onhide);
+                evts.on('open close', e => {
+                    e.stopPropagation();
+                    if (e.type === "open") {
+                        if (self.config.fade === true) {
+                            el.classList.add('fadeInFlash');
+                            setTimeout(x => evts.trigger('show'), 750);
+                        } else evts.trigger('show');
+                    } else if (self.config.fade === true) {
+                        el.classList.remove('fadeInFlash');
+                        el.classList.add('fadeOutFlash');
+                        setTimeout(x => evts.trigger('hide'), 750);
+                    } else evts.trigger('hide');
+                });
+
+                let parent = self.root, before = null;
+                if (self.config.after === true) {
+                    parent = self.root.parentElement;
+                    before = self.root.nextElementSibling;
+                }
+                evts.on('show hide', e => {
+                    e.stopPropagation();
+                    if (e.type === 'show') {
+                        if (self.config.timeout > 0) setTimeout(x => evts.trigger('close'), self.config.timeout);
+                        if (typeof self.config.onshow === f) self.config.onshow.call(el, e);
+                    } else {
+                        if (typeof self.config.onhide === f) self.config.onhide.call(el, e);
+                        el.remove();
+                    }
+                });
+                evts.on('click', (e) => {
+                    e.stopPropagation();
+                    evts.trigger('hide');
+                });
+                parent.insertBefore(el, before);
+                evts.trigger('open');
+            }
+        }
+
+
+        set message(message){
+            this._create(message);
+        }
+        set info(message){
+            this._create(message, 'info');
+        }
+
+        set warning(message){
+            this._create(message, 'warning');
+        }
+        set success(message){
+            this._create(message, 'success');
+        }
+        set error(message){
+            this._create(message, 'error');
+        }
+
+
+        constructor(container, params){
+            params = params || {};
+            const self = this;
+            Object.assign(this, {
+                root: container,
+                config: Object.assign({
+                    timeout: 2000,
+                    fade: true,
+                    after: false,
+                    onshow: null,
+                    onhide: null
+                }, params),
+
+            });
+
+
+
+            gmFlash.applyStyles();
+        }
+
+
+    }
+
 
 
     class KodiRPCConfig {
@@ -545,6 +638,7 @@
                                     <select name="serverid" placeholder="Select Server"></select>
                                 </fieldset>
                                 <fieldset class="kodirpc-server-config hidden">
+                                    
                                     <label>Name:</label>
                                     <input type="text" name="name" value="" placeholder="Name" required />
                                 
@@ -559,6 +653,7 @@
                                     <input type="text" name="user" value="" placeholder="Username" />
                                     <input type="password" name="pass" value="" placeholder="Password" />
                                 </fieldset>
+                                
                             </form>`;
             const self = this;
             Object.assign(this, {
@@ -649,6 +744,7 @@
                 selection: self.root.querySelector('.kodirpc-server-selection'),
                 config: self.root.querySelector('.kodirpc-server-config'),
                 toolbar: self.root.querySelector('.kodirpc-server-toolbar'),
+                flash: html2element(`<div class="kodirpc-server-flash" style="cursor:pointer;overflow:hidden;position: absolute; bottom:12px; right: 12px;width:400px;text-align: center;"></div>`),
                 inputs: {},
                 buttons: {
                     save: self.dialog.elements.buttons.yes,
@@ -770,12 +866,16 @@
                 },
                 check(){
 
-                    let server = self.servers[self.current];
+                    let server = self.servers[self.current], flash = new gmFlash(self.elements.flash);
+                    flash.info = 'Connecting to ' + server.name + ' ...';
 
-                    self.client.RPCsend(server, "Playlist.GetPlaylists", {}, (json) => {
+
+                    self.client.RPCsend(server, "Playlist.GetPlaylists", {}, json => {
                         console.debug(json);
-                    }, (errcode) => {
+                        flash.success = "Server " + server.name + " available.";
+                    }, errcode => {
                         console.error(errcode);
+                        flash.error = "Cannot connect to " + server.name + " (" + errcode + ")";
                     });
 
 
@@ -790,6 +890,7 @@
 
             self.dialog.title = self.title;
             self.dialog.body = self.root;
+            self.dialog.root.appendChild(self.elements.flash);
             self.dialog.open();
 
 
