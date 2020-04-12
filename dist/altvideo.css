@@ -49,7 +49,7 @@
 .switch [type="checkbox"],.switch .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
 .switch .slider:after,.switch .slider:before {-webkit-transition: 0.25s;transition: 0.25s;content: "";position: absolute;}
 .switch .slider {width: 64px;height: 32px;vertical-align: middle;}
-.switch .slider:before {z-index:1;height: 24px;width: 24px;left: 4px;bottom: 2px;}
+.switch .slider:before {z-index:1;height: 24px;width: 24px;left: 4px;bottom: 4px;}
 .switch [type="checkbox"]:checked + .slider:before {-webkit-transform: translateX(32px);-ms-transform: translateX(32px);transform: translateX(32px);}
 .switch.round .slider:after{border-radius: 32px;}
 .switch.round .slider:before {border-radius: 50%;}
