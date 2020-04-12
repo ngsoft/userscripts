@@ -1433,5 +1433,310 @@ const isoCode = (() => {
     return getLangInfos;
 })();
 
+/**
+ * Userscripts Dialog Box
+ */
+class gmDialog {
 
+    static applyStyles(){
+        if (this.styles === true) return;
+        this.styles = true;
+        addstyle(`
+            [class*="gm-"]{font-family: Arial,Helvetica,sans-serif;font-size: 16px; font-weight: normal;line-height: 1.5;box-sizing: border-box;padding:0;margin:0;}
+            .gm-dialog-overlay{position: fixed; top:0;left:0; right:0; bottom:0; z-index: 2147483647; background-color: rgba(0, 0, 0, 0.45);}
+            .gm-dialog{
+                position: absolute; top:5%; left: 50%; transform: translate(-50%,0);
+                background-color: #FFF; border-radius: 6px;border: none; min-width: 256px; width: 60%;
+            }
+            .gm-btn{
+                padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;
+                background-color: rgba(0,0,0,.125);border: 1px solid rgba(255,255,255,.25);color: rgb(28, 29, 30);
+                font-size: 16px;font-weight: 700;min-width: 96px;margin: 8px 4px;
+            }
+            .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
+            .gm-btn + .gm-btn{margin-left: 16px;}
+            .gm-dialog-header .gm-btn-close{padding: 3px 16px;position: absolute;top: 10px;right: 12px;}
+            .gm-btn-no{ color: rgb(219, 40, 40); }
+            .gm-btn-no:hover, .gm-btn-no:active{ background-color: rgb(219, 40, 40); color: rgb(255, 255, 255); }
+            .gm-btn-yes{ color: rgb(30, 130, 205); }
+            .gm-btn-yes:hover, .gm-btn-yes:active{ background-color: rgb(30, 130, 205);color: rgb(255, 255, 255); }
+            .gm-btn-close{min-width: auto;}
+            .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;}
+            .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
+            .gm-dialog-header{background-color: rgba(0,0,0,.03);}
+            .gm-dialog-body{min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;padding: 24px;color: #333;position:relative;}
+            .gm-dialog-body > *{margin: -24px; padding: 8px 24px;text-align: left;font-size: 20px;}
+            .gm-dialog-footer{ text-align: right;}
+            .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
+            .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
+            .gm-dialog .placeholder, .gm-dialog input::placeholder{color: gray;}
+            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 16px 0;border: none;font-size:16px;font-weight: 700;}
+            .gm-dialog fieldset + fieldset{border-top: 1px solid rgba(0,0,0,.125);margin-top:0;}
+            .gm-dialog fieldset label{display: block;margin: 0;}
+            .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
+                width: 100%;padding: 6px 10px;margin: 4px 0;box-sizing: border-box;
+                border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+                -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
+            }
+            .gm-dialog fieldset label + input{margin-top:0;}
+            .gm-dialog input:focus, .gm-dialog select:focus, .gm-dialog textarea:focus{border: 1px solid rgb(0, 153, 204);}
+            .gm-dialog select {
+                background-image:linear-gradient(45deg, transparent 50%, gray 50%),linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
+                background-position: calc(100% - 20px) 14px,calc(100% - 15px) 14px,calc(100% - 40px) 4px;
+                background-size: 5px 5px, 5px 5px, 1px calc(100% - 8px);
+                background-repeat: no-repeat;
+            }
+
+            .gm-dialog .flash-message {
+                padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;
+                color: #1b1e21;background-color: #d6d8d9;border-color: #c6c8ca;
+            }
+            .gm-dialog .flash-message.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
+            .gm-dialog .flash-message.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
+
+            .gm-dialog *:not(input):not(textarea){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
+            .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
+            .gm-dialog [hidden], .gm-dialog .hidden{display:none;}
+            @keyframes fadeIn {from {opacity: 0;}to {opacity: 1;}}
+            @keyframes fadeOut {from {opacity: 1;}to {opacity: 0;}}
+            .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
+            .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
+
+        `);
+
+
+    }
+
+
+    set title(t){
+        if ((typeof t === s)) this.elements.title.innerHTML = t;
+    }
+
+    set body(body){
+        if (typeof body === s) this.elements.body.innerHTML = body;
+        else if (body instanceof Element) {
+            this.elements.body.innerHTML = "";
+            this.elements.body.appendChild(body);
+        }
+    }
+
+
+    open(callback){
+        if (typeof callback === f) this.one('confirm', callback);
+        this.trigger('open');
+    }
+
+    close(){
+        this.trigger('close');
+    }
+
+
+    constructor(parent, settings){
+        settings = settings || {};
+        if (!(parent instanceof Element)) parent = doc.body;
+        Object.assign(this, {
+            parent: parent,
+            root: html2element('<div class="gm-dialog-overlay" />'),
+            elements: {
+                dialog: html2element('<div class="gm-dialog" />'),
+                header: html2element('<div class="gm-dialog-header" />'),
+                title: html2element('<h1 class="gm-dialog-title" />'),
+                body: html2element('<div class="gm-dialog-body" />'),
+                footer: html2element('<div class="gm-dialog-footer" />'),
+                buttons: {
+                    yes: html2element(`<button class="gm-btn gm-btn-yes" name="yes" />`),
+                    no: html2element(`<button class="gm-btn gm-btn-no" name="no" />`),
+                    close: html2element('<button class="gm-btn gm-btn-close" name="close">&times;</button>')
+                }
+            },
+            config: Object.assign({
+                overlayclickclose: true,
+                buttons: {
+                    yes: "Yes",
+                    no: "No"
+                },
+                events: {},
+                title: doc.title,
+                body: ""
+            }, settings),
+            events: {
+                btn_yes(){
+                    this.trigger("confirm close");
+                },
+                btn_no(){
+                    this.trigger('close');
+                },
+                btn_close(){
+                    this.trigger('close');
+                },
+                keydown(e){
+                    if (e.keyCode === 27) {
+                        this.trigger('close');
+                    }
+                }
+
+            }
+        });
+        const self = this;
+
+        self.root.appendChild(self.elements.dialog);
+        self.elements.dialog.appendChild(self.elements.header);
+        self.elements.dialog.appendChild(self.elements.body);
+        self.elements.dialog.appendChild(self.elements.footer);
+        self.elements.header.appendChild(self.elements.title);
+        self.elements.header.appendChild(self.elements.buttons.close);
+        self.elements.footer.appendChild(self.elements.buttons.no);
+        self.elements.footer.appendChild(self.elements.buttons.yes);
+
+        Object.keys(self.config.buttons).forEach(btn => {
+            if (self.elements.buttons[btn] instanceof Element) self.elements.buttons[btn].innerHTML = self.config.buttons[btn];
+        });
+
+        new Events(self.root, self);
+
+
+        self.title = self.config.title;
+        self.body = self.config.body;
+
+        Object.keys(self.config.events).forEach(evt => self.events[evt] = self.config.events[evt]);
+        Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
+
+        self.on('open close', e => {
+            self.elements.dialog.classList.remove('fadeOut', 'fadeIn');
+            if (e.type === "open") {
+
+                self.elements.dialog.classList.add('fadeIn');
+                self.parent.appendChild(self.root);
+                setTimeout(x => self.trigger('show'), 750);
+            } else {
+                self.elements.dialog.classList.add('fadeOut');
+                setTimeout(() => {
+                    self.parent.removeChild(self.root);
+                    self.trigger('hide');
+                }, 750);
+            }
+
+        }).on('click', e => {
+            if ((e.target.closest('.gm-dialog') === null) && (self.config.overlayclickclose === true)) self.close();
+            let btn = e.target.closest('button[name]');
+            if (btn !== null) {
+                let name = btn.getAttribute('name'), type = "btn_" + name;
+                self.trigger(type);
+            }
+
+        });
+
+
+        gmDialog.applyStyles();
+    }
+}
+
+/**
+ * UserScripts flash messages
+ */
+class gmFlash {
+
+    static applyStyles(){
+        if (this.styles === true) return;
+        this.styles = true;
+        addstyle(`
+                .gm-flash{font-family: Arial,Helvetica,sans-serif;font-size: 16px; font-weight: normal;line-height: 1.5;box-sizing: border-box;padding:0;margin:0;}
+                .gm-flash {padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;}
+                .gm-flash {color: #383d41; background-color: #e2e3e5; border-color: #d6d8db;}
+                .gm-flash.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
+                .gm-flash.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
+                .gm-flash.warning {color: #856404;background-color: #fff3cd;border-color: #ffeeba;}
+                .gm-flash.info {color: #0c5460;background-color: #d1ecf1;border-color: #bee5eb;}
+                @keyframes fadeInFlash {from {opacity: 0;}to {opacity: 1;}}
+                @keyframes fadeOutFlash {from {opacity: 1;}to {opacity: 0;}}
+                .fadeInFlash {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
+                .fadeOutFlash {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
+            `);
+    }
+    _create(message, classname, onshow, onhide){
+        classname = classname || "";
+        if (typeof message === s) {
+            const self = this;
+            let el = doc.createElement('div');
+            el.classList.add('gm-flash');
+            if (classname.length > 0) el.classList.add(...classname.split(' '));
+            el.innerHTML = message;
+            const evts = Events(el);
+            if (typeof onshow === f) evts.one('show', onshow);
+            if (typeof onhide === f) evts.one('hide', onhide);
+            evts.on('open close', e => {
+                e.stopPropagation();
+                if (e.type === "open") {
+                    if (self.config.fade === true) {
+                        el.classList.add('fadeInFlash');
+                        setTimeout(x => evts.trigger('show'), 750);
+                    } else evts.trigger('show');
+                } else if (self.config.fade === true) {
+                    el.classList.remove('fadeInFlash');
+                    el.classList.add('fadeOutFlash');
+                    setTimeout(x => evts.trigger('hide'), 750);
+                } else evts.trigger('hide');
+            });
+
+            let parent = self.root, before = null;
+            if (self.config.after === true) {
+                parent = self.root.parentElement;
+                before = self.root.nextElementSibling;
+            }
+            evts.on('show hide', e => {
+                e.stopPropagation();
+                if (e.type === 'show') {
+                    if (self.config.timeout > 0) setTimeout(x => evts.trigger('close'), self.config.timeout);
+                    if (typeof self.config.onshow === f) self.config.onshow.call(el, e);
+                } else {
+                    if (typeof self.config.onhide === f) self.config.onhide.call(el, e);
+                    el.remove();
+                }
+            });
+            evts.on('click', (e) => {
+                e.stopPropagation();
+                evts.trigger('hide');
+            });
+            parent.insertBefore(el, before);
+            evts.trigger('open');
+        }
+    }
+
+
+    set message(message){
+        this._create(message);
+    }
+    set info(message){
+        this._create(message, 'info');
+    }
+
+    set warning(message){
+        this._create(message, 'warning');
+    }
+    set success(message){
+        this._create(message, 'success');
+    }
+    set error(message){
+        this._create(message, 'error');
+    }
+
+
+    constructor(container, params){
+        params = params || {};
+        const self = this;
+        Object.assign(this, {
+            root: container,
+            config: Object.assign({
+                timeout: 2000,
+                fade: true,
+                after: false,
+                onshow: null,
+                onhide: null
+            }, params)
+        });
+        gmFlash.applyStyles();
+    }
+
+
+}
 
