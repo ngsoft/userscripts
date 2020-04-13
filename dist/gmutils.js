@@ -1034,6 +1034,7 @@ class LSCache {
         this.__prefix__ = "";
         if (typeof prefix === s) this.__prefix__ = prefix;
         this.ttl = typeof ttl === n ? ttl : 60;
+        this.ttl = this.ttl * 1000;
 
         let expired = this.expire, now = +new Date(), keys = Object.keys(expired);
         for (let i = 0; i < keys.length; i++) {
