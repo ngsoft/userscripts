@@ -36,23 +36,28 @@ function getMeta($file) {
 class UserScriptMeta extends stdClass {
 
     public function __construct(string $file) {
+        $this->values = [];
         if ($meta = getMeta($file)) $this->parse($meta);
     }
 
     private function parse(string $meta) {
+
         foreach (explode(PHP_EOL, $meta) as $line) {
 
             if (preg_match('/@(\S+)(\h+(.*))?/', $line, $matches)) {
                 $value = true;
                 if (isset($matches[3])) list(, $key,, $value) = $matches;
                 else list(, $key) = $matches;
-                $this->{$key} = $value;
+                if (!isset($this->{$key})) $this->{$key} = [];
+                $this->{$key}[] = $value;
+                $this->values[] = $value;
             }
         }
     }
 
     public function compare(UserScriptMeta $other) {
-        return array_diff((array) $this, (array) $other);
+
+        return array_diff($this->values, $other->values);
     }
 
     public function __toString() {
@@ -60,9 +65,12 @@ class UserScriptMeta extends stdClass {
         $meta = [];
         if (count($data)) {
             $meta[] = "// ==UserScript==";
-            foreach ($data as $k => $v) {
-                if (is_string($v)) $meta[] = sprintf("// @%s\t%s", $k, $v);
-                else $meta[] = sprintf("// @%s", $k);
+            foreach ($data as $k => $a) {
+                if ($k === "values") continue;
+                foreach ($a as $v) {
+                    if (is_string($v)) $meta[] = sprintf("// @%s\t%s", $k, $v);
+                    else $meta[] = sprintf("// @%s", $k);
+                }
             }
             $meta[] = "// ==/UserScript==";
         }
@@ -78,6 +86,8 @@ foreach (scandir(__DIR__) as $file) {
         $meta = sprintf('%s.meta.js', $script);
         $file_usm = new UserScriptMeta($file);
         $meta_usm = new UserScriptMeta($meta);
+
+
         if (count($file_usm->compare($meta_usm))) {
             printf("[ MODIFIED ]\t%s\n", $meta);
             file_put_contents($meta, $file_usm);

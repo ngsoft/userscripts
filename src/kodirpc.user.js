@@ -613,6 +613,4 @@
     const kodi = new KodiRPCClient();
 
 
-    new KodiRPCConfig(kodi);
-
 })(document);
