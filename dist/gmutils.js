@@ -1463,6 +1463,24 @@ class gmDialog {
         this.trigger('close');
     }
 
+    /**
+     * auto resize dialog
+     */
+    setSize(){
+        this.elements.body.style.height = null;
+        this.elements.body.style["max-height"] = null;
+        this.elements.body.style["overflow-y"] = null;
+        let max = innerHeight,
+                dialogHeight = this.dialog.elements.dialog.offsetHeight,
+                minus = this.dialog.elements.header.offsetHeight + this.dialog.elements.footer.offsetHeight;
+
+        if ((dialogHeight > max) || (max < 640) || (innerWidth < 950)) {
+            this.elements.body.style["overflow-y"] = "scroll";
+            let height = max - minus;
+            this.elements.body.style.height = height + "px";
+            this.elements.body.style["max-height"] = height + "px";
+        }
+    }
 
     constructor(parent, settings){
         settings = settings || {};
@@ -1557,6 +1575,19 @@ class gmDialog {
                 self.trigger(type);
             }
 
+        });
+
+        //autoresize
+        let l = () => {
+            self.setSize();
+        };
+
+        self.dialog.on('hide', e => {
+            removeEventListener('resize', l);
+        });
+        self.dialog.on('show', e => {
+            addEventListener('resize', l);
+            self.setSize();
         });
 
         new gmStyles();
@@ -1723,6 +1754,8 @@ class gmStyles {
             @keyframes fadeOut {from {opacity: 1;}to {opacity: 0;}}
             .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
             .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
+            @media (max-height: 640px) {.gm-dialog{width: 100%; top:0;max-height:100%;}}
+            @media (max-width: 950px) {.gm-dialog{width: 100%; top:0;max-height:100%;}}
         `;
         //gmFlash
         styles += `

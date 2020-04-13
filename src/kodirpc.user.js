@@ -5,7 +5,7 @@
 // @description  Sends Video Streams to Kodi
 // @author       ngsoft
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.4/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.5/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -363,7 +363,6 @@
         }
 
 
-
         constructor(open, close){
 
             const client = new KodiRPCClient();
@@ -659,7 +658,6 @@
                 self.client._settings.set('servers', settings);
             });
 
-
             if (typeof open === f) self.dialog.on('open', open);
             if (typeof close === f) self.dialog.on('close', close);
 
@@ -669,13 +667,15 @@
     }
 
     class KodiRPCBlacklistManager {
+
+
         constructor(open, close){
 
             let template = `<form class="kodirpc-blacklist-manager">
-                                <fieldset class="kodirpc-bm-add" style="margin-top: -12px;padding: 4px;">
+                                <fieldset class="kodirpc-bm-add" style="padding: 0;">
                                     <label>Address:</label>
                                     <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 56px);">
-                                    <button type="submit" title="Add URL" name="add" class="gm-btn gm-btn-sm gm-btn-yes" style="min-width:auto; padding:6px 16px;margin:0 0 0 0px;">+</button>
+                                    <button type="submit" title="Add URL" name="add" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px;margin:0 0 0 0px;">+</button>
                                 </fieldset>
                                 <ul class="kodirpc-bm-list gm-list" style="border-radius: 0;border-left: 0;border-right: 0;border-bottom: 0;">
                                 </ul>
@@ -750,7 +750,7 @@
                     self.blacklist.list.forEach(host => {
                         ul.appendChild(html2element(`<li data-host="${host}" style="position:relative;text-align:center;">
                             ${host} <button class="gm-btn gm-btn-no" name="rm" title="Remove"
-                                    style="min-width:auto; padding:6px 16px;margin:0 0 0 0px;position:absolute; top:50%;right:0;transform: translateY(-50%);">-</button>
+                                    style="min-width:auto; padding:7px 16px;margin:0 0 0 0px;position:absolute; top:50%;right:-4px;transform: translateY(-50%);">-</button>
                         </li>`));
 
                     });
@@ -763,6 +763,7 @@
                         let li = target.parentElement, host = li.data('host');
                         if (self.blacklist.remove(host)) {
                             flash.info = "Removed host: " + host;
+                            self.elements.buttons.save.disabled = null;
                             li.remove();
                         } else flash.error = "Cannot remove host" + host;
                     }
@@ -784,14 +785,17 @@
             self.dialog.elements.footer.appendChild(self.elements.vinfo);
             self.elements.vinfo.innerHTML = GMinfo.script.version;
 
+            //save
+            self.dialog.on('confirm', e => {
+                if (self.blacklist.dirty === true) self.client._settings.set('blacklist', self.blacklist.list);
+            });
+
+            if (typeof open === f) self.dialog.on('open', open);
+            if (typeof close === f) self.dialog.on('close', close);
             self.dialog.open();
 
         }
     }
-
-
-    new KodiRPCBlacklistManager();
-
 
 
     /**
@@ -887,8 +891,11 @@
     on.load(() => {
         new KodiRPCModule();
     });
+    new KodiRPCConfig();
 
-    let bl = new KodiRPCBlacklist();
+
+
+
 
 
 })(document);
