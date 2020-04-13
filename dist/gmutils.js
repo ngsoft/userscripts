@@ -13,7 +13,7 @@ const s = "string", b = "boolean", f = "function", o = "object", u = "undefined"
 let undef;
 
 //time
-const minute = 60 * 60, hour = minute * 60, day = hour * 24, week = day * 7, year = 365 * day, month = Math.round(year / 12);
+const minute = 60, hour = minute * 60, day = hour * 24, week = day * 7, year = 365 * day, month = Math.round(year / 12);
 
 
 function isPlainObject(v) {
