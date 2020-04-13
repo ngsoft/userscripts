@@ -1582,10 +1582,9 @@ class gmDialog {
             self.setSize();
         };
 
-        self.dialog.on('hide', e => {
+        self.on('hide', e => {
             removeEventListener('resize', l);
-        });
-        self.dialog.on('show', e => {
+        }).on('show', e => {
             addEventListener('resize', l);
             self.setSize();
         });
