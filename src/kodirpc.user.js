@@ -330,22 +330,18 @@
                                     <select name="serverid" placeholder="Select Server"></select>
                                 </fieldset>
                                 <fieldset class="kodirpc-server-config hidden">
-                                    
                                     <label>Name:</label>
                                     <input type="text" name="name" value="" placeholder="Name" required />
-                                
                                     <label>Hostname:</label>
                                     <input type="text" name="host" value="" placeholder="Host" required />
                                     <label>Port:</label>
                                     <input type="number" name="port" value="" placeholder="Port" min="1" max="65535" required />
                                     <label>Endpoint:</label>
                                     <input type="text" name="pathname" value="" placeholder="Endpoint" required />
-                                
                                     <label>Authentification:</label>
                                     <input type="text" name="user" value="" placeholder="Username" />
                                     <input type="password" name="pass" value="" placeholder="Password" />
                                 </fieldset>
-                                
                             </form>`;
             const self = this;
             Object.assign(this, {
@@ -609,6 +605,39 @@
 
         }
     }
+
+
+
+
+
+    class KodiRPCModule {
+
+        constructor(){
+            const self = this;
+
+            Object.assign(this, {
+
+            });
+
+
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const kodi = new KodiRPCClient();
 

@@ -1028,8 +1028,9 @@ class LSCache {
      * @param {string} prefix
      * @param {number} ttl
      */
-    constructor(prefix = "", ttl = 60) {
-        this.storage = new xStore(localStorage);
+    constructor(prefix = "", ttl = 60, storage){
+        if (!(storage instanceof DataStore)) storage = new xStore(localStorage);
+        this.storage = storage;
         this.__prefix__ = "";
         if (typeof prefix === s) this.__prefix__ = prefix;
         this.ttl = typeof ttl === n ? ttl : 60;
@@ -1433,79 +1434,11 @@ const isoCode = (() => {
     return getLangInfos;
 })();
 
+
 /**
  * Userscripts Dialog Box
  */
 class gmDialog {
-
-    static applyStyles(){
-        if (this.styles === true) return;
-        this.styles = true;
-        addstyle(`
-            [class*="gm-"]{font-family: Arial,Helvetica,sans-serif;font-size: 16px; font-weight: normal;line-height: 1.5;box-sizing: border-box;padding:0;margin:0;}
-            .gm-dialog-overlay{position: fixed; top:0;left:0; right:0; bottom:0; z-index: 2147483647; background-color: rgba(0, 0, 0, 0.45);}
-            .gm-dialog{
-                position: absolute; top:5%; left: 50%; transform: translate(-50%,0);
-                background-color: #FFF; border-radius: 6px;border: none; min-width: 256px; width: 60%;
-            }
-            .gm-btn{
-                padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;
-                background-color: rgba(0,0,0,.125);border: 1px solid rgba(255,255,255,.25);color: rgb(28, 29, 30);
-                font-size: 16px;font-weight: 700;min-width: 96px;margin: 8px 4px;
-            }
-            .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
-            .gm-btn + .gm-btn{margin-left: 16px;}
-            .gm-dialog-header .gm-btn-close{padding: 3px 16px;position: absolute;top: 10px;right: 12px;}
-            .gm-btn-no{ color: rgb(219, 40, 40); }
-            .gm-btn-no:hover, .gm-btn-no:active{ background-color: rgb(219, 40, 40); color: rgb(255, 255, 255); }
-            .gm-btn-yes{ color: rgb(30, 130, 205); }
-            .gm-btn-yes:hover, .gm-btn-yes:active{ background-color: rgb(30, 130, 205);color: rgb(255, 255, 255); }
-            .gm-btn-close{min-width: auto;}
-            .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;}
-            .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
-            .gm-dialog-header{background-color: rgba(0,0,0,.03);}
-            .gm-dialog-body{min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;padding: 24px;color: #333;position:relative;}
-            .gm-dialog-body > *{margin: -24px; padding: 8px 24px;text-align: left;font-size: 20px;}
-            .gm-dialog-footer{ text-align: right;}
-            .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
-            .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
-            .gm-dialog .placeholder, .gm-dialog input::placeholder{color: gray;}
-            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 16px 0;border: none;font-size:16px;font-weight: 700;}
-            .gm-dialog fieldset + fieldset{border-top: 1px solid rgba(0,0,0,.125);margin-top:0;}
-            .gm-dialog fieldset label{display: block;margin: 0;}
-            .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
-                width: 100%;padding: 6px 10px;margin: 4px 0;box-sizing: border-box;
-                border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-                -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
-            }
-            .gm-dialog fieldset label + input{margin-top:0;}
-            .gm-dialog input:focus, .gm-dialog select:focus, .gm-dialog textarea:focus{border: 1px solid rgb(0, 153, 204);}
-            .gm-dialog select {
-                background-image:linear-gradient(45deg, transparent 50%, gray 50%),linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
-                background-position: calc(100% - 20px) 14px,calc(100% - 15px) 14px,calc(100% - 40px) 4px;
-                background-size: 5px 5px, 5px 5px, 1px calc(100% - 8px);
-                background-repeat: no-repeat;
-            }
-
-            .gm-dialog .flash-message {
-                padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;
-                color: #1b1e21;background-color: #d6d8d9;border-color: #c6c8ca;
-            }
-            .gm-dialog .flash-message.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
-            .gm-dialog .flash-message.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
-
-            .gm-dialog *:not(input):not(textarea){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
-            .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
-            .gm-dialog [hidden], .gm-dialog .hidden{display:none;}
-            @keyframes fadeIn {from {opacity: 0;}to {opacity: 1;}}
-            @keyframes fadeOut {from {opacity: 1;}to {opacity: 0;}}
-            .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
-            .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
-
-        `);
-
-
-    }
 
 
     set title(t){
@@ -1626,8 +1559,7 @@ class gmDialog {
 
         });
 
-
-        gmDialog.applyStyles();
+        new gmStyles();
     }
 }
 
@@ -1636,23 +1568,7 @@ class gmDialog {
  */
 class gmFlash {
 
-    static applyStyles(){
-        if (this.styles === true) return;
-        this.styles = true;
-        addstyle(`
-                .gm-flash{font-family: Arial,Helvetica,sans-serif;font-size: 16px; font-weight: normal;line-height: 1.5;box-sizing: border-box;padding:0;margin:0;}
-                .gm-flash {padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;}
-                .gm-flash {color: #383d41; background-color: #e2e3e5; border-color: #d6d8db;}
-                .gm-flash.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
-                .gm-flash.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
-                .gm-flash.warning {color: #856404;background-color: #fff3cd;border-color: #ffeeba;}
-                .gm-flash.info {color: #0c5460;background-color: #d1ecf1;border-color: #bee5eb;}
-                @keyframes fadeInFlash {from {opacity: 0;}to {opacity: 1;}}
-                @keyframes fadeOutFlash {from {opacity: 1;}to {opacity: 0;}}
-                .fadeInFlash {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
-                .fadeOutFlash {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
-            `);
-    }
+
     _create(message, classname, onshow, onhide){
         classname = classname || "";
         if (typeof message === s) {
@@ -1734,9 +1650,123 @@ class gmFlash {
                 onhide: null
             }, params)
         });
-        gmFlash.applyStyles();
+        new gmStyles();
     }
 
 
 }
 
+/**
+ * Dynamically load styles needed by gmUtils
+ */
+class gmStyles {
+
+    get styles(){
+        //gmDialog
+        let styles = `
+            [class*="gm-"]{font-family: Arial,Helvetica,sans-serif;font-size: 16px; font-weight: normal;line-height: 1.5;box-sizing: border-box;padding:0;margin:0;}
+            .gm-dialog-overlay{position: fixed; top:0;left:0; right:0; bottom:0; z-index: 2147483647; background-color: rgba(0, 0, 0, 0.45);}
+            .gm-dialog{
+                position: absolute; top:5%; left: 50%; transform: translate(-50%,0);
+                background-color: #FFF; border-radius: 6px;border: none; min-width: 256px; width: 60%;
+            }
+            .gm-btn{
+                padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;
+                background-color: rgba(0,0,0,.125);border: 1px solid rgba(255,255,255,.25);color: rgb(28, 29, 30);
+                font-size: 16px;font-weight: 700;min-width: 96px;margin: 8px 4px;
+            }
+            .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
+            .gm-btn + .gm-btn{margin-left: 16px;}
+            .gm-dialog-header .gm-btn-close{padding: 3px 16px;position: absolute;top: 10px;right: 12px;}
+            .gm-btn-no{ color: rgb(219, 40, 40); }
+            .gm-btn-no:hover, .gm-btn-no:active{ background-color: rgb(219, 40, 40); color: rgb(255, 255, 255); }
+            .gm-btn-yes{ color: rgb(30, 130, 205); }
+            .gm-btn-yes:hover, .gm-btn-yes:active{ background-color: rgb(30, 130, 205);color: rgb(255, 255, 255); }
+            .gm-btn-close{min-width: auto;}
+            .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;}
+            .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
+            .gm-dialog-header{background-color: rgba(0,0,0,.03);}
+            .gm-dialog-body{min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;padding: 24px;color: #333;position:relative;}
+            .gm-dialog-body > *{margin: -24px; padding: 8px 24px;text-align: left;font-size: 20px;}
+            .gm-dialog-footer{ text-align: right;}
+            .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
+            .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
+            .gm-dialog .placeholder, .gm-dialog input::placeholder{color: gray;}
+            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 16px 0;border: none;font-size:16px;font-weight: 700;}
+            .gm-dialog fieldset + fieldset{border-top: 1px solid rgba(0,0,0,.125);margin-top:0;}
+            .gm-dialog fieldset label{display: block;margin: 0;}
+            .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
+                width: 100%;padding: 6px 10px;margin: 4px 0;box-sizing: border-box;
+                border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+                -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
+            }
+            .gm-dialog fieldset label + input{margin-top:0;}
+            .gm-dialog input:focus, .gm-dialog select:focus, .gm-dialog textarea:focus{border: 1px solid rgb(0, 153, 204);}
+            .gm-dialog select {
+                background-image:linear-gradient(45deg, transparent 50%, gray 50%),linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
+                background-position: calc(100% - 20px) 14px,calc(100% - 15px) 14px,calc(100% - 40px) 4px;
+                background-size: 5px 5px, 5px 5px, 1px calc(100% - 8px);
+                background-repeat: no-repeat;
+            }
+
+            .gm-dialog .flash-message {
+                padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;
+                color: #1b1e21;background-color: #d6d8d9;border-color: #c6c8ca;
+            }
+            .gm-dialog .flash-message.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
+            .gm-dialog .flash-message.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
+
+            .gm-dialog *:not(input):not(textarea){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
+            .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
+            .gm-dialog [hidden], .gm-dialog .hidden{display:none;}
+            @keyframes fadeIn {from {opacity: 0;}to {opacity: 1;}}
+            @keyframes fadeOut {from {opacity: 1;}to {opacity: 0;}}
+            .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
+            .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
+        `;
+        //gmFlash
+        styles += `
+            .gm-flash {padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;}
+            .gm-flash {color: #383d41; background-color: #e2e3e5; border-color: #d6d8db;}
+            .gm-flash.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
+            .gm-flash.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
+            .gm-flash.warning {color: #856404;background-color: #fff3cd;border-color: #ffeeba;}
+            .gm-flash.info {color: #0c5460;background-color: #d1ecf1;border-color: #bee5eb;}
+        `;
+        //switch checkbox
+        styles += `
+            /** switch **/
+            [class*="switch"],[class*="switch"] .slider {position: relative;display: inline-block;}
+            [class*="switch"] [type="checkbox"] {opacity: 0;z-index: 2;}
+            [class*="switch"] [type="checkbox"],
+            [class*="switch"] .slider:after {position: absolute;top: 0;right: 0;left: 0;bottom: 0;min-width: 100%;min-height: 100%;cursor: pointer;}
+            [class*="switch"] .slider:after,[class*="switch"] .slider:before {transition: 0.25s;content: "";position: absolute;}
+            [class*="switch"] .slider {width: 64px;height: 32px;vertical-align: middle;}
+            [class*="switch"] .slider:before {z-index:1;height: 24px;width: 24px;left: 4px;bottom: 4px;}
+            [class*="switch"] [type="checkbox"]:checked + .slider:before {transform: translateX(32px);}
+            [class*="switch"][class*="-round"] .slider:after{border-radius: 32px;}
+            [class*="switch"][class*="-round"] .slider:before{border-radius: 50%;}
+            [class*="switch"][class*="-big"] .slider:before{width:40px;height:40px;transform: translate(-8px,8px);}
+            [class*="switch"][class*="-big"] [type="checkbox"]:checked + .slider:before {transform: translate(32px,8px);}
+            /** colors **/
+            [class*="switch"] [type="checkbox"]:checked + .slider:after {background-color: rgba(0, 123, 255, 1);}
+            [class*="switch"] [type="checkbox"]:focus + .slider:after {box-shadow: 0 0 1px rgba(0, 123, 255, 1);}
+            [class*="switch"] .slider:before {background-color: rgba(255, 255, 255, 1);}
+            [class*="switch"] .slider:after {background-color: rgba(108, 117, 125, 1);}
+            /** sizes **/
+            [class*="switch"] .slider{transform: scale(.75,.75);}
+            [class*="switch"][class*="-sm"] .slider{transform: scale(.55,.55);}
+            [class*="switch"][class*="-md"] .slider{transform: scale(.9,.9);}
+            [class*="switch"][class*="-lg"] .slider{transform: scale(1.1,1.1);}
+        `;
+
+        return styles;
+    }
+
+
+    constructor(){
+        if (gmStyles.applied === true) return;
+        gmStyles.applied = true;
+        addstyle(this.styles);
+    }
+}
