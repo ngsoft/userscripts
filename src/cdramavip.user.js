@@ -37,12 +37,6 @@
     })();
 
     
-    //disables KodiRPC (m3u8 hangs severely)
-    on.body(() => {
-        Object.defineProperty(doc.body, 'KodiRPCModule', {
-            value: "off", configurable: true
-        });
-    });
 
 
     /**

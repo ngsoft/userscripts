@@ -1733,6 +1733,13 @@ class gmStyles {
             .gm-flash.warning {color: #856404;background-color: #fff3cd;border-color: #ffeeba;}
             .gm-flash.info {color: #0c5460;background-color: #d1ecf1;border-color: #bee5eb;}
         `;
+        //gmList
+        styles += `
+        .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;}
+        .gm-list > *{height: 48px;text-align: center;border: none;padding: 12px 0 0 0; position: relative;}
+        .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
+        `;
+
         //switch checkbox
         styles += `
             /** switch **/

@@ -11,7 +11,6 @@
 // @grant       GM_deleteValue
 // @grant       GM_listValues
 // @grant       GM_xmlhttpRequest
-// @compatible  firefox+greasemonkey(3.17)
 // @compatible  firefox+tampermonkey
 // @compatible  chrome+tampermonkey
 //
@@ -48,19 +47,14 @@
 
 
     class KodiRPCServer {
-
-
         set name(name){
             if (typeof name === s) {
                 this._params.name = name;
             }
         }
-
         get name(){
             return this._params.name;
         }
-
-
         set host(h){
             if (typeof h !== s) return;
             let valid = true;
@@ -73,20 +67,16 @@
             } else if (!(/^[a-z](?:[\w\.]+\w)$/.test(h))) valid = false;
             if (valid === true) this._params.host = h;
         }
-
         get host(){
             return this._params.host;
         }
-
         set pathname(p){
             if (typeof p !== s) return;
             if (/^\/(?:[\w\-\.@]+[\/]?)+$/.test(p)) this._params.pathname = p;
         }
-
         get pathname(){
             return this._params.pathname;
         }
-
         set user(user){
             if (user === null) {
                 this._params.username = this._params.auth = null;
@@ -96,23 +86,17 @@
             if (/^\w+$/.test(user)) {
                 this._params.username = user;
             }
-
-
         }
         get user(){
             return this._params.username;
         }
-
         set port(p){
             if (typeof p !== n) return;
             if ((p > 0) && (p < 65536)) this._params.port = p;
         }
-
         get port(){
             return this._params.port;
         }
-
-
         set auth(pass){
             if ((typeof pass === s) && (this.user !== null)) {
                 this._params.auth = btoa(this.user + ':' + pass);
@@ -121,17 +105,12 @@
             }
 
         }
-
         get auth(){
             return this._params.auth;
         }
-
-
-
         get address(){
             return  new URL('http://' + this.host + ':' + this.port + this.pathname);
         }
-
         get headers(){
             const headers = {
                 "Content-Type": "application/json"
@@ -140,10 +119,7 @@
             return headers;
 
         }
-
-
         constructor(params){
-
             let defs = {
                 name: 'localhost',
                 host: "127.0.0.1",
@@ -156,7 +132,70 @@
             if (isPlainObject(params)) Object.assign(defs, params);
             this._params = defs;
         }
+    }
 
+    class KodiRPCBlacklist {
+
+        get list(){
+            return this._list;
+        }
+
+        get dirty(){
+            return this._dirty;
+        }
+        set dirty(flag){
+            this._dirty = flag === true;
+        }
+        _getHost(url){
+            let host;
+            if (typeof url === s) {
+                if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(url)) { //ipv4
+                    let valid = true;
+                    url.split('.').forEach((str) => {
+                        let n = parseInt(str);
+                        if (n > 254) valid = false;
+                    });
+                    if (valid === true) host = url;
+                } else if (/^[a-z](?:[\w\.]+\w)$/.test(url)) host = url;
+                else if (url = getURL(url)) {
+                    let o = new URL(url);
+                    host = o.host;
+                }
+            }
+
+            return host;
+        }
+
+
+        has(url){
+            let host = this._getHost(url);
+            return (typeof host === s) ? this.list.includes(host) : false;
+        }
+
+        add(url){
+
+            let host = this._getHost(url);
+            if ((typeof host === s) && !(this.has(host))) {
+                this.list.push(host);
+                this.dirty = true;
+            }
+            return this.has(url);
+        }
+
+        remove(url){
+            let host = this._getHost(url);
+            if ((typeof host === s) && (this.has(host))) {
+                this.list.splice(this.list.indexOf(host), 1)
+                this.dirty = true;
+            }
+            return !this.has(url);
+        }
+
+        constructor(data){
+            if (Array.isArray(data)) this._list = data;
+            else this._list = [];
+
+        }
     }
 
 
@@ -175,23 +214,20 @@
             }
             return  {
                 servers: this._settings.get('servers').map(d => new KodiRPCServer(d)),
-                blacklist: this._settings.get('blacklist'),
-                selector: this._settings.get('selector')
+                blacklist: new KodiRPCBlacklist(this._settings.get('blacklist'))
             };
         }
 
         get servers(){
-            if (typeof this._servers === u) this._servers = this.settings.servers;
-            return this._servers;
+            return this.settings.servers;
         }
 
         get blacklist(){
-            if (typeof this._blacklist === u) this._blacklist = this.settings.blacklist;
-            return this._blacklist;
+            return this.settings.blacklist;
         }
 
 
-        RPCsend(server, method, params, success, error){
+        sendRPCRequest(server, method, params, success, error){
 
             params = params || {};
             error = (typeof error === f) ? error : x => x;
@@ -236,51 +272,64 @@
         }
 
 
-        send(method, params, ...args){
+        sendRequest(method, params, ...args){
 
             const self = this, defs = {
-                client: null,
+                servers: [],
                 success: null,
                 error: x => x
             };
 
             args.forEach(arg => {
-                switch (typeof arg) {
-                    case o:
-                        if (isPlainObject(arg)) Object.assign(defs, arg);
-                        break;
-                    case n:
-                        defs.client = arg;
-                        break;
-                    case f:
-                        if (typeof defs.success === f) defs.error = arg;
-                        else defs.success = arg;
-                        break;
+                if (Array.isArray(arg)) {
+                    if (arg.every(x => (x instanceof KodiRPCServer))) defs.servers = arg;
+                } else if (isPlainObject(arg)) Object.assign(defs, arg);
+                else if (typeof arg === f) {
+                    if (typeof defs.success === f) defs.error = arg;
+                    else defs.success = arg;
                 }
             });
 
-            let client = defs.client, success = defs.success, error = defs.error, clients = [];
+            let servers = defs.servers, success = defs.success, error = defs.error;
 
-            const servers = this.servers;
-            if (typeof client === n) {
-               if(typeof servers[client] !== u) clients.push(servers[client]);
-            } else clients = servers;
+            if (servers.length === 0) servers = this.servers;
 
-            if (clients.length < 1) return;
-
+            if (servers.length < 1) return;
             if (typeof method === s) {
                 if ((typeof request === s) && (typeof success === f)) {
-                    clients.forEach(server => self.sendRPC(server, method, params, success, error));
+                    servers.forEach(server => self.sendRPCRequest(server, method, params, success, error));
                 }
             }
         }
 
+
+        send(link, success, error){
+            console.debug(link);
+        }
+
+
+        addBlacklist(link, success, error){
+            if(typeof link === s){
+                let blacklist = this.blacklist;
+                success = (typeof success === f) ? success : x => x;
+                error = (typeof error === f) ? error : x => x;
+                
+                if(blacklist.add(link)){
+                    if(blacklist.dirty === true){
+                        this._settings.set('blacklist', blacklist.list);
+                    }
+                    success(link);
+                    return;
+                }
+            }
+            error(link);
+        }
+
+
         constructor(){
 
 
-            if (this.blacklist.indexOf(location.host) !== -1) {
-                return;
-            }
+
 
 
 
@@ -315,15 +364,18 @@
 
 
 
-        constructor(client){
+        constructor(open, close){
 
+            const client = new KodiRPCClient();
 
             let template = `<form class="kodirpc-config">
-                                <fieldset class="kodirpc-server-toolbar" style="text-align:center;">
+                                <fieldset class="kodirpc-server-toolbar" style="text-align:center;margin: -8px 0 0 0">
                                     <button class="gm-btn" name="select">Select Server</button>
                                     <button class="gm-btn gm-btn-yes" name="add">Add Server</button>
                                     <button class="gm-btn gm-btn-no" name="rm">Remove Server</button>
+                                    <br>
                                     <button class="gm-btn" name="check">Test Connection</button>
+                                    <button class="gm-btn" name="blacklist">Manage Blacklist</button>
                                 </fieldset>
                                 <fieldset class="kodirpc-server-selection">
                                     <label>Servers:</label>
@@ -556,12 +608,20 @@
                     let server = self.servers[self.current], flash = new gmFlash(self.elements.flash);
                     flash.info = 'Connecting to ' + server.name + ' ...';
 
-                    self.client.RPCsend(server, "Playlist.GetPlaylists", {}, json => {
+                    self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, json => {
                         flash.success = "Server " + server.name + " available.";
                     }, errcode => {
                         flash.error = "Cannot connect to " + server.name + " (" + errcode + ")";
                     });
                     
+                },
+
+                blacklist(){
+                    self.dialog.one('hide', e => {
+                        new KodiRPCBlacklistManager();
+                        console.debug("manager");
+                    });
+                    self.dialog.trigger('close');
                 }
             };
 
@@ -599,47 +659,236 @@
                 self.client._settings.set('servers', settings);
             });
 
+
+            if (typeof open === f) self.dialog.on('open', open);
+            if (typeof close === f) self.dialog.on('close', close);
+
             self.dialog.open();
 
+        }
+    }
 
+    class KodiRPCBlacklistManager {
+        constructor(open, close){
+
+            let template = `<form class="kodirpc-blacklist-manager">
+                                <fieldset class="kodirpc-bm-add" style="margin-top: -12px;padding: 4px;">
+                                    <label>Address:</label>
+                                    <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 56px);">
+                                    <button type="submit" title="Add URL" name="add" class="gm-btn gm-btn-sm gm-btn-yes" style="min-width:auto; padding:6px 16px;margin:0 0 0 0px;">+</button>
+                                </fieldset>
+                                <ul class="kodirpc-bm-list gm-list" style="border-radius: 0;border-left: 0;border-right: 0;border-bottom: 0;">
+                                </ul>
+                            </form>`;
+
+
+
+            const self = this, client = new KodiRPCClient();
+            Object.assign(this, {
+                title: GMinfo.script.name + " Blacklist Manager",
+                root: html2element(template),
+                dialog: new gmDialog(doc.body, {
+                    buttons: {
+                        yes: "Save",
+                        no: "Close"
+                    },
+                    events: {
+                        show(){
+                            self.trigger('init');
+
+                        }
+                    }
+                }),
+                client: client,
+                blacklist: client.blacklist
+            });
+
+            self.elements = {
+                formadd: self.root.querySelector('.kodirpc-bm-add'),
+                list: self.root.querySelector('.kodirpc-bm-list'),
+                flash: html2element(`<div class="kodirpc-server-flash" style="cursor:pointer;overflow:hidden;position: absolute; bottom:12px; right: 12px;width:400px;text-align: center;"></div>`),
+                vinfo: html2element(`<small class="kodirpc-server-version" style="position: absolute;bottom:16px;left:16px;" />`),
+                inputs: {},
+                buttons: {
+                    save: self.dialog.elements.buttons.yes,
+                    close: self.dialog.elements.buttons.no
+                }
+            };
+
+            self.root.querySelectorAll('input[name], select[name]').forEach(el => {
+                let name = el.getAttribute("name");
+                self.elements.inputs[name] = el;
+            });
+            self.root.querySelectorAll('button[name]').forEach(el => {
+                let name = el.getAttribute("name");
+                self.elements.buttons[name] = el;
+            });
+
+            self.events = {
+                submit(e){
+                    e.preventDefault();
+                    console.debug(e);
+
+                    if (self.elements.inputs.url.value.length > 0) {
+                        console.debug(self.blacklist.add(self.elements.inputs.url.value), self.blacklist);
+                        if (self.blacklist.add(self.elements.inputs.url.value)) {
+                            flash.info = "URL added to blacklist.";
+                            self.trigger('init');
+                        } else flash.error = "Invalid URL";
+
+                    }
+                },
+
+                init(){
+                    self.elements.inputs.url.value = null;
+                    self.elements.buttons.save.disabled = true;
+                    if (self.blacklist.dirty === true) self.elements.buttons.save.disabled = null;
+                    //mk list
+                    const ul = self.elements.list;
+                    ul.querySelectorAll('li').forEach(li => li.remove());
+                    console.debug(self.blacklist);
+                    self.blacklist.list.forEach(host => {
+                        ul.appendChild(html2element(`<li data-host="${host}" style="position:relative;text-align:center;">
+                            ${host} <button class="gm-btn gm-btn-no" name="rm" title="Remove"
+                                    style="min-width:auto; padding:6px 16px;margin:0 0 0 0px;position:absolute; top:50%;right:0;transform: translateY(-50%);">-</button>
+                        </li>`));
+
+                    });
+                },
+                click(e){
+                    e.stopPropagation();
+                    let target = e.target.closest('button[name="rm"]');
+                    if (target !== null) {
+                        e.preventDefault();
+                        let li = target.parentElement, host = li.data('host');
+                        if (self.blacklist.remove(host)) {
+                            flash.info = "Removed host: " + host;
+                            li.remove();
+                        } else flash.error = "Cannot remove host" + host;
+                    }
+                }
+
+
+            };
+
+
+            const flash = new gmFlash(self.elements.flash);
+
+            new Events(self.root, self);
+
+            Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
+
+            self.dialog.title = self.title;
+            self.dialog.body = self.root;
+            self.dialog.root.appendChild(self.elements.flash);
+            self.dialog.elements.footer.appendChild(self.elements.vinfo);
+            self.elements.vinfo.innerHTML = GMinfo.script.version;
+
+            self.dialog.open();
 
         }
     }
 
 
+    new KodiRPCBlacklistManager();
 
 
+
+    /**
+     * KodiRPC Module
+     * Attach events to the current page (compatibility with other userscripts)
+     */
 
     class KodiRPCModule {
 
+        get client(){
+            if (typeof this._client === u) this._client = new KodiRPCClient();
+            return this._client;
+        }
+
+        get events(){
+            if (typeof this._listeners === u) {
+                const self = this;
+                this._listeners = {
+                    ready(){
+                        console.debug(this.title, 'version', this.version, 'started.');
+                    },
+                    //legacy mode
+                    settings(e){
+                        let open, close;
+                        if (typeof e.data !== u) {
+                            open = (typeof e.data.open === f) ? e.data.open : x => x;
+                            close = (typeof e.data.close === f) ? e.data.close : x => x;
+                        }
+                        self.openSettings(open, close);
+                    },
+                    send(e){
+
+                        if ((typeof e.data !== u) && (typeof e.data.link === s)) {
+                            self.client.send(e.data.link, e.data.success, e.data.error);
+                        }
+                    },
+
+                    //new features
+                    blacklist(e){
+                        if ((typeof e.data !== u) && (typeof e.data.link === s)) {
+                            self.client.addBlacklist(e.data.link, e.data.success, e.data.error);
+                        }
+                    }
+
+
+                };
+            }
+            return this._listeners;
+        }
+
+
+        openSettings(...args){
+            new KodiRPCConfig(...args);
+
+        }
+
+
+
+
         constructor(){
-            const self = this;
 
-            Object.assign(this, {
+            const el = doc.documentElement, self = this;
 
+            if (el.KodiRPCModule instanceof KodiRPCModule) return;
+            Object.defineProperty(el, 'KodiRPCModule', {
+                value: this, configurable: true
             });
 
+            Object.assign(this, {
+                title: 'KodiRPC Module',
+                version: GMinfo.script.version,
+                prefix: 'kodirpc',
+            });
 
+            let blacklist = this.client.blacklist;
+
+            if (blacklist.has(location.host)) return;
+
+
+
+            new Events(doc.body, this);
+
+
+            const events = this.events;
+
+            Object.keys(events).forEach(evt => {
+                let type = self.prefix + '.' + evt;
+                self.on(type, events[evt]);
+            });
         }
     }
 
+    on.load(() => {
+        new KodiRPCModule();
+    });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    const kodi = new KodiRPCClient();
+    let bl = new KodiRPCBlacklist();
 
 
 })(document);
