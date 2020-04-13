@@ -1471,8 +1471,8 @@ class gmDialog {
         this.elements.body.style["max-height"] = null;
         this.elements.body.style["overflow-y"] = null;
         let max = innerHeight,
-                dialogHeight = this.dialog.elements.dialog.offsetHeight,
-                minus = this.dialog.elements.header.offsetHeight + this.dialog.elements.footer.offsetHeight;
+                dialogHeight = this.elements.dialog.offsetHeight,
+                minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight;
 
         if ((dialogHeight > max) || (max < 640) || (innerWidth < 950)) {
             this.elements.body.style["overflow-y"] = "scroll";
