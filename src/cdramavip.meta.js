@@ -1,10 +1,10 @@
 // ==UserScript==
-// @version	1.6.3
+// @version	1.6.4
 // @name	CDRAMA Downloader
 // @description	FIX Stream + download stream (FFMPEG)
 // @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
-// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.9/dist/gmutils.min.js
+// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
 // @grant	GM_setValue
 // @grant	GM_getValue
 // @grant	GM_deleteValue

@@ -5,7 +5,7 @@
 // @description  Sends Video Streams to Kodi
 // @author       ngsoft
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.9/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -351,7 +351,7 @@
             return this._listeners;
         }
 
-        checkServersConnections(){
+        checkServersConnection(){
             if (Array.isArray(servers)) {
 
             }
@@ -380,7 +380,6 @@
             setInterval(() => {
                 self.checkServersConnection();
             }, 5 * minute);
-            console.debug(5 * minute);
             self.checkServersConnection();
 
 
