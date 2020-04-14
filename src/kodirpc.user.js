@@ -5,7 +5,7 @@
 // @description  Sends Video Streams to Kodi
 // @author       ngsoft
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.1/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -37,7 +37,7 @@
 
     if ((gmSettings.get('blacklist') || []).includes(location.host)) return;
 
-    const cache = new LSCache("rpclient", 10000, new gmStore());
+    const cache = new LSCache("rpclient", 2 * minute, new gmStore());
 
 
 
@@ -141,7 +141,7 @@
         get online(){
             let item = cache.getItem(this.uniqid);
             if (!item.isHit()) return null;
-            return item.get() === true;
+            return item.get();
         }
 
         constructor(params){
@@ -376,7 +376,6 @@
 
             servers.forEach(server => {
                 let item = self.cache.getItem(server.uniqid);
-                console.debug(item, server);
                 if (item.isHit()) return;
                 self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, () => {
                     item.set(true);
@@ -885,6 +884,146 @@
         }
     }
 
+
+    class KodiRPCConfigurator {
+
+        constructor(open, close){
+            const client = new KodiRPCClient();
+
+            let template = `<div class="" style="padding:0 24px 24px 24px;">
+                                <ul class="gm-tabs">
+                                    <li class="gm-tab" data-tab=".kodirpc-configurator">Basics</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-config">Servers</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-blacklist-manager">Blacklist</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-about">About</li>
+                                </ul>
+
+                           
+                                <form class="kodirpc-configurator">
+
+                                </form>
+                                <form class="kodirpc-blacklist-manager" style="position:relative;">
+                                    <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
+                                        <label>Address:</label>
+                                        <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 56px);">
+                                        <button type="submit" title="Add URL" name="add" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px;margin:0 0 0 0px;">+</button>
+                                        <button class="gm-btn" name="addsite" style="position: absolute;top: -2px;right: 20px;">Add Current Site</button>
+                                    </fieldset>
+                                    <ul class="kodirpc-bm-list gm-list" style="border-radius: 0;border-left: 0;border-right: 0;border-bottom: 0;">
+                                    </ul>
+                                </form>
+                                <form class="kodirpc-config">
+                                    <fieldset class="kodirpc-server-toolbar" style="text-align:center;margin: -8px 0 0 0;">
+                                        <button class="gm-btn" name="select">Select Server</button>
+                                        <button class="gm-btn gm-btn-yes" name="add">Add Server</button>
+                                        <button class="gm-btn gm-btn-no" name="rm">Remove Server</button>
+                                        <br>
+                                        <button class="gm-btn" name="check">Test Connection</button>
+                                        <button class="gm-btn" name="blacklist">Manage Blacklist</button>
+                                    </fieldset>
+                                    <fieldset class="kodirpc-server-selection">
+                                        <label>Servers:</label>
+                                        <select name="serverid" placeholder="Select Server"></select>
+                                    </fieldset>
+                                    <fieldset class="kodirpc-server-config">
+                                        <label>Name:</label>
+                                        <input type="text" name="name" value="" placeholder="Name" required />
+                                        <label>Hostname:</label>
+                                        <input type="text" name="host" value="" placeholder="Host" required />
+                                        <label>Port:</label>
+                                        <input type="number" name="port" value="" placeholder="Port" min="1" max="65535" required />
+                                        <label>Endpoint:</label>
+                                        <input type="text" name="pathname" value="" placeholder="Endpoint" required />
+                                        <label>Authentification:</label>
+                                        <input type="text" name="user" value="" placeholder="Username" />
+                                        <input type="password" name="pass" value="" placeholder="Password" />
+                                    </fieldset>
+                                </form>
+                                <div class="kodirpc-about">
+                                </div>
+                            </div>`;
+            const self = this;
+            Object.assign(this, {
+                title: GMinfo.script.name + " Settings",
+                root: html2element(template),
+                dialog: new gmDialog(doc.body, {
+                    buttons: {
+                        yes: "Save",
+                        no: "Close"
+                    },
+                    events: {
+                        show(){
+                            self.trigger('init');
+                        }
+                    }
+                }),
+                client: new KodiRPCClient(),
+
+                events: {
+
+                    init(e){
+
+                    },
+
+                    click(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+
+
+                    }
+                }
+            });
+            self.elements = {
+                selection: self.root.querySelector('.kodirpc-server-selection'),
+                config: self.root.querySelector('.kodirpc-server-config'),
+                toolbar: self.root.querySelector('.kodirpc-server-toolbar'),
+                flash: html2element(`<div class="kodirpc-server-flash" style="cursor:pointer;overflow:hidden;position: absolute; bottom:128px; right: 12px;width:400px;text-align: center;"></div>`),
+                vinfo: html2element(`<small class="kodirpc-server-version" style="position: absolute;bottom:16px;left:16px;" />`),
+                inputs: {},
+                buttons: {
+                    save: self.dialog.elements.buttons.yes,
+                    close: self.dialog.elements.buttons.no
+                }
+            };
+
+            self.root.querySelectorAll('input[name], select[name]').forEach(el => {
+                let name = el.getAttribute("name");
+                self.elements.inputs[name] = el;
+            });
+            self.root.querySelectorAll('button[name]').forEach(el => {
+                let name = el.getAttribute("name");
+                self.elements.buttons[name] = el;
+            });
+
+            self.flash = new gmFlash(self.elements.flash);
+
+
+            new Events(self.root, self);
+
+            Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
+
+            self.dialog.title = self.title;
+            self.dialog.body = self.root;
+            self.dialog.root.appendChild(self.elements.flash);
+            self.dialog.elements.footer.appendChild(self.elements.vinfo);
+            self.elements.vinfo.innerHTML = GMinfo.script.version;
+
+            //save settings
+            self.dialog.on('confirm', e => {
+
+            });
+
+            if (typeof open === f) self.dialog.on('open', open);
+            if (typeof close === f) self.dialog.on('close', close);
+            new gmTabs(self.root);
+            self.dialog.open();
+
+
+        }
+    }
+
+
+
     class KodiRPCServerSelector {
         constructor(callback){
             const template = `<form class="kodirpc-server-selector">
@@ -1309,17 +1448,24 @@
             Events(doc.body)
                     .on('kodirpc.ready', e => self.start())
                     .on('kodirpc.update', e => {
-                        console.debug(e);
                         let server = e.data.server;
-                        self.list.querySelectorAll('li[data-uniqid]').forEach(li => {
+                        self.elements.slist.querySelectorAll('li[data-uniqid]').forEach(li => {
                             if (li.data('uniqid') === server.uniqid) li.data('online', server.online);
                         });
-            });
+                    });
             new KodiRPCModule();
         }
 
     }
 
+    
+
+
+
+
+
+
+    new KodiRPCConfigurator();
 
     (() => {
         const elements = [];

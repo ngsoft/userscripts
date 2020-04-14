@@ -1703,6 +1703,87 @@ class gmFlash {
 }
 
 /**
+ * Userscript Tab Management
+ */
+class gmTabs {
+
+    constructor(root){
+        root = root instanceof Element ? root : doc.body;
+        if (typeof root.gmTabs !== u) return;
+
+        const self = this, events = {
+            init(e){
+                self.root.querySelectorAll('.gm-tabs').forEach(gmtabs => {
+                    let hasactive = gmtabs.querySelector('.gm-tab.active') !== null, first = gmtabs.querySelector('.gm-tab');
+                    if (!hasactive && first instanceof Element) first.classList.add('active');
+                    let tabs = gmtabs.querySelectorAll('.gm-tab'), tabp = (tabs.length > 0) ? ((1 / tabs.length) * 100) : null;
+                    tabs.forEach(tab => {
+                        tab.style.width = tabp + "%";
+                        let selector = tab.data('tab');
+                        if (typeof selector === s) {
+                            let type = tab.classList.contains('active') ? "gmtab.show" : "gmtab.hide";
+                            self.root.querySelectorAll(selector).forEach(el => Events(el).trigger(type));
+                        }
+                    });
+                });
+            },
+            show(e){
+                e.target.hidden = null;
+            },
+            hide(e){
+                e.target.hidden = true;
+            },
+            click(e){
+                let target = e.target.closest('.gm-tabs .gm-tab');
+                if (target !== null) {
+                    target.closest('.gm-tabs').querySelectorAll('.gm-tab').forEach(tab => {
+                        let selector;
+                        if (tab === target) {
+                            tab.classList.add('active');
+                            selector = tab.data('tab');
+                            if (typeof selector === s) self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.show'));
+                            return;
+                        }
+                        if (tab.classList.contains('active')) {
+                            tab.classList.remove('active');
+                            selector = tab.data('tab');
+                            if (typeof selector === s) self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.hide'));
+                        }
+                    });
+                }
+            }
+        };
+
+        Object.assign(this, {
+            root: root,
+        });
+
+        Object.defineProperty(root, 'gmTabs', {
+            value: this, configurable: true
+        });
+        new Events(root, this);
+        Object.keys(events).forEach(evt => {
+            let type = 'gmtab.' + evt;
+            self.on(type, events[evt]);
+        });
+
+        this.on('click', e => {
+            let target;
+            if ((target = e.target.closest('.gm-tabs .gm-tab')) !== null) {
+                e.preventDefault();
+                if (!target.classList.contains('active')) Events(target).trigger('gmtab.click');
+            }
+        });
+
+        this.trigger('gmtab.init');
+
+        new gmStyles();
+    }
+}
+
+
+
+/**
  * Dynamically load styles needed by gmUtils
  */
 class gmStyles {
@@ -1787,6 +1868,29 @@ class gmStyles {
             .gm-list > *{height: 48px;text-align: center;border: none;padding: 12px 0 0 0; position: relative;}
             .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
         `;
+        //gmTabs
+        styles += `
+            .gm-tabs{
+                list-style-type: none;width:100%;display:flex;padding:0;margin:0;text-align:center;background: #fff;
+                border: 1px solid rgba(34,36,38,.15);box-shadow: 0 1px 2px 0 rgba(34,36,38,.15);border-radius: 4px;
+                min-height: 48px;margin: 24px 0 16px 0;position: relative;
+            }
+            .gm-tabs:after{content: "";display: block;height: 1px;clear: both;visibility: hidden;}
+            .gm-tabs:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-16px;display:block;content:"";height: 1px;}
+            .gm-tabs .gm-tab{
+                position:relative;padding: 12px 0;vertical-align: middle;text-decoration: none;text-align: center;cursor: pointer;
+                color: rgba(0,0,0,.87);font-weight: 700;display: inline-block;
+                transition: background .1s ease,box-shadow .1s ease,color .1s ease,-webkit-box-shadow .1s ease;
+            }
+            .gm-tabs .gm-tab:hover, .gm-tabs .gm-tab:active{background: rgba(0,0,0,.03);color: rgba(0,0,0,.95);}
+            .gm-tabs .gm-tab:before{position: absolute;content: "";top: 0;right: 0;height: 100%;width: 1px;background: rgba(34,36,38,.1);}
+            .gm-tabs .gm-tab:last-child:before{display:none;}
+            .gm-tabs .gm-tab:first-child{border-radius: 4px 0 0 4px;}
+            .gm-tabs .gm-tab:last-child{border-radius: 0 4px 0 4px;}
+            .gm-tabs .gm-tab.active{
+                background: rgba(0,0,0,.05);color: rgba(0,0,0,.95);box-shadow: none;
+            }`;
+
 
         //switch checkbox
         styles += `
