@@ -1887,9 +1887,8 @@ class gmStyles {
             .gm-tabs .gm-tab:last-child:before{display:none;}
             .gm-tabs .gm-tab:first-child{border-radius: 4px 0 0 4px;}
             .gm-tabs .gm-tab:last-child{border-radius: 0 4px 0 4px;}
-            .gm-tabs .gm-tab.active{
-                background: rgba(0,0,0,.05);color: rgba(0,0,0,.95);box-shadow: none;
-            }`;
+            .gm-tabs .gm-tab.active{background: rgba(0,0,0,.05);color: rgba(0,0,0,.95);box-shadow: none;}
+        `;
 
 
         //switch checkbox
