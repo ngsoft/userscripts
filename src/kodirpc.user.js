@@ -37,7 +37,7 @@
 
     if ((gmSettings.get('blacklist') || []).includes(location.host)) return;
 
-    const cache = new LSCache("rpclient", 30000, new gmStore());
+    const cache = new LSCache("rpclient", 10000, new gmStore());
 
 
 
@@ -412,7 +412,7 @@
             //check rpc server connection
             setInterval(() => {
                 self.checkServersConnection.call(self);
-            }, (self.cache.ttl + 5000));
+            }, (self.cache.ttl + 2000));
             self.checkServersConnection();
 
             self.one(self.prefix + '.ready', e => {
