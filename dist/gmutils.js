@@ -916,7 +916,7 @@ class LSCacheItem {
      * is a legitimate cached value, so the isHit() method SHOULD be used to
      * differentiate between "null value was found" and "no value was found."
      *
-     * @return {any} The value corresponding to this cache item's key, or null if not found.
+     * @return {any} The value corresponding to this cache item's key, or undefined if not found.
      */
     get() {
         return this.value;
@@ -1042,7 +1042,12 @@ class LSCache {
         this.storage = storage;
         this.__prefix__ = "";
         if (typeof prefix === s) this.__prefix__ = prefix;
-        this.ttl = typeof ttl === n ? ttl : 600000;
+        this.ttl = typeof ttl === n ? ttl : 60000;
+        this.__removeExpired();
+
+    }
+
+    __removeExpired(){
 
         let expired = this.expire, now = +new Date(), keys = Object.keys(expired);
         for (let i = 0; i < keys.length; i++) {
@@ -1050,6 +1055,7 @@ class LSCache {
                 this.deleteItem(keys[i]);
             }
         }
+
     }
 
     /**
@@ -1066,7 +1072,7 @@ class LSCache {
     getItem(key) {
         if (typeof key !== s) throw new Error("Invalid Argument");
         let value, pkey = this.prefix + key;
-        if (this.storage.has(pkey)) value = this.storage.get(pkey);
+        if(this.hasItem(key)) value = this.storage.get(pkey);
         return new LSCacheItem(key, value !== undef, value);
     }
 
@@ -1101,6 +1107,7 @@ class LSCache {
      */
     hasItem(key) {
         if (typeof key !== s) throw new Error("Invalid Argument");
+        this.__removeExpired();
         return this.storage.has(this.prefix + key);
     }
 
@@ -1173,7 +1180,7 @@ class LSCache {
             data[item.getKey()] = +expire;
             this.expire = data;
             let key = this.prefix + item.getKey();
-            this.storage.set(key, item.value ? item.value : null);
+            this.storage.set(key, item.value !== undef ? item.value : null);
             return true;
 
         }

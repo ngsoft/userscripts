@@ -37,7 +37,7 @@
 
     if ((gmSettings.get('blacklist') || []).includes(location.host)) return;
 
-    const cache = new LSCache("rpclient", 5 * minute, new gmStore());
+    const cache = new LSCache("rpclient", 30000, new gmStore());
 
 
 
@@ -368,7 +368,25 @@
         }
 
         checkServersConnection(){
+            //console.debug("check connection", doc.hidden, this);
 
+            if (doc.hidden === true) return;
+
+            const self = this, servers = self.client.servers;
+
+            servers.forEach(server => {
+                let item = self.cache.getItem(server.uniqid);
+                console.debug(item, server);
+                if (item.isHit()) return;
+                self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, () => {
+                    item.set(true);
+                }, () => {
+                    item.set(false);
+                }, () => {
+                    self.cache.save(item);
+                    self.trigger(self.prefix + '.update', {server: server});
+                });
+            });
         }
 
         constructor(){
@@ -380,7 +398,8 @@
             Object.assign(this, {
                 title: 'KodiRPC Module',
                 version: GMinfo.script.version,
-                prefix: 'kodirpc'
+                prefix: 'kodirpc',
+                cache: cache
 
             });
             new Events(doc.body, this);
@@ -392,10 +411,9 @@
 
             //check rpc server connection
             setInterval(() => {
-                self.checkServersConnection();
-            }, 5 * minute);
+                self.checkServersConnection.call(self);
+            }, (self.cache.ttl + 5000));
             self.checkServersConnection();
-
 
             self.one(self.prefix + '.ready', e => {
                 self.ready = true;
@@ -1185,7 +1203,6 @@
                         servers.forEach(x => {
                             if (x.uniqid === id) server = x;
                         });
-                        console.debug(id, e, server);
 
                         if (server instanceof KodiRPCServer) {
                             target.data('online', null);
@@ -1289,7 +1306,15 @@
             let module = doc.documentElement.KodiRPCModule;
             if ((module instanceof KodiRPCModule) && (module.ready === true)) return self.start();
 
-            Events(doc.body).on('kodirpc.ready', e => self.start());
+            Events(doc.body)
+                    .on('kodirpc.ready', e => self.start())
+                    .on('kodirpc.update', e => {
+                        console.debug(e);
+                        let server = e.data.server;
+                        self.list.querySelectorAll('li[data-uniqid]').forEach(li => {
+                            if (li.data('uniqid') === server.uniqid) li.data('online', server.online);
+                        });
+            });
             new KodiRPCModule();
         }
 
