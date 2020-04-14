@@ -199,6 +199,15 @@ function sanitizeFileName(input, replacement){
 }
 
 
+/**
+ * Generate a unique ID
+ * @returns {String}
+ */
+function uniqid(){
+    return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+
 
 /**
  * Loads an external script
@@ -1768,9 +1777,9 @@ class gmStyles {
         `;
         //gmList
         styles += `
-        .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;}
-        .gm-list > *{height: 48px;text-align: center;border: none;padding: 12px 0 0 0; position: relative;}
-        .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
+            .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;}
+            .gm-list > *{height: 48px;text-align: center;border: none;padding: 12px 0 0 0; position: relative;}
+            .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
         `;
 
         //switch checkbox
