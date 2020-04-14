@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version	1.6.4
+// @version	1.6.5
 // @name	CDRAMA Downloader
 // @description	FIX Stream + download stream (FFMPEG)
 // @namespace	https://github.com/ngsoft/userscripts
@@ -11,6 +11,6 @@
 // @grant	GM_listValues
 // @run-at	document-body
 // @noframes
-// @include	/^https?:\/\/(\w+\.)?(5nj|zhuijukan|16ys|duboku)\.\w+\//
+// @include	/^https?:\/\/(\w+\.)?(5nj|zhuijukan|16ys|duboku|fanstui)\.\w+\//
 // @icon	https://cdn.jsdelivr.net/gh/ngsoft/userscripts/dist/altvideo.png
 // ==/UserScript==

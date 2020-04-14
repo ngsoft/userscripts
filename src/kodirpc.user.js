@@ -29,13 +29,16 @@
 
     const gmSettings = new UserSettings({
         servers: [
-            {name: 'localhost', host: "127.0.0.1"}
+            {name: 'localhost', host: "127.0.0.1", uniqid: uniqid()}
         ],
         blacklist: []
 
     });
 
     if ((gmSettings.get('blacklist') || []).includes(location.host)) return;
+
+    const cache = new LSCache("rpclient", 5 * minute, new gmStore());
+
 
 
     JSON.RPCRequest = function(method, params, id){
@@ -135,6 +138,12 @@
             return this._params.uniqid;
         }
 
+        get online(){
+            let item = cache.getItem(this.uniqid);
+            if (!item.isHit()) return null;
+            return item.get() === true;
+        }
+
         constructor(params){
             let defs = {
                 name: 'localhost',
@@ -143,7 +152,7 @@
                 pathname: '/jsonrpc',
                 username: null,
                 auth: null,
-                uniqid: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) //ro
+                uniqid: uniqid() //ro
             };
 
             if (isPlainObject(params)) Object.assign(defs, params);
@@ -223,10 +232,17 @@
             if (typeof this._settings === u) {
                 this._settings = gmSettings;
             }
-            return  {
-                servers: this._settings.get('servers').map(d => new KodiRPCServer(d)),
+            let update = false, retval = {
+                servers: this._settings.get('servers').map(d => {
+                    if (typeof d.uniqid !== s) update = true;
+                    return new KodiRPCServer(d);
+
+                }),
                 blacklist: new KodiRPCBlacklist(this._settings.get('blacklist'))
             };
+
+            if (update === true) this._settings.set('servers', retval.servers.map(x => x._params));
+            return retval;
         }
 
         get servers(){
@@ -352,9 +368,7 @@
         }
 
         checkServersConnection(){
-            if (Array.isArray(servers)) {
 
-            }
         }
 
         constructor(){
@@ -1119,7 +1133,7 @@
                 notifications: html2element(notify),
                 video: video,
                 client: new KodiRPCClient(),
-                cache: new LSCache("rpclient", 5 * minute, new gmStore()),
+                cache: cache,
                 events: {
                     click(e){
                         e.preventDefault();
@@ -1131,7 +1145,7 @@
                             return;
                         }
                         //ck server online
-                        target = e.target.closest('li[data-id]');
+                        target = e.target.closest('li[data-uniqid]');
                         if (target !== null) self.actions.check.call(target, e);
 
                     },
@@ -1143,13 +1157,10 @@
                         servers.forEach((server, i) => {
                             let li = html2element(`<li>${server.name}</li>`);
                             li.data({
-                                id: i, name: server.name
+                                uniqid: server.uniqid
                             });
                             self.elements.slist.appendChild(li);
-
-                            //check cache
-                            let key = server.name + i, item = self.cache.getItem(key);
-                            if (item.isHit()) li.data('online', item.get() === true);
+                            li.data('online', server.online);
 
                         
                         });
@@ -1170,18 +1181,22 @@
                     check(e){
                         const target = this;
                         if (!self.visible) return;
-                        let servers = self.client.servers, id = target.data('id'), server = servers[id];
+                        let servers = self.client.servers, id = target.data('uniqid'), server;
+                        servers.forEach(x => {
+                            if (x.uniqid === id) server = x;
+                        });
+                        console.debug(id, e, server);
+
                         if (server instanceof KodiRPCServer) {
-                            target.data('online', false);
-                            //check cache
-                            let key = server.name + id, item = self.cache.getItem(key);
+                            target.data('online', null);
+                            let item = self.cache.getItem(id);
                             if (typeof e !== u) self.flash.message = "Checking connection to " + server.name;
-                            self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, json => {
-                                target.data('online', true);
+                            self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, () => {
                                 item.set(true);
-                                self.cache.save(item);
-                            }, errcode => {
+                            }, () => {
                                 item.set(false);
+                            },()=>{
+                                target.data('online', item.get() === true);
                                 self.cache.save(item);
                             });
                         }
