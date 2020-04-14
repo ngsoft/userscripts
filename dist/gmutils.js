@@ -13,7 +13,7 @@ const s = "string", b = "boolean", f = "function", o = "object", u = "undefined"
 let undef;
 
 //time
-const minute = 60, hour = minute * 60, day = hour * 24, week = day * 7, year = 365 * day, month = Math.round(year / 12);
+const minute = 60 * 1000, hour = minute * 60, day = hour * 24, week = day * 7, year = 365 * day, month = Math.round(year / 12);
 
 
 function isPlainObject(v) {
@@ -1037,13 +1037,12 @@ class LSCache {
      * @param {string} prefix
      * @param {number} ttl
      */
-    constructor(prefix = "", ttl = 60, storage){
+    constructor(prefix = "", ttl = 60000, storage){
         if (!(storage instanceof DataStore)) storage = new xStore(localStorage);
         this.storage = storage;
         this.__prefix__ = "";
         if (typeof prefix === s) this.__prefix__ = prefix;
-        this.ttl = typeof ttl === n ? ttl : 60;
-        this.ttl = this.ttl * 1000;
+        this.ttl = typeof ttl === n ? ttl : 600000;
 
         let expired = this.expire, now = +new Date(), keys = Object.keys(expired);
         for (let i = 0; i < keys.length; i++) {

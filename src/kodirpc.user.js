@@ -351,7 +351,7 @@
             return this._listeners;
         }
 
-        checkConnection(servers){
+        checkServersConnections(){
             if (Array.isArray(servers)) {
 
             }
@@ -377,6 +377,11 @@
             });
 
             //check rpc server connection
+            setInterval(() => {
+                self.checkServersConnection();
+            }, 5 * minute);
+            console.debug(5 * minute);
+            self.checkServersConnection();
 
 
             self.one(self.prefix + '.ready', e => {
