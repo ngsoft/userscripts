@@ -1383,6 +1383,24 @@ HTMLElement.prototype.data = function(key, value) {
     }
 };
 
+
+HTMLElement.prototype.siblings = function(selector){
+    const self = this, retval = [];
+    selector = typeof selector === s ? selector : null;
+    if (self.parentElement !== null) {
+        let list = self.parentElement.children;
+        for (let i = 0; i < list.length; i++) {
+            let el = list[i];
+            if(el === self) continue;
+            if (selector !== null) {
+                if (!el.matches(selector)) continue;
+            }
+            retval.push(el);
+        }
+    }
+    return retval;
+};
+
 /**
  * Set or Get value from Element.dataset
  * @param {string|object} key

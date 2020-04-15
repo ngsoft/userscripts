@@ -913,6 +913,7 @@
                 .kodirpc-about li:last-child strong{}
                 .kodirpc-basics li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
+                .kodirpc-server-selection .gm-list .gm-btn{width: 96px;}
             
                
                 
@@ -1189,6 +1190,15 @@
                         servers(e){
                             const form = e.target.closest('form'), inputs = self.elements.inputs, servers = self.data.servers;
                             if (servers.length === 0) servers.push(new KodiRPCServer());
+                            //reset map
+                            self.data.map = {};
+                            //map tabs add, auth, edit, selection
+                            self.elements.tabs = {};
+                            form.querySelectorAll('.gm-tabs .gm-tab').forEach(tab => {
+                                let name = tab.data('tab').split('-').pop();
+                                self.elements.tabs [name] = tab;
+                            });
+
                             //reset fields
                             for (let i = 0; i < form.length; i++) {
                                 let input = form[i];
@@ -1198,17 +1208,20 @@
                             const ul = form.querySelector('.gm-list');
                             if (ul !== null) {
                                 ul.querySelectorAll('li').forEach(li => li.remove());
-                                servers.forEach(server => {
-
+                                servers.forEach((server, i) => {
+                                    self.data.map[server.uniqid] = i;
                                     let li = doc.createElement('li'),
-                                            button = html2element(`<button class="gm-btn gm-btn-yes" name="server_select">Select</button>`),
-                                            rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">-</button>`);
+                                            button = html2element(`<button class="gm-btn gm-btn-yes" name="server_select">Edit</button>`),
+                                            rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">Remove</button>`);
                                     button.data({
                                         uniqid: server.uniqid
                                     });
+                                    rm.data({
+                                        uniqid: server.uniqid
+                                    });
                                     li.innerHTML = server.name;
-                                    li.appendChild(button);
                                     li.appendChild(rm);
+                                    li.appendChild(button);
                                     ul.appendChild(li);
                                     if (servers.length === 1) Events(button).trigger('click');
                                 });
@@ -1252,6 +1265,33 @@
                         },
                         add_current(){
                             self.elements.inputs.url.value = location.hostname;
+                        },
+
+                        server_select(){
+                            let uniqid = this.data('uniqid');
+                            if (typeof uniqid === s) {
+                                let index = self.data.map[uniqid];
+                                if (typeof index === n) {
+                                    let server = self.data.servers[index];
+                                    if (server instanceof KodiRPCServer) {
+                                        const inputs = self.elements.inputs;
+                                        ["uniqid", "name", "host", "port", "pathname", "user"].forEach(name => {
+                                            inputs[name].value = server[name];
+                                        });
+                                        this.parentElement.siblings().forEach(li => li.classList.remove('active'));
+                                        this.parentElement.classList.add('active');
+                                    }
+
+
+
+
+                                }
+
+
+                            }
+                            console.debug();
+
+
                         }
                     }
                     
