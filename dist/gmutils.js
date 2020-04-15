@@ -1878,12 +1878,28 @@ class gmStyles {
             .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
             .gm-dialog-body h2{font-size: 24px;position:relative;padding: 8px 0 16px;margin: 0 0 16px;}
             .gm-dialog-body h2:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:0;display:block;content:"";height: 1px;}
+            .gm-dialog-body a{color:rgba(100, 149, 237,.8);text-decoration:none;}
+            .gm-dialog-body a:hover,.kodirpc-configurator a:active{color:rgba(100, 149, 237,1);}
             .gm-dialog-footer{ text-align: right;}
             .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
             .gm-dialog form{display:block;position:relative;}
             .gm-dialog form:before{content:"";display:block;clear: both;width:0;height:1px;visibility:hidden;}
             .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 600;color:#333;font-size: 16px;}
-            .gm-dialog .placeholder, .gm-dialog input::placeholder{color: gray;}
+            .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
+                width: 100%;padding: 6px 10px;margin: 4px 0;box-sizing: border-box;
+                border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
+                -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
+            }
+            .gm-dialog select {
+                background-image:linear-gradient(45deg, transparent 50%, gray 50%),linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
+                background-position: calc(100% - 20px) 14px,calc(100% - 15px) 14px,calc(100% - 40px) 4px;
+                background-size: 5px 5px, 5px 5px, 1px calc(100% - 8px);
+                background-repeat: no-repeat;
+            }
+            .gm-dialog input:not(:valid), .gm-dialog input[required]:placeholder-shown,.gm-dialog input.error {border-color:rgb(219, 40, 40);}
+            .gm-dialog input:focus, .gm-dialog select:focus, .gm-dialog textarea:focus{border: 1px solid rgb(30, 130, 205);}
+            .gm-dialog .placeholder, .gm-dialog ::placeholder{color: gray;}
+            
             .gm-dialog fieldset{text-align: left; padding: 8px 0;margin: 0;border: none;font-size:16px;font-weight: 600;min-width:0;display: table-cell;position:relative;}
             .gm-dialog fieldset legend{
                 display: table;width: 100%;max-width: 100%;padding: 8px 0;margin:0 0 16px;position: relative;
@@ -1892,28 +1908,8 @@ class gmStyles {
             .gm-dialog fieldset legend:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-8px;display:block;content:"";height: 1px;}
             .gm-dialog fieldset legend:after{content: "";display: block;height: 1px;clear: both;visibility: hidden;}
             .gm-dialog fieldset label{display: block;margin: 0;font-size:18px;padding: 8px 0 4px;}
-            
-            .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
-                width: 100%;padding: 6px 10px;margin: 4px 0;box-sizing: border-box;
-                border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
-                -moz-appearance: textfield;-webkit-appearance: none;-o-appearance: none;text-align: center;
-            }
             .gm-dialog fieldset label + input{margin-top:0;}
-            .gm-dialog input:focus, .gm-dialog select:focus, .gm-dialog textarea:focus{border: 1px solid rgb(0, 153, 204);}
-            .gm-dialog select {
-                background-image:linear-gradient(45deg, transparent 50%, gray 50%),linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
-                background-position: calc(100% - 20px) 14px,calc(100% - 15px) 14px,calc(100% - 40px) 4px;
-                background-size: 5px 5px, 5px 5px, 1px calc(100% - 8px);
-                background-repeat: no-repeat;
-            }
-
-            .gm-dialog .flash-message {
-                padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;
-                color: #1b1e21;background-color: #d6d8d9;border-color: #c6c8ca;
-            }
-            .gm-dialog .flash-message.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
-            .gm-dialog .flash-message.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
-
+            
             .gm-dialog *:not(input):not(textarea), .gm-noselect{-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
             .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
             .gm-dialog [hidden], .gm-dialog .hidden{display:none !important;z-index: -1 !important;}
@@ -1930,7 +1926,10 @@ class gmStyles {
         `;
         //gmFlash
         styles += `
-            .gm-flash {padding: 12px 20px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;}
+            .gm-flash {
+                padding: 16px 24px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;
+                text-align: center;font-size: 18px;
+            }
             .gm-flash {color: #383d41; background-color: #e2e3e5; border-color: #d6d8db;}
             .gm-flash.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
             .gm-flash.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
@@ -1939,10 +1938,11 @@ class gmStyles {
         `;
         //gmList
         styles += `
-            .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;}
-            .gm-list > *{height: 56px;text-align: center;border: none;padding: 16px; position: relative;font-weight:600;}
+            .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;display:block;}
+            .gm-list > *{height: 56px;text-align: center;border: none;padding: 16px; position: relative;font-weight:600;display:block;}
             .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
             .gm-list:empty{display:none;}
+            .gm-list:not(:empty) +.gm-flash{display: none;}
         `;
         //gmTabs
         styles += `

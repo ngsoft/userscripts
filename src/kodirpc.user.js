@@ -905,18 +905,14 @@
                 
                 .kodirpc-configurator{padding:0 24px 24px;}
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
-                .kodirpc-configurator a{color:rgba(100, 149, 237,.8);}
-                .kodirpc-configurator a:hover,.kodirpc-configurator a:active{color:rgba(100, 149, 237,1);}
+                
                 
                 .kodirpc-about li{text-align:left;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;}
                 .kodirpc-basics li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
                 
-                
-                .kodirpc-server-selection:before{bottom:-8px;}
-                .kodirpc-blacklist-manager .gm-flash{display: none;}
-                .kodirpc-blacklist-manager .gm-list + .gm-flash{display: block; text-align:center;}
+               
                 
             `;
             addstyle(styles);
@@ -991,27 +987,28 @@
 
                                     <fieldset class="kodirpc-server-selection">
                                         <legend>Select Server</legend>
-                                        <select name="uniqid" placeholder="Select Server"></select>
+                                        <input name="uniqid" type="hidden">
+           
                                     </fieldset>
 
                                    
                                     <fieldset class="kodirpc-server-edit">
                                         <legend>Edit Server</legend>
                                         <label>Name:</label>
-                                        <input type="text" name="name" value="" placeholder="Name" required />
+                                        <input type="text" name="name" value="" placeholder="Name" required>
                                         <label>Hostname:</label>
-                                        <input type="text" name="host" value="" placeholder="Hostname" required />
+                                        <input type="text" name="host" value="" placeholder="Hostname" required>
                                         <label>Port:</label>
-                                        <input type="number" name="port" value="" placeholder="Port" min="1" max="65535" required />
+                                        <input type="number" name="port" value="" placeholder="Port" min="1" max="65535" required>
                                         <label>Endpoint:</label>
-                                        <input type="text" name="pathname" value="" placeholder="Endpoint" required />
+                                        <input type="text" name="pathname" value="" placeholder="Endpoint" required>
                                     </fieldset>
                                     <fieldset class="kodirpc-server-auth">
                                         <legend>Credentials</legend>
                                         <label>Username:</label>
-                                        <input type="text" name="user" value="" placeholder="Username" />
+                                        <input type="text" name="user" value="" placeholder="Username">
                                         <label>Password:</label>
-                                        <input type="password" name="pass" value="" placeholder="Password" />
+                                        <input type="password" name="pass" value="" placeholder="Password">
                                         <div style="text-align: right;margin: 16px 0 0;">
                                             <button class="gm-btn" name="check">Check Connection</button>
                                         </div>
@@ -1019,9 +1016,9 @@
                                     <fieldset class="kodirpc-server-add">
                                         <legend>Add a Server</legend>
                                         <label>Name:</label>
-                                        <input type="text" name="add_name" value="" placeholder="Name" />
+                                        <input type="text" name="add_name" value="" placeholder="Name">
                                         <label>Hostname:</label>
-                                        <input type="text" name="add_host" value="" placeholder="Hostname" />
+                                        <input type="text" name="add_host" value="" placeholder="Hostname">
                                         <div style="text-align: right;margin: 16px 0 0;">
                                             <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
                                         </div>
