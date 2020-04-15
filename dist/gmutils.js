@@ -1489,6 +1489,7 @@ class gmDialog {
         let max = innerHeight,
                 dialogHeight = this.elements.dialog.offsetHeight,
                 minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight;
+        minus += 12;
 
         if ((dialogHeight > max) || (max < 640) || (innerWidth < 950)) {
             this.elements.body.style["overflow-y"] = "scroll";
@@ -1864,8 +1865,8 @@ class gmStyles {
             @keyframes fadeOut {from {opacity: 1;}to {opacity: 0;}}
             .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
             .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
-            @media (max-height: 640px) {.gm-dialog{width: 100%; top:0;max-height:100%;}}
-            @media (max-width: 950px) {.gm-dialog{width: 100%; top:0;max-height:100%;}}
+            @media (max-height: 640px) {.gm-dialog{width: calc(100% - 12px); top:6px;max-height:calc(100% - 12px);}}
+            @media (max-width: 950px) {.gm-dialog{width: calc(100% - 12px); top:6px;max-height:calc(100% - 12px);}}
         `;
         //gmFlash
         styles += `

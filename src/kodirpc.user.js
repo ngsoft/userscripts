@@ -901,7 +901,7 @@
             if (this.styles === true) return;
             this.styles = true;
             let styles = `
-
+                .gm-dialog fieldset, .gm-dialog fieldset *{font-weight: 600;}
                 .gm-dialog fieldset legend{
                     display: block;width: 100%;max-width: 100%;padding: 8px 0;margin:0 0 16px;position: relative;
                     font-size: 24px;line-height: 1.5;color: #333;white-space: normal;font-weight: 500;
