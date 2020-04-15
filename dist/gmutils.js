@@ -1722,7 +1722,11 @@ class gmTabs {
                         let selector = tab.data('tab');
                         if (typeof selector === s) {
                             let type = tab.classList.contains('active') ? "gmtab.show" : "gmtab.hide";
-                            self.root.querySelectorAll(selector).forEach(el => Events(el).trigger(type));
+                            try {
+                                self.root.querySelectorAll(selector).forEach(el => Events(el).trigger(type));
+                            } catch (e) {
+                                console.warn(e.message);
+                            }
                         }
                     });
                 });
@@ -1741,13 +1745,25 @@ class gmTabs {
                         if (tab === target) {
                             tab.classList.add('active');
                             selector = tab.data('tab');
-                            if (typeof selector === s) self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.show'));
+                            if (typeof selector === s) {
+                                try {
+                                    self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.show'));
+                                } catch (e) {
+                                    console.warn(e.message);
+                                }
+                            }
                             return;
                         }
                         if (tab.classList.contains('active')) {
                             tab.classList.remove('active');
                             selector = tab.data('tab');
-                            if (typeof selector === s) self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.hide'));
+                            if (typeof selector === s) {
+                                try {
+                                    self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.hide'));
+                                } catch (e) {
+                                    console.warn(e.message);
+                                }
+                            }
                         }
                     });
                 }
@@ -1755,7 +1771,7 @@ class gmTabs {
         };
 
         Object.assign(this, {
-            root: root,
+            root: root
         });
 
         Object.defineProperty(root, 'gmTabs', {
@@ -1780,8 +1796,6 @@ class gmTabs {
         new gmStyles();
     }
 }
-
-
 
 /**
  * Dynamically load styles needed by gmUtils
@@ -1865,7 +1879,7 @@ class gmStyles {
         //gmList
         styles += `
             .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;}
-            .gm-list > *{height: 48px;text-align: center;border: none;padding: 12px 0 0 0; position: relative;}
+            .gm-list > *{height: 56px;text-align: center;border: none;padding: 16px; position: relative;}
             .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
         `;
         //gmTabs

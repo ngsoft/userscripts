@@ -5,7 +5,7 @@
 // @description  Sends Video Streams to Kodi
 // @author       ngsoft
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.1/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.2/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -28,6 +28,12 @@
     // Site Blacklisted?
 
     const gmSettings = new UserSettings({
+        config: {
+            legacy_mode: true,
+            use_blacklist: true,
+            display_servers: true,
+            update_servers_online: true
+        },
         servers: [
             {name: 'localhost', host: "127.0.0.1", uniqid: uniqid()}
         ],
@@ -238,7 +244,8 @@
                     return new KodiRPCServer(d);
 
                 }),
-                blacklist: new KodiRPCBlacklist(this._settings.get('blacklist'))
+                blacklist: new KodiRPCBlacklist(this._settings.get('blacklist')),
+                config: this._settings.get('config') || {}
             };
 
             if (update === true) this._settings.set('servers', retval.servers.map(x => x._params));
@@ -251,6 +258,10 @@
 
         get blacklist(){
             return this.settings.blacklist;
+        }
+
+        get config(){
+            return this.settings.config;
         }
 
 
@@ -349,7 +360,7 @@
                             open = (typeof e.data.open === f) ? e.data.open : x => x;
                             close = (typeof e.data.close === f) ? e.data.close : x => x;
                         }
-                        new KodiRPCConfig(open, close);
+                        new KodiRPCConfigurator(open, close);
                     },
                     send(e){
                         if ((typeof e.data !== u) && (typeof e.data.link === s)) {
@@ -368,7 +379,6 @@
         }
 
         checkServersConnection(){
-            //console.debug("check connection", doc.hidden, this);
 
             if (doc.hidden === true) return;
 
@@ -813,7 +823,7 @@
             self.events = {
                 submit(e){
                     e.preventDefault();
-                    console.debug(e);
+
 
                     if (self.elements.inputs.url.value.length > 0) {
                         if (self.blacklist.add(self.elements.inputs.url.value)) {
@@ -887,20 +897,70 @@
 
     class KodiRPCConfigurator {
 
+        static loadStyles(){
+            if (this.styles === true) return;
+            this.styles = true;
+            let styles = `
+                .kodirpc-configurator{padding:0 24px 24px;}
+                .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
+                .kodirpc-configurator a{color:rgba(100, 149, 237,.8);}
+                .kodirpc-configurator a:hover,.kodirpc-configurator a:active{color:rgba(100, 149, 237,1);}
+                .gm-dialog-body h1{font-size: 32px;text-align: left;padding: 16px 0;margin:0;}
+                .gm-list li{padding:16px;height: auto;}
+                .kodirpc-about li{text-align:left;position:relative;}
+                .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;}
+                .kodirpc-basics li{cursor: pointer;}
+                .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
+            `;
+            addstyle(styles);
+        }
+
+
+
         constructor(open, close){
             const client = new KodiRPCClient();
 
-            let template = `<div class="" style="padding:0 24px 24px 24px;">
+            let template = `<div class="kodirpc-configurator">
                                 <ul class="gm-tabs">
-                                    <li class="gm-tab" data-tab=".kodirpc-configurator">Basics</li>
-                                    <li class="gm-tab" data-tab=".kodirpc-config">Servers</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-basics">Basics</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-servers">Servers</li>
                                     <li class="gm-tab" data-tab=".kodirpc-blacklist-manager">Blacklist</li>
                                     <li class="gm-tab" data-tab=".kodirpc-about">About</li>
                                 </ul>
 
                            
-                                <form class="kodirpc-configurator">
-
+                                <form class="kodirpc-basics">
+                                    <h1>Basic Configuration</h1>
+                                    <ul class="gm-list">
+                                        <li>
+                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                <input type="checkbox" name="display_servers">
+                                                <span class="slider"></span>
+                                            </span>
+                                            Display Server List
+                                        </li>
+                                        <li>
+                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                <input type="checkbox" name="update_servers_online">
+                                                <span class="slider"></span>
+                                            </span>
+                                            Check Servers Online
+                                        </li>
+                                        <li>
+                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                <input type="checkbox" name="use_blacklist">
+                                                <span class="slider"></span>
+                                            </span>
+                                            Use Blacklist
+                                        </li>
+                                        <li>
+                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                <input type="checkbox" name="legacy_mode">
+                                                <span class="slider"></span>
+                                            </span>
+                                            Use Legacy Mode (Direct Play)
+                                        </li>
+                                    </ul>
                                 </form>
                                 <form class="kodirpc-blacklist-manager" style="position:relative;">
                                     <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
@@ -912,7 +972,13 @@
                                     <ul class="kodirpc-bm-list gm-list" style="border-radius: 0;border-left: 0;border-right: 0;border-bottom: 0;">
                                     </ul>
                                 </form>
-                                <form class="kodirpc-config">
+                                <form class="kodirpc-servers">
+                                    <ul class="gm-tabs">
+                                        <li class="gm-tab" data-tab="">Basics</li>
+                                        <li class="gm-tab" data-tab="">Servers</li>
+                                        <li class="gm-tab" data-tab="">Blacklist</li>
+                                        <li class="gm-tab" data-tab="">About</li>
+                                    </ul>
                                     <fieldset class="kodirpc-server-toolbar" style="text-align:center;margin: -8px 0 0 0;">
                                         <button class="gm-btn" name="select">Select Server</button>
                                         <button class="gm-btn gm-btn-yes" name="add">Add Server</button>
@@ -940,7 +1006,16 @@
                                     </fieldset>
                                 </form>
                                 <div class="kodirpc-about">
+                                    <h1 style="font-size:32px;text-align:left;">${GMinfo.script.name}</h1>
+                                    <ul class="gm-list">
+                                        <li><strong>Description:</strong> ${GMinfo.script.description}</li>
+                                        <li><strong>Version:</strong> ${GMinfo.script.version}</li>
+                                        <li><strong>Author:</strong> ${GMinfo.script.author}</li>
+                                        <li><strong>UUID:</strong> ${GMinfo.script.uuid}</li>
+                                        <li style="text-align: center;"><strong style="width:auto;">Copyright &copy; 2020 <a href="${GMinfo.script.namespace}" target="_blank">NGSOFT</a></strong></li>
+                                    </ul>
                                 </div>
+                                
                             </div>`;
             const self = this;
             Object.assign(this, {
@@ -958,20 +1033,54 @@
                     }
                 }),
                 client: new KodiRPCClient(),
-
                 events: {
 
                     init(e){
 
                     },
+                    change(e){
+                        e.stopPropagation();
+                        let target, name;
+
+                        if ((target = e.target.closest('input[name], select[name], textarea[name]')) !== null) {
+                            e.preventDefault();
+                            name = target.getAttribute('name');
+                            if (typeof self.actions.change[name]) self.actions.change[name].call(target, e);
+                        }
+                    },
 
                     click(e){
-                        e.preventDefault();
                         e.stopPropagation();
+                        let target, name, prevent = false;
 
+                        if ((target = e.target.closest('button[name]'))!==null){
+                            prevent = true;
+                            name = target.getAttribute('name');
+                            if (typeof self.actions[name]) self.actions[name].call(target, e);
+                        }
+
+                        if ((target = e.target.closest('.kodirpc-basics li')) !== null) {
+                            prevent = true;
+
+                            let input = target.querySelector('[name]');
+                            if (input instanceof Element) {
+                                Events(input).trigger('change');
+                            }
+
+                        }
+                        if (prevent === true) e.preventDefault();
+                    },
+                    submit(e){
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }
+                },
+                actions: {
+                    change: {
 
                     }
                 }
+
             });
             self.elements = {
                 selection: self.root.querySelector('.kodirpc-server-selection'),
@@ -986,7 +1095,7 @@
                 }
             };
 
-            self.root.querySelectorAll('input[name], select[name]').forEach(el => {
+            self.root.querySelectorAll('input[name], select[name], textarea[name]').forEach(el => {
                 let name = el.getAttribute("name");
                 self.elements.inputs[name] = el;
             });
@@ -1016,9 +1125,9 @@
             if (typeof open === f) self.dialog.on('open', open);
             if (typeof close === f) self.dialog.on('close', close);
             new gmTabs(self.root);
+
             self.dialog.open();
-
-
+            KodiRPCConfigurator.loadStyles();
         }
     }
 
@@ -1173,7 +1282,6 @@
                     callback(servers);
 
                 });
-
 
                 self.dialog.open();
             }
@@ -1396,7 +1504,7 @@
                                     self.flash.error = "Cannot send stream to " + server.name + " (" + code + ")";
                                 },
                                 complete(s){
-                                    console.debug(s);
+
                                     self.expand(false);
                                 }
                             });
@@ -1457,11 +1565,6 @@
         }
 
     }
-
-    
-
-
-
 
 
 
