@@ -1459,12 +1459,16 @@ class gmDialog {
 
     set title(t){
         if ((typeof t === s)) this.elements.title.innerHTML = t;
+        else if (body instanceof Element) {
+            this.elements.body.innerHTML = null;
+            this.elements.body.appendChild(body);
+        }
     }
 
     set body(body){
         if (typeof body === s) this.elements.body.innerHTML = body;
         else if (body instanceof Element) {
-            this.elements.body.innerHTML = "";
+            this.elements.body.innerHTML = null;
             this.elements.body.appendChild(body);
         }
     }
@@ -1490,15 +1494,12 @@ class gmDialog {
                 dialogHeight = this.elements.dialog.offsetHeight,
                 minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight;
         minus += 12;
+        let height = max - minus;
+        body.style["max-height"] = height + "px";
 
-        if ((dialogHeight > max) || (max < 640) || (innerWidth < 950)) {
-            body.style["overflow-y"] = "scroll";
-            let height = max - minus;
+        if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || this.elements.dialog.classList.contains('gm-dialog-fullscreen'))
             body.style.height = height + "px";
-            body.style["max-height"] = height + "px";
-            body.style["margin-right"] = "-24px"; //hide scrollbar
-            body.style["padding-right"] = "48px"; //repairs page
-        }
+
     }
 
     constructor(parent, settings){
@@ -1514,13 +1515,23 @@ class gmDialog {
                 body: html2element('<div class="gm-dialog-body" />'),
                 footer: html2element('<div class="gm-dialog-footer" />'),
                 buttons: {
-                    yes: html2element(`<button class="gm-btn gm-btn-yes" name="yes" />`),
-                    no: html2element(`<button class="gm-btn gm-btn-no" name="no" />`),
+                    yes: html2element(`<button class="gm-btn gm-btn-yes" name="yes">Yes</button>`),
+                    no: html2element(`<button class="gm-btn gm-btn-no" name="no">No</button>`),
                     close: html2element('<button class="gm-btn gm-btn-close" name="close">&times;</button>')
                 }
             },
             config: Object.assign({
                 overlayclickclose: true,
+                fullscreen: false,
+                width: null,
+                height: null,
+                position: {
+                    top: null,
+                    right: null,
+                    bottom: null,
+                    left: null,
+                    center: true
+                },
                 buttons: {
                     yes: "Yes",
                     no: "No"
@@ -1547,12 +1558,12 @@ class gmDialog {
 
             }
         });
-        const self = this;
+        const self = this, dialog = self.elements.dialog;
 
         self.root.appendChild(self.elements.dialog);
-        self.elements.dialog.appendChild(self.elements.header);
-        self.elements.dialog.appendChild(self.elements.body);
-        self.elements.dialog.appendChild(self.elements.footer);
+        dialog.appendChild(self.elements.header);
+        dialog.appendChild(self.elements.body);
+        dialog.appendChild(self.elements.footer);
         self.elements.header.appendChild(self.elements.title);
         self.elements.header.appendChild(self.elements.buttons.close);
         self.elements.footer.appendChild(self.elements.buttons.no);
@@ -1564,9 +1575,30 @@ class gmDialog {
 
         new Events(self.root, self);
 
+        //reads config
 
-        self.title = self.config.title;
-        self.body = self.config.body;
+        const conf = self.config;
+        ["title", "body"].forEach(key => self[key] = conf[key]);
+
+        //position
+        if(conf.position instanceof Object){
+            ["top", "right", "bottom", "left"].forEach(key => {
+                let val = conf.position[key];
+                if (typeof val === n) val += "px";
+                if (typeof val === s) dialog.style[key] = val;
+            });
+            if (conf.position.center === true) dialog.classList.add('gm-dialog-screencenter');
+        }
+
+        if (conf.fullscreen === true) dialog.classList.add('gm-dialog-fullscreen');
+
+        //dimensions
+        ["width", "height"].forEach(key => {
+            let val = conf[key];
+            if (typeof val === n) val += "px";
+            if (typeof val === s) dialog.style[key] = val;
+        });
+
 
         Object.keys(self.config.events).forEach(evt => self.events[evt] = self.config.events[evt]);
         Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
@@ -1574,11 +1606,16 @@ class gmDialog {
         self.on('open close', e => {
             self.elements.dialog.classList.remove('fadeOut', 'fadeIn');
             if (e.type === "open") {
+                //prevent page scroll
+                doc.body.classList.add('gm-noscroll');
+
 
                 self.elements.dialog.classList.add('fadeIn');
                 self.parent.appendChild(self.root);
                 setTimeout(x => self.trigger('show'), 750);
             } else {
+                //restore page scroll
+                doc.body.classList.remove('gm-noscroll');
                 self.elements.dialog.classList.add('fadeOut');
                 setTimeout(() => {
                     self.parent.removeChild(self.root);
@@ -1587,6 +1624,8 @@ class gmDialog {
             }
 
         }).on('click', e => {
+
+
             if ((e.target.closest('.gm-dialog') === null) && (self.config.overlayclickclose === true)) self.close();
             let btn = e.target.closest('button[name]');
             if (btn !== null) {
@@ -1718,7 +1757,7 @@ class gmTabs {
             init(e){
                 self.root.querySelectorAll('.gm-tabs').forEach(gmtabs => {
                     let hasactive = gmtabs.querySelector('.gm-tab.active') !== null, first = gmtabs.querySelector('.gm-tab');
-                    if (!hasactive && first instanceof Element) first.classList.add('active');
+                    if ((hasactive === false) && (first instanceof Element)) first.classList.add('active');
                     let tabs = gmtabs.querySelectorAll('.gm-tab'), tabp = (tabs.length > 0) ? ((1 / tabs.length) * 100) : null;
                     tabs.forEach(tab => {
                         tab.style.width = tabp + "%";
@@ -1811,9 +1850,10 @@ class gmStyles {
             [class*="gm-"]{font-family: Arial,Helvetica,sans-serif;font-size: 16px; font-weight: normal;line-height: 1.5;box-sizing: border-box;padding:0;margin:0;}
             .gm-dialog-overlay{position: fixed; top:0;left:0; right:0; bottom:0; z-index: 2147483647; background-color: rgba(0, 0, 0, 0.45);}
             .gm-dialog{
-                position: absolute; top:5%; left: 50%; transform: translate(-50%,0);
+                position: absolute; top:10%; left: 15%;overflow: hidden;
                 background-color: #FFF; border-radius: 6px;border: none; min-width: 256px; width: 60%;
             }
+            .gm-dialog.gm-dialog-screencenter{top: 50%;left: 50%;right:auto;bottom:auto;transform: translate(-50%, -50%);}
             .gm-btn{
                 padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;
                 background-color: rgba(0,0,0,.125);border: 1px solid rgba(255,255,255,.25);color: rgb(28, 29, 30);
@@ -1830,21 +1870,29 @@ class gmStyles {
             .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;}
             .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
             .gm-dialog-header{background-color: rgba(0,0,0,.03);}
-            .gm-dialog-body{min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;padding: 24px;color: #333;position:relative;}
+            .gm-dialog-body{
+                min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;
+                padding: 24px 48px 24px 24px;color: #333;position:relative;overflow-y:scroll; margin: 0 -24px 0 0;
+            }
             .gm-dialog-body > *{margin: -24px; padding: 8px 24px;text-align: left;font-size: 20px;}
+            .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
+            .gm-dialog-body h2{font-size: 24px;position:relative;padding: 8px 0 16px;margin: 0 0 16px;}
+            .gm-dialog-body h2:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:0;display:block;content:"";height: 1px;}
             .gm-dialog-footer{ text-align: right;}
             .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
+            .gm-dialog form{display:block;position:relative;}
+            .gm-dialog form:before{content:"";display:block;clear: both;width:0;height:1px;visibility:hidden;}
             .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 600;color:#333;font-size: 16px;}
             .gm-dialog .placeholder, .gm-dialog input::placeholder{color: gray;}
-            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 0;border: none;font-size:16px;font-weight: 600;min-width:0;display: table-cell;}
-            .gm-dialog fieldset + fieldset{border-top: 1px solid rgba(0,0,0,.125);margin-top:0;}
+            .gm-dialog fieldset{text-align: left; padding: 8px 0;margin: 0;border: none;font-size:16px;font-weight: 600;min-width:0;display: table-cell;position:relative;}
             .gm-dialog fieldset legend{
                 display: table;width: 100%;max-width: 100%;padding: 8px 0;margin:0 0 16px;position: relative;
                 font-size: 24px;line-height: 1.5;color: #333;white-space: normal;font-weight: 500;float:left;
             }
             .gm-dialog fieldset legend:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-8px;display:block;content:"";height: 1px;}
             .gm-dialog fieldset legend:after{content: "";display: block;height: 1px;clear: both;visibility: hidden;}
-            .gm-dialog fieldset label{display: block;margin: 0;}
+            .gm-dialog fieldset label{display: block;margin: 0;font-size:18px;padding: 8px 0 4px;}
+            
             .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
                 width: 100%;padding: 6px 10px;margin: 4px 0;box-sizing: border-box;
                 border-radius: 4px; background-color: rgba(0,0,0,.03);border: 1px solid rgba(0,0,0,.125);
@@ -1866,15 +1914,19 @@ class gmStyles {
             .gm-dialog .flash-message.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
             .gm-dialog .flash-message.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
 
-            .gm-dialog *:not(input):not(textarea){-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
+            .gm-dialog *:not(input):not(textarea), .gm-noselect{-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
             .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
-            .gm-dialog [hidden], .gm-dialog .hidden{display:none;}
+            .gm-dialog [hidden], .gm-dialog .hidden{display:none !important;z-index: -1 !important;}
+            .gm-noscroll{overflow: hidden;}
             @keyframes fadeIn {from {opacity: 0;}to {opacity: 1;}}
             @keyframes fadeOut {from {opacity: 1;}to {opacity: 0;}}
             .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
             .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
-            @media (max-height: 640px) {.gm-dialog{width: calc(100% - 12px); top:6px;max-height:calc(100% - 12px);}}
-            @media (max-width: 950px) {.gm-dialog{width: calc(100% - 12px); top:6px;max-height:calc(100% - 12px);}}
+
+            @media (max-height: 640px), (max-width: 950px) {
+                .gm-dialog{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);}
+            }
+            .gm-dialog.gm-dialog-fullscreen{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);}
         `;
         //gmFlash
         styles += `
@@ -1888,18 +1940,19 @@ class gmStyles {
         //gmList
         styles += `
             .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;}
-            .gm-list > *{height: 56px;text-align: center;border: none;padding: 16px; position: relative;}
+            .gm-list > *{height: 56px;text-align: center;border: none;padding: 16px; position: relative;font-weight:600;}
             .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
+            .gm-list:empty{display:none;}
         `;
         //gmTabs
         styles += `
             .gm-tabs{
-                list-style-type: none;width:100%;display:flex;padding:0;margin:0;text-align:center;background: #fff;
+                list-style-type: none;width:100%;display:flex;padding:0;text-align:center;background: #fff;
                 border: 1px solid rgba(34,36,38,.15);box-shadow: 0 1px 2px 0 rgba(34,36,38,.15);border-radius: 4px;
-                min-height: 48px;margin: 24px 0 16px 0;position: relative;
+                min-height: 48px;margin: 24px 0;position: relative;
             }
             .gm-tabs:after{content: "";display: block;height: 1px;clear: both;visibility: hidden;}
-            .gm-tabs:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-16px;display:block;content:"";height: 1px;}
+            .gm-tabs:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-24px;display:block;content:"";height: 1px;}
             .gm-tabs .gm-tab{
                 position:relative;padding: 12px 0;vertical-align: middle;text-decoration: none;text-align: center;cursor: pointer;
                 color: rgba(0,0,0,.87);font-weight: 700;display: inline-block;

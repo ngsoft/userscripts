@@ -41,7 +41,8 @@
 
     });
 
-    if ((gmSettings.get('blacklist') || []).includes(location.host)) return;
+    //do not load script on blacklisted page
+    if (((gmSettings.get('blacklist') || []).includes(location.host)) && (gmSettings.get('config').use_blacklist === true)) return;
 
     const cache = new LSCache("rpclient", 2 * minute, new gmStore());
 
@@ -902,28 +903,20 @@
             this.styles = true;
             let styles = `
                 
-                
-
-
-                .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
-                .gm-dialog-body h2{font-size: 24px;position:relative;padding: 8px 0 16px;margin: 0 0 16px;}
-                .gm-dialog-body h2:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:0;display:block;content:"";height: 1px;}
-                .gm-list li{padding:16px;height: auto;}
-
-
                 .kodirpc-configurator{padding:0 24px 24px;}
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
                 .kodirpc-configurator a{color:rgba(100, 149, 237,.8);}
                 .kodirpc-configurator a:hover,.kodirpc-configurator a:active{color:rgba(100, 149, 237,1);}
                 
-                .kodirpc-about li{text-align:left;position:relative;}
+                .kodirpc-about li{text-align:left;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;}
                 .kodirpc-basics li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
-                .kodirpc-servers fieldset{padding: 8px 0;position: relative;}
+                
                 
                 .kodirpc-server-selection:before{bottom:-8px;}
-
+                .kodirpc-blacklist-manager .gm-flash{display: none;}
+                .kodirpc-blacklist-manager .gm-list + .gm-flash{display: block; text-align:center;}
                 
             `;
             addstyle(styles);
@@ -978,31 +971,32 @@
                                 </form>
                                 <form class="kodirpc-blacklist-manager" style="position:relative;" >
                                     <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
-                                        <label>Address:</label>
-                                        <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 56px);">
-                                        <button type="submit" title="Add URL" name="add" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px;margin:0 0 0 0px;">+</button>
-                                        <button class="gm-btn" name="addsite" style="position: absolute;top: -2px;right: 20px;">Add Current Site</button>
+                                        <legend>Blacklist Manager</legend>
+                                        <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 72px);">
+                                        <button type="submit" title="Add URL" name="add_url" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px;margin:4px 0 0;">Add</button>
+                                        <button class="gm-btn" name="add_current" style="position: absolute;top: 8px;right: 0;">Add Current Site</button>
                                     </fieldset>
-                                    <ul class="kodirpc-bm-list gm-list" style="border-radius: 0;border-left: 0;border-right: 0;border-bottom: 0;">
-                                    </ul>
+                                    <h2>Hostnames</h2>
+                                    <ul class="gm-list"></ul>
+                                    <div class="gm-flash warning">List is empty.</div>
                                 </form>
                                 <form class="kodirpc-servers" autocomplete="off">
                                     
                                     <ul class="gm-tabs">
+                                        <li class="gm-tab" data-tab=".kodirpc-server-add">Add Server</li>
+                                        <li class="gm-tab active" data-tab=".kodirpc-server-selection">Select Server</li>
                                         <li class="gm-tab" data-tab=".kodirpc-server-edit">Server Edit</li>
                                         <li class="gm-tab" data-tab=".kodirpc-server-auth">Credentials</li>
-                                        <li class="gm-tab" data-tab=".kodirpc-server-add">Add Server</li>
-                                        <li class="gm-tab" data-tab=".kodirpc-server-connect">Test Connection</li>
                                     </ul>
 
                                     <fieldset class="kodirpc-server-selection">
-                                        <label>Servers:</label>
-                                        <select name="server_uniqid" placeholder="Select Server"></select>
+                                        <legend>Select Server</legend>
+                                        <select name="uniqid" placeholder="Select Server"></select>
                                     </fieldset>
 
                                    
                                     <fieldset class="kodirpc-server-edit">
-                                        <legend>Credentials</legend>
+                                        <legend>Edit Server</legend>
                                         <label>Name:</label>
                                         <input type="text" name="name" value="" placeholder="Name" required />
                                         <label>Hostname:</label>
@@ -1018,6 +1012,9 @@
                                         <input type="text" name="user" value="" placeholder="Username" />
                                         <label>Password:</label>
                                         <input type="password" name="pass" value="" placeholder="Password" />
+                                        <div style="text-align: right;margin: 16px 0 0;">
+                                            <button class="gm-btn" name="check">Check Connection</button>
+                                        </div>
                                     </fieldset>
                                     <fieldset class="kodirpc-server-add">
                                         <legend>Add a Server</legend>
@@ -1025,20 +1022,12 @@
                                         <input type="text" name="add_name" value="" placeholder="Name" />
                                         <label>Hostname:</label>
                                         <input type="text" name="add_host" value="" placeholder="Hostname" />
+                                        <div style="text-align: right;margin: 16px 0 0;">
+                                            <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
+                                        </div>
+                                        
                                     </fieldset>
-                                    <div class="kodirpc-server-connect">
-                                        <h2>Server Connect</h2>
-
-                                    </div>
-
-                                    <fieldset class="kodirpc-server-toolbar" hidden>
-                                        <button class="gm-btn" name="select">Select Server</button>
-                                        <button class="gm-btn gm-btn-yes" name="add">Add Server</button>
-                                        <button class="gm-btn gm-btn-no" name="rm">Remove Server</button>
-                                        <br>
-                                        <button class="gm-btn" name="check">Test Connection</button>
-                                        <button class="gm-btn" name="blacklist">Manage Blacklist</button>
-                                    </fieldset>
+                                   
                                 </form>
                                 <div class="kodirpc-about">
                                     <h1 style="font-size:32px;text-align:left;">${GMinfo.script.name}</h1>
@@ -1065,12 +1054,26 @@
                         show(){
                             self.trigger('init');
                         }
+                    },
+                    position: {
+                        top: "2%"
                     }
                 }),
                 client: new KodiRPCClient(),
                 events: {
 
                     init(e){
+                        const buttons = self.elements.buttons, inputs = self.elements.inputs;
+                        buttons.save.disabled = true;
+                        //basics
+                        let cfg = self.client.config;
+                        Object.keys(cfg).forEach(name => {
+                            let val = cfg[name], input = inputs[name];
+                            if (input instanceof Element) {
+                                input.checked = val === true;
+                            }
+                        });
+
 
                     },
                     change(e){
@@ -1080,7 +1083,7 @@
                         if ((target = e.target.closest('input[name], select[name], textarea[name]')) !== null) {
                             e.preventDefault();
                             name = target.getAttribute('name');
-                            if (typeof self.actions.change[name]) self.actions.change[name].call(target, e);
+                            if (typeof self.actions.change[name] === f) self.actions.change[name].call(target, e);
                         }
                     },
 
@@ -1091,7 +1094,7 @@
                         if ((target = e.target.closest('button[name]'))!==null){
                             prevent = true;
                             name = target.getAttribute('name');
-                            if (typeof self.actions[name]) self.actions[name].call(target, e);
+                            if (typeof self.actions[name] === f) self.actions[name].call(target, e);
                         }
 
                         if ((target = e.target.closest('.kodirpc-basics li')) !== null) {
@@ -1099,6 +1102,7 @@
 
                             let input = target.querySelector('[name]');
                             if (input instanceof Element) {
+                                input.checked = input.checked !== true;
                                 Events(input).trigger('change');
                             }
 
@@ -1115,7 +1119,6 @@
 
                         if ((target = e.target.closest('.kodirpc-server-add')) !== null) {
 
-                            self.root.querySelector('.kodirpc-server-selection').hidden = true;
 
                         }
 
@@ -1125,7 +1128,7 @@
                         let target;
                         if ((target = e.target.closest('.kodirpc-server-add')) !== null) {
 
-                            self.root.querySelector('.kodirpc-server-selection').hidden = null;
+
 
                         }
                     }
