@@ -1900,13 +1900,12 @@ class gmStyles {
             .gm-dialog input:focus, .gm-dialog select:focus, .gm-dialog textarea:focus{border: 1px solid rgb(30, 130, 205);}
             .gm-dialog .placeholder, .gm-dialog ::placeholder{color: gray;}
             
-            .gm-dialog fieldset{text-align: left; padding: 8px 0;margin: 0;border: none;font-size:16px;font-weight: 600;min-width:0;display: table-cell;position:relative;}
+            .gm-dialog fieldset{text-align: left; padding: 8px 0;margin: 0;border: none;font-size:16px;font-weight: 600;min-width:0;display: table-cell;}
             .gm-dialog fieldset legend{
-                display: table;width: 100%;max-width: 100%;padding: 8px 0;margin:0 0 16px;position: relative;
-                font-size: 24px;line-height: 1.5;color: #333;white-space: normal;font-weight: 500;float:left;
+                display: table;width: 100%;max-width: 100%;padding: 8px 0;margin:8px 0 16px;position: relative;
+                font-size: 24px;line-height: 1.5;color: #333;white-space: normal;font-weight: 500;
             }
             .gm-dialog fieldset legend:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-8px;display:block;content:"";height: 1px;}
-            .gm-dialog fieldset legend:after{content: "";display: block;height: 1px;clear: both;visibility: hidden;}
             .gm-dialog fieldset label{display: block;margin: 0;font-size:18px;padding: 8px 0 4px;}
             .gm-dialog fieldset label + input{margin-top:0;}
             
@@ -1939,7 +1938,7 @@ class gmStyles {
         //gmList
         styles += `
             .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;display:block;}
-            .gm-list > *{height: 56px;text-align: center;border: none;padding: 16px; position: relative;font-weight:600;display:block;}
+            .gm-list > *{text-align: center;border: none;padding: 16px; position: relative;font-weight:600;display:block;}
             .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
             .gm-list:empty{display:none;}
             .gm-list:not(:empty) +.gm-flash{display: none;}

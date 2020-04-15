@@ -974,7 +974,7 @@
                                     </fieldset>
                                     <h2>Hostnames</h2>
                                     <ul class="gm-list"></ul>
-                                    <div class="gm-flash warning">List is empty.</div>
+                                    <div class="gm-flash warning">Blacklist is empty.</div>
                                 </form>
                                 <form class="kodirpc-servers" autocomplete="off">
                                     
@@ -987,7 +987,11 @@
 
                                     <fieldset class="kodirpc-server-selection">
                                         <legend>Select Server</legend>
-                                        <input name="uniqid" type="hidden">
+                                        <input name="uniqid" type="hidden" value="">
+                                        <ul class="gm-list"></ul>
+                                        <div class="gm-flash warning">
+                                            Server list is empty.
+                                        </div>
            
                                     </fieldset>
 
