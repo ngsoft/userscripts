@@ -1814,7 +1814,7 @@ class gmStyles {
             .gm-btn{
                 padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;
                 background-color: rgba(0,0,0,.125);border: 1px solid rgba(255,255,255,.25);color: rgb(28, 29, 30);
-                font-size: 16px;font-weight: 700;min-width: 96px;margin: 8px 4px;
+                font-size: 16px;font-weight: 600;min-width: 96px;margin: 8px 4px;
             }
             .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
             .gm-btn + .gm-btn{margin-left: 16px;}
@@ -1831,9 +1831,9 @@ class gmStyles {
             .gm-dialog-body > *{margin: -24px; padding: 8px 24px;text-align: left;font-size: 20px;}
             .gm-dialog-footer{ text-align: right;}
             .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
-            .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#333;font-size: 16px;}
+            .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 600;color:#333;font-size: 16px;}
             .gm-dialog .placeholder, .gm-dialog input::placeholder{color: gray;}
-            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 16px 0;border: none;font-size:16px;font-weight: 700;}
+            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 16px 0;border: none;font-size:16px;font-weight: 600;}
             .gm-dialog fieldset + fieldset{border-top: 1px solid rgba(0,0,0,.125);margin-top:0;}
             .gm-dialog fieldset label{display: block;margin: 0;}
             .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
