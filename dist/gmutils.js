@@ -1938,8 +1938,10 @@ class gmStyles {
         //gmList
         styles += `
             .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;display:block;}
-            .gm-list > *{text-align: center;border: none;padding: 16px; position: relative;font-weight:600;display:block;}
+            .gm-list > *{text-align: center;border: none;padding: 16px; position: relative;font-weight:600;display:block;clear:both;}
             .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
+            .gm-list > * > .gm-btn{min-width:auto; padding:8px 16px;margin:-8px -8px 0 0;float: right;} /** tools **/
+            .gm-list > * > .gm-btn + .gm-btn{margin: -8px 4px 0 0;}
             .gm-list:empty{display:none;}
             .gm-list:not(:empty) +.gm-flash{display: none;}
         `;

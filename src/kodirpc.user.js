@@ -42,7 +42,7 @@
     });
 
     //do not load script on blacklisted page
-    if (((gmSettings.get('blacklist') || []).includes(location.host)) && (gmSettings.get('config').use_blacklist === true)) return;
+    if (((gmSettings.get('blacklist') || []).includes(location.hostname)) && (gmSettings.get('config').use_blacklist === true)) return;
 
     const cache = new LSCache("rpclient", 2 * minute, new gmStore());
 
@@ -907,17 +907,25 @@
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
                 
                 
-                .kodirpc-about li{text-align:left;position:relative;font-weight: normal;}
-                .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;}
+                .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
+                .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
+                .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
+                .kodirpc-about li:last-child strong{}
                 .kodirpc-basics li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
-                
+            
                
                 
             `;
             addstyle(styles);
         }
+        set cansave(flag){
+            if (typeof flag === b) this.elements.buttons.save.disabled = flag === true ? null : true;
+        }
 
+        get cansave(){
+            return this.elements.buttons.save.disabled !== true;
+        }
 
 
         constructor(open, close){
@@ -930,9 +938,7 @@
                                     <li class="gm-tab" data-tab=".kodirpc-blacklist-manager">Blacklist</li>
                                     <li class="gm-tab" data-tab=".kodirpc-about">About</li>
                                 </ul>
-
-                           
-                                <form class="kodirpc-basics" autocomplete="off">
+                                <form class="kodirpc-basics" name="basics" autocomplete="off">
                                     <h1>Basic Configuration</h1>
                                     <ul class="gm-list">
                                         <li>
@@ -965,7 +971,7 @@
                                         </li>
                                     </ul>
                                 </form>
-                                <form class="kodirpc-blacklist-manager" style="position:relative;" >
+                                <form class="kodirpc-blacklist-manager" name="blacklist" autocomplete="off">
                                     <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
                                         <legend>Blacklist Manager</legend>
                                         <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 72px);">
@@ -976,15 +982,13 @@
                                     <ul class="gm-list"></ul>
                                     <div class="gm-flash warning">Blacklist is empty.</div>
                                 </form>
-                                <form class="kodirpc-servers" autocomplete="off">
-                                    
+                                <form class="kodirpc-servers" autocomplete="off" name="servers">
                                     <ul class="gm-tabs">
                                         <li class="gm-tab" data-tab=".kodirpc-server-add">Add Server</li>
                                         <li class="gm-tab active" data-tab=".kodirpc-server-selection">Select Server</li>
                                         <li class="gm-tab" data-tab=".kodirpc-server-edit">Server Edit</li>
                                         <li class="gm-tab" data-tab=".kodirpc-server-auth">Credentials</li>
                                     </ul>
-
                                     <fieldset class="kodirpc-server-selection">
                                         <legend>Select Server</legend>
                                         <input name="uniqid" type="hidden" value="">
@@ -992,10 +996,7 @@
                                         <div class="gm-flash warning">
                                             Server list is empty.
                                         </div>
-           
                                     </fieldset>
-
-                                   
                                     <fieldset class="kodirpc-server-edit">
                                         <legend>Edit Server</legend>
                                         <label>Name:</label>
@@ -1026,9 +1027,7 @@
                                         <div style="text-align: right;margin: 16px 0 0;">
                                             <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
                                         </div>
-                                        
                                     </fieldset>
-                                   
                                 </form>
                                 <div class="kodirpc-about">
                                     <h1 style="font-size:32px;text-align:left;">${GMinfo.script.name}</h1>
@@ -1037,7 +1036,7 @@
                                         <li><strong>Version:</strong> ${GMinfo.script.version}</li>
                                         <li><strong>Author:</strong> ${GMinfo.script.author}</li>
                                         <li><strong>UUID:</strong> ${GMinfo.script.uuid}</li>
-                                        <li style="text-align: center;"><strong style="width:auto;">Copyright &copy; 2020 <a href="${GMinfo.script.namespace}" target="_blank">NGSOFT</a></strong></li>
+                                        <li style="text-align: center;">Copyright &copy; 2020 <a href="${GMinfo.script.namespace}" target="_blank">NGSOFT</a></li>
                                     </ul>
                                 </div>
                                 
@@ -1061,19 +1060,25 @@
                     }
                 }),
                 client: new KodiRPCClient(),
+                data: {},
                 events: {
 
                     init(e){
-                        const buttons = self.elements.buttons, inputs = self.elements.inputs;
-                        buttons.save.disabled = true;
-                        //basics
-                        let cfg = self.client.config;
-                        Object.keys(cfg).forEach(name => {
-                            let val = cfg[name], input = inputs[name];
-                            if (input instanceof Element) {
-                                input.checked = val === true;
-                            }
+
+                        self.cansave = false;
+                        //loads data
+                        const data = self.data = {};
+                        data.config = self.client.config;
+                        data.servers = self.client.servers;
+                        data.blacklist = self.client.blacklist;
+
+                        //init forms
+                        Object.keys(self.elements.forms).forEach(name => {
+                            Events(self.elements.forms[name]).trigger("form.init");
                         });
+
+
+                        console.debug(self.data);
 
 
                     },
@@ -1092,16 +1097,16 @@
                         e.stopPropagation();
                         let target, name, prevent = false;
 
-                        if ((target = e.target.closest('button[name]'))!==null){
+                        if ((target = e.target.closest('button[name]:not([type="submit"])')) !== null) {
                             prevent = true;
                             name = target.getAttribute('name');
-                            if (typeof self.actions[name] === f) self.actions[name].call(target, e);
+                            if (typeof self.actions.click[name] === f) self.actions.click[name].call(target, e);
                         }
 
                         if ((target = e.target.closest('.kodirpc-basics li')) !== null) {
                             prevent = true;
 
-                            let input = target.querySelector('[name]');
+                            let input = target.querySelector('input[type="checkbox"][name]');
                             if (input instanceof Element) {
                                 input.checked = input.checked !== true;
                                 Events(input).trigger('change');
@@ -1113,57 +1118,177 @@
                     submit(e){
                         e.stopPropagation();
                         e.preventDefault();
-                    },
-                    "gmtab.show": function(e){
-                        //console.debug(e, this);
-                        let target;
-
-                        if ((target = e.target.closest('.kodirpc-server-add')) !== null) {
-
-
+                        let form = e.target.closest('form');
+                        if (form !== null) {
+                            let name = form.getAttribute('name');
+                            if (name !== null) {
+                                if (typeof self.actions.form_submit[name] === f) self.actions.form_submit[name].call(form, e);
+                            }
                         }
 
+
                     },
-                    "gmtab.hide": function(e){
-                        // console.debug(e, this);
-                        let target;
-                        if ((target = e.target.closest('.kodirpc-server-add')) !== null) {
-
-
-
+                    "gmtab.show": function(e){
+                        const t = e.target, tag = t.tagName.toLowerCase();
+                        if (["form", "fieldset"].includes(tag)) {
+                            let name = t.getAttribute('name');
+                            if ((typeof name === s) && name.length > 0) {
+                                let act = tag + "_show";
+                                if (typeof self.actions[act][name] === s) self.actions[act][name].call(t, e);
+                                console.debug(act, name);
+                            }
+                        }
+                    },
+                    "form.init": function(e){
+                        let form = e.target.closest('form');
+                        if (form !== null) {
+                            let name;
+                            if ((name = form.getAttribute('name')) !== null) {
+                                if (typeof self.actions.form_init[name] === f) self.actions.form_init[name].call(form, e);
+                            }
                         }
                     }
                 },
                 actions: {
+                    form_init: {
+                        basics(e){
+                            const form = e.target.closest('form');
+                            for (let i = 0; i < form.length; i++) {
+                                let input = form[i], name = input.getAttribute('name');
+                                if (typeof name === s) {
+                                    input.checked = self.data.config[name] === true;
+                                }
+                            }
+                            Events(form).on('change', e => {
+                                if (e.target.matches('[type="checkbox"][name]')) {
+                                    let name = e.target.getAttribute('name');
+                                    self.data.config[name] = e.target.checked === true;
+                                    self.cansave = true;
+                                }
+                            });
+                        },
+                        blacklist(e){
+                            const form = e.target.closest('form'),  inputs = self.elements.inputs;
+                            inputs.url.value = null;
+                            inputs.url.classList.remove('error');
+                            let ul = form.querySelector('ul.gm-list');
+                            if (ul instanceof Element) {
+                                ul.querySelectorAll('li').forEach(li => li.remove());
+
+                                self.data.blacklist.list.forEach(host => {
+                                    let li = doc.createElement('li'),
+                                            btn = html2element(`<button title="Remove Hostname" name="rm_url" class="gm-btn gm-btn-no">-</button>`);
+
+                                    btn.data('host', host);
+                                    li.innerHTML = host;
+                                    li.appendChild(btn);
+                                    ul.appendChild(li);
+                                });
+                            }
+                        },
+                        servers(e){
+                            const form = e.target.closest('form'), inputs = self.elements.inputs, servers = self.data.servers;
+                            if (servers.length === 0) servers.push(new KodiRPCServer());
+                            //reset fields
+                            for (let i = 0; i < form.length; i++) {
+                                let input = form[i];
+                                if (input.tagName === "INPUT") input.value = null;
+                            }
+
+                            const ul = form.querySelector('.gm-list');
+                            if (ul !== null) {
+                                ul.querySelectorAll('li').forEach(li => li.remove());
+                                servers.forEach(server => {
+
+                                    let li = doc.createElement('li'),
+                                            button = html2element(`<button class="gm-btn gm-btn-yes" name="server_select">Select</button>`),
+                                            rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">-</button>`);
+                                    button.data({
+                                        uniqid: server.uniqid
+                                    });
+                                    li.innerHTML = server.name;
+                                    li.appendChild(button);
+                                    li.appendChild(rm);
+                                    ul.appendChild(li);
+                                    if (servers.length === 1) Events(button).trigger('click');
+                                });
+                            }
+
+                        }
+
+                    },
+                    form_submit: {
+                        blacklist(e){
+                            const input = self.elements.inputs.url
+                            let host = input.value;
+                            if(host.length > 0) {
+                                if (self.data.blacklist.has(host)) input.classList.add('error');
+                                else if (self.data.blacklist.add(host)) {
+                                    self.cansave = true;
+                                    Events(this).trigger('form.init');
+                                }
+                                else input.classList.add('error');
+                            }
+                        }
+                    },
+                    form_show: {
+
+                    },
+                    fieldset_show: {
+
+                    },
                     change: {
 
+                    },
+                    click: {
+                        rm_url(){
+                            let host = this.data('host');
+                            if (typeof host === s) {
+                                if (self.data.blacklist.remove(host)) {
+                                    this.parentElement.remove();
+                                    self.cansave = true;
+                                }
+                            }
+                        },
+                        add_current(){
+                            self.elements.inputs.url.value = location.hostname;
+                        }
                     }
+                    
+
+
                 }
 
             });
             self.elements = {
                 selection: self.root.querySelector('.kodirpc-server-selection'),
-                config: self.root.querySelector('.kodirpc-server-config'),
-                toolbar: self.root.querySelector('.kodirpc-server-toolbar'),
-                flash: html2element(`<div class="kodirpc-server-flash" style="cursor:pointer;overflow:hidden;position: absolute; bottom:128px; right: 12px;width:400px;text-align: center;"></div>`),
                 vinfo: html2element(`<small class="kodirpc-server-version" style="position: absolute;bottom:16px;left:16px;" />`),
+                forms: {},
+                fieldsets: {},
                 inputs: {},
                 buttons: {
                     save: self.dialog.elements.buttons.yes,
                     close: self.dialog.elements.buttons.no
                 }
+
             };
 
-            self.root.querySelectorAll('input[name], select[name], textarea[name]').forEach(el => {
-                let name = el.getAttribute("name");
-                self.elements.inputs[name] = el;
+            self.root.querySelectorAll('input[name], select[name], textarea[name], form[name], fieldset[name], button[name]').forEach(el => {
+                let name = el.getAttribute("name"), tag = el.tagName.toLowerCase();
+                switch (tag) {
+                    case "form":
+                    case "button":
+                    case "fieldset":
+                        tag += "s";
+                        self.elements[tag][name] = el;
+                        break;
+                    default :
+                        self.elements.inputs[name] = el;
+                }
             });
-            self.root.querySelectorAll('button[name]').forEach(el => {
-                let name = el.getAttribute("name");
-                self.elements.buttons[name] = el;
-            });
+            console.debug(self.elements);
 
-            self.flash = new gmFlash(self.elements.flash);
+
 
 
             new Events(self.root, self);
@@ -1172,7 +1297,6 @@
 
             self.dialog.title = self.title;
             self.dialog.body = self.root;
-            self.dialog.root.appendChild(self.elements.flash);
             self.dialog.elements.footer.appendChild(self.elements.vinfo);
             self.elements.vinfo.innerHTML = GMinfo.script.version;
 
