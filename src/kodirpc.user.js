@@ -901,17 +901,13 @@
             if (this.styles === true) return;
             this.styles = true;
             let styles = `
-                .gm-dialog fieldset, .gm-dialog fieldset *{font-weight: 600;}
-                .gm-dialog fieldset legend{
-                    display: block;width: 100%;max-width: 100%;padding: 8px 0;margin:0 0 16px;position: relative;
-                    font-size: 24px;line-height: 1.5;color: #333;white-space: normal;font-weight: 500;
-                }
-                .gm-dialog fieldset legend:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-8px;display:block;content:"";height: 1px;}
+                
+                
 
 
                 .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
                 .gm-dialog-body h2{font-size: 24px;position:relative;padding: 8px 0 16px;margin: 0 0 16px;}
-                .gm-dialog-body h2:before, .kodirpc-server-selection:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:0;display:block;content:"";height: 1px;}
+                .gm-dialog-body h2:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:0;display:block;content:"";height: 1px;}
                 .gm-list li{padding:16px;height: auto;}
 
 
@@ -925,7 +921,7 @@
                 .kodirpc-basics li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
                 .kodirpc-servers fieldset{padding: 8px 0;position: relative;}
-                .kodirpc-servers fieldset + fieldset{border:0;}
+                
                 .kodirpc-server-selection:before{bottom:-8px;}
 
                 
@@ -947,7 +943,7 @@
                                 </ul>
 
                            
-                                <form class="kodirpc-basics">
+                                <form class="kodirpc-basics" autocomplete="off">
                                     <h1>Basic Configuration</h1>
                                     <ul class="gm-list">
                                         <li>
@@ -980,7 +976,7 @@
                                         </li>
                                     </ul>
                                 </form>
-                                <form class="kodirpc-blacklist-manager" style="position:relative;">
+                                <form class="kodirpc-blacklist-manager" style="position:relative;" >
                                     <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
                                         <label>Address:</label>
                                         <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 56px);">
@@ -990,7 +986,7 @@
                                     <ul class="kodirpc-bm-list gm-list" style="border-radius: 0;border-left: 0;border-right: 0;border-bottom: 0;">
                                     </ul>
                                 </form>
-                                <form class="kodirpc-servers">
+                                <form class="kodirpc-servers" autocomplete="off">
                                     
                                     <ul class="gm-tabs">
                                         <li class="gm-tab" data-tab=".kodirpc-server-edit">Server Edit</li>
@@ -1112,6 +1108,26 @@
                     submit(e){
                         e.stopPropagation();
                         e.preventDefault();
+                    },
+                    "gmtab.show": function(e){
+                        //console.debug(e, this);
+                        let target;
+
+                        if ((target = e.target.closest('.kodirpc-server-add')) !== null) {
+
+                            self.root.querySelector('.kodirpc-server-selection').hidden = true;
+
+                        }
+
+                    },
+                    "gmtab.hide": function(e){
+                        // console.debug(e, this);
+                        let target;
+                        if ((target = e.target.closest('.kodirpc-server-add')) !== null) {
+
+                            self.root.querySelector('.kodirpc-server-selection').hidden = null;
+
+                        }
                     }
                 },
                 actions: {

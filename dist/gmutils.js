@@ -1483,19 +1483,21 @@ class gmDialog {
      * auto resize dialog
      */
     setSize(){
-        this.elements.body.style.height = null;
-        this.elements.body.style["max-height"] = null;
-        this.elements.body.style["overflow-y"] = null;
+        const body = this.elements.body;
+
+        body.style = null; //reset style
         let max = innerHeight,
                 dialogHeight = this.elements.dialog.offsetHeight,
                 minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight;
         minus += 12;
 
         if ((dialogHeight > max) || (max < 640) || (innerWidth < 950)) {
-            this.elements.body.style["overflow-y"] = "scroll";
+            body.style["overflow-y"] = "scroll";
             let height = max - minus;
-            this.elements.body.style.height = height + "px";
-            this.elements.body.style["max-height"] = height + "px";
+            body.style.height = height + "px";
+            body.style["max-height"] = height + "px";
+            body.style["margin-right"] = "-24px"; //hide scrollbar
+            body.style["padding-right"] = "48px"; //repairs page
         }
     }
 
@@ -1834,8 +1836,14 @@ class gmStyles {
             .gm-dialog-title{position: absolute;top:12px;left:24px;font-size: 20px; font-weight: normal;line-height: 1.5; color: #333; text-decoration: none;}
             .gm-dialog input, .gm-dialog textarea, .gm-dialog select{font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 600;color:#333;font-size: 16px;}
             .gm-dialog .placeholder, .gm-dialog input::placeholder{color: gray;}
-            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 16px 0;border: none;font-size:16px;font-weight: 600;}
+            .gm-dialog fieldset{text-align: left; padding: 8px 16px;margin: 0;border: none;font-size:16px;font-weight: 600;min-width:0;display: table-cell;}
             .gm-dialog fieldset + fieldset{border-top: 1px solid rgba(0,0,0,.125);margin-top:0;}
+            .gm-dialog fieldset legend{
+                display: table;width: 100%;max-width: 100%;padding: 8px 0;margin:0 0 16px;position: relative;
+                font-size: 24px;line-height: 1.5;color: #333;white-space: normal;font-weight: 500;float:left;
+            }
+            .gm-dialog fieldset legend:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:-8px;display:block;content:"";height: 1px;}
+            .gm-dialog fieldset legend:after{content: "";display: block;height: 1px;clear: both;visibility: hidden;}
             .gm-dialog fieldset label{display: block;margin: 0;}
             .gm-dialog input, .gm-dialog select, .gm-dialog textarea{
                 width: 100%;padding: 6px 10px;margin: 4px 0;box-sizing: border-box;
