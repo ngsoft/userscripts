@@ -244,6 +244,14 @@
                     if (typeof d.uniqid !== s) update = true;
                     return new KodiRPCServer(d);
 
+                }).sort(function(a, b){
+                    if (a.name > b.name) {
+                        return 1;
+                    }
+                    if (a.name < b.name) {
+                        return -1;
+                    }
+                    return 0;
                 }),
                 blacklist: new KodiRPCBlacklist(this._settings.get('blacklist')),
                 config: this._settings.get('config') || {}
@@ -437,463 +445,6 @@
 
 
 
-    class KodiRPCConfig {
-
-        _configure(val){
-            const self = this;
-            let server = self.servers[val];
-            self.elements.selection.classList.add('hidden');
-            self.elements.config.classList.remove('hidden');
-            ["name", "host", "port", "pathname", "user"].forEach(i => {
-                let input = self.elements.inputs[i], val = server[i];
-                input.setAttribute("value", "");
-                input.value = "";
-                if (val !== null) {
-                    input.setAttribute("value", val);
-                    input.value = val;
-                }
-            });
-            self.elements.inputs.pass.value = "";
-            self.elements.buttons.check.disabled = null;
-
-        }
-
-
-        constructor(open, close){
-
-            const client = new KodiRPCClient();
-
-            let template = `<form class="kodirpc-config">
-                                <fieldset class="kodirpc-server-toolbar" style="text-align:center;margin: -8px 0 0 0">
-                                    <button class="gm-btn" name="select">Select Server</button>
-                                    <button class="gm-btn gm-btn-yes" name="add">Add Server</button>
-                                    <button class="gm-btn gm-btn-no" name="rm">Remove Server</button>
-                                    <br>
-                                    <button class="gm-btn" name="check">Test Connection</button>
-                                    <button class="gm-btn" name="blacklist">Manage Blacklist</button>
-                                </fieldset>
-                                <fieldset class="kodirpc-server-selection">
-                                    <label>Servers:</label>
-                                    <select name="serverid" placeholder="Select Server"></select>
-                                </fieldset>
-                                <fieldset class="kodirpc-server-config hidden">
-                                    <label>Name:</label>
-                                    <input type="text" name="name" value="" placeholder="Name" required />
-                                    <label>Hostname:</label>
-                                    <input type="text" name="host" value="" placeholder="Host" required />
-                                    <label>Port:</label>
-                                    <input type="number" name="port" value="" placeholder="Port" min="1" max="65535" required />
-                                    <label>Endpoint:</label>
-                                    <input type="text" name="pathname" value="" placeholder="Endpoint" required />
-                                    <label>Authentification:</label>
-                                    <input type="text" name="user" value="" placeholder="Username" />
-                                    <input type="password" name="pass" value="" placeholder="Password" />
-                                </fieldset>
-                            </form>`;
-            const self = this;
-            Object.assign(this, {
-                title: GMinfo.script.name + " Settings",
-                root: html2element(template),
-                dialog: new gmDialog(doc.body, {
-                    buttons: {
-                        yes: "Save",
-                        no: "Close"
-                    },
-                    events: {
-                        show(){
-                            self.trigger('reset');
-                        }
-                    }
-                }),
-                client: client,
-                servers: [],
-                current: -1,
-                events: {
-                    reset(){
-                        const buttons = self.elements.buttons, inputs = self.elements.inputs;
-                        Object.keys(self.elements).forEach(name => {
-                            let el = self.elements[name];
-                            if (el instanceof Element) el.classList.remove('hidden');
-                        });
-                        Object.keys(buttons).forEach(name => {
-                            let btn = buttons[name];
-                            btn.disabled = null;
-                        });
-                        Object.keys(inputs).forEach(name => {
-                            let input = inputs[name];
-                            if (input.tagName === "INPUT") input.setAttribute('value', "");
-                            else input.classList.remove('placeholder');
-                        });
-                        self.elements.config.classList.add('hidden');
-                        buttons.save.disabled = buttons.select.disabled = buttons.check.disabled = true;
-                        self.servers = self.client.settings.servers;
-                        self.trigger("init");
-                    },
-                    init(e){
-                        //initialize server list
-                        const select = self.elements.inputs.serverid;
-                        select.querySelectorAll('option').forEach(opt => select.removeChild(opt));
-                        let placeholder = select.getAttribute('placeholder'), el = html2element(`<option data-role="placeholder" value="" disabled hidden selected/>`);
-                        el.innerHTML = placeholder;
-                        select.appendChild(el);
-                        select.selectedIndex = 0;
-                        select.classList.add('placeholder');
-                        self.servers.forEach((item, index) => {
-                            let opt = doc.createElement('option');
-                            Object.assign(opt, {
-                                value: index
-                            });
-                            opt.innerHTML = item.name;
-                            select.appendChild(opt);
-                        });
-                        self.elements.buttons.rm.disabled = null;
-                        //only one server
-                        if (self.servers.length === 1) {
-                            self.elements.buttons.rm.disabled = true;
-                            select.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
-                            Events(select).trigger("change");
-                        }
-                    },
-                    change(e){
-                        let target = e.target.closest('[name]');
-
-                        if (target !== null) {
-                            let name = target.getAttribute("name");
-                            if (typeof events[name] === f) events[name].call(target, e);
-                        }
-                    },
-                    click(e){
-                        if (e.target.closest('[name]') !== null) e.preventDefault();
-                        let btn = e.target.closest('button[name]');
-                        if (btn !== null) {
-                            let name = btn.getAttribute('name');
-                            if (typeof events[name] === f) events[name].call(btn, e);
-                        }
-
-
-                    }
-                }
-            });
-            self.elements = {
-                selection: self.root.querySelector('.kodirpc-server-selection'),
-                config: self.root.querySelector('.kodirpc-server-config'),
-                toolbar: self.root.querySelector('.kodirpc-server-toolbar'),
-                flash: html2element(`<div class="kodirpc-server-flash" style="cursor:pointer;overflow:hidden;position: absolute; bottom:128px; right: 12px;width:400px;text-align: center;"></div>`),
-                vinfo: html2element(`<small class="kodirpc-server-version" style="position: absolute;bottom:16px;left:16px;" />`),
-                inputs: {},
-                buttons: {
-                    save: self.dialog.elements.buttons.yes,
-                    close: self.dialog.elements.buttons.no
-                }
-            };
-
-            self.root.querySelectorAll('input[name], select[name]').forEach(el => {
-                let name = el.getAttribute("name");
-                self.elements.inputs[name] = el;
-            });
-            self.root.querySelectorAll('button[name]').forEach(el => {
-                let name = el.getAttribute("name");
-                self.elements.buttons[name] = el;
-            });
-
-
-
-
-            const events = {
-                serverid(){
-                    if (this.value.length > 0) {
-                        let val = JSON.parse(this.value);
-                        this.querySelectorAll('[data-role="placeholder"]').forEach(el => this.removeChild(el));
-                        this.classList.remove('placeholder');
-                        self.current = -1;
-                        self.elements.buttons.select.disabled = self.elements.buttons.rm.disabled = true;
-                        if (typeof self.servers[val] !== u) {
-                            self.current = val;
-                            self._configure(val);
-                            if (self.servers.length > 1) {
-                                self.elements.buttons.select.disabled = self.elements.buttons.rm.disabled = null;
-                            }
-                        }
-                    }
-                },
-                name(){
-                    let val = this.value, server = self.servers[self.current];
-                    server.name = val;
-                    if (val === server.name) {
-                        self.elements.buttons.save.disabled = null;
-                    }
-                    this.value = server.name;
-
-                },
-                host(){
-                    let val = this.value, server = self.servers[self.current];
-                    server.host = val;
-                    if (val === server.host) {
-                        self.elements.buttons.save.disabled = null;
-                    }
-                    this.value = server.host;
-
-
-                },
-                pathname(){
-                    let val = this.value, server = self.servers[self.current];
-                    server.pathname = val;
-                    if (val === server.pathname) {
-                        self.elements.buttons.save.disabled = null;
-                    }
-                    this.value = server.pathname;
-
-
-                },
-                port(){
-
-                    let val, server = self.servers[self.current];
-
-                    try {
-                        val = JSON.parse(this.value);
-                        server.port = val;
-                        if (val === server.port) {
-                            self.elements.buttons.save.disabled = null;
-                        }
-                    } catch (e) {
-                        this.value = server.port;
-                    }
-
-                },
-                user(){
-                    let val = this.value, server = self.servers[self.current];
-                    if (val.length === 0) val = null;
-                    server.user = val;
-                    if (val === server.user) {
-                        self.elements.buttons.save.disabled = null;
-                    }
-                    this.value = server.user === null ? "" : server.user;
-                },
-                pass(){
-                    let val = this.value, server = self.servers[self.current];
-                    if (val.length === 0) val = null;
-                    server.auth = val;
-                    if (server.auth !== null) {
-                        self.elements.buttons.save.disabled = null;
-                    } else this.value = "";
-                },
-
-
-                add(){
-                    self.servers.push(new KodiRPCServer({name: "New Server " + self.servers.length}));
-                    self.current = self.servers.length - 1;
-                    self._configure(self.current);
-                    self.elements.buttons.select.disabled = null;
-                    self.elements.buttons.save.disabled = null;
-                    self.trigger('init');
-                },
-                rm(){
-                    self.servers.splice(self.current, 1);
-                    self.elements.buttons.save.disabled = null;
-                    events.select();
-                    self.trigger('init');
-                },
-                select(){
-                    self.current = -1;
-                    self.elements.config.classList.add('hidden');
-                    self.elements.selection.classList.remove('hidden');
-                    self.elements.buttons.rm.disabled = self.elements.buttons.select.disabled = self.elements.buttons.check.disabled = true;
-                },
-                check(){
-
-                    let server = self.servers[self.current], flash = new gmFlash(self.elements.flash);
-                    flash.info = 'Connecting to ' + server.name + ' ...';
-
-                    self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, json => {
-                        flash.success = "Server " + server.name + " available.";
-                    }, errcode => {
-                        flash.error = "Cannot connect to " + server.name + " (" + errcode + ")";
-                    });
-                    
-                },
-
-                blacklist(){
-                    self.dialog.one('hide', e => {
-                        new KodiRPCBlacklistManager();
-                    });
-                    self.dialog.trigger('close');
-                }
-            };
-
-            new Events(self.root, self);
-
-            Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
-
-            self.dialog.title = self.title;
-            self.dialog.body = self.root;
-            self.dialog.root.appendChild(self.elements.flash);
-            self.dialog.elements.footer.appendChild(self.elements.vinfo);
-            self.elements.vinfo.innerHTML = GMinfo.script.version;
-
-            //keyboard shortcuts
-            self.on('keyup keydown', e => {
-                let target = e.target.closest('input[name]');
-                if (([13, 9].includes(e.keyCode)) && (target !== null)) {
-                    e.preventDefault();
-                    if ((e.type === "keyup")) {
-                        let index = -1, list = target.parentElement.querySelectorAll('input[name]'), next;
-                        list.forEach((input, i) => {
-                            if (input === target) next = i + 1;
-                        });
-                        if (typeof list[next] === u) next = 0;
-                        list[next].focus();
-                    }
-                }
-
-            });
-
-
-            //save settings
-            self.dialog.on('confirm', e => {
-                let settings = self.servers.map(x => x._params);
-                self.client._settings.set('servers', settings);
-            });
-
-            if (typeof open === f) self.dialog.on('open', open);
-            if (typeof close === f) self.dialog.on('close', close);
-
-            self.dialog.open();
-
-        }
-    }
-
-    class KodiRPCBlacklistManager {
-
-
-        constructor(open, close){
-
-            let template = `<form class="kodirpc-blacklist-manager">
-                                <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
-                                    <label>Address:</label>
-                                    <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 56px);">
-                                    <button type="submit" title="Add URL" name="add" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px;margin:0 0 0 0px;">+</button>
-                                    <button class="gm-btn" name="addsite" style="position: absolute;top: -2px;right: 20px;">Add Current Site</button>
-                                </fieldset>
-                                <ul class="kodirpc-bm-list gm-list" style="border-radius: 0;border-left: 0;border-right: 0;border-bottom: 0;">
-                                </ul>
-                            </form>`;
-
-
-
-            const self = this, client = new KodiRPCClient();
-            Object.assign(this, {
-                title: GMinfo.script.name + " Blacklist Manager",
-                root: html2element(template),
-                dialog: new gmDialog(doc.body, {
-                    buttons: {
-                        yes: "Save",
-                        no: "Close"
-                    },
-                    events: {
-                        show(){
-                            self.trigger('init');
-
-                        }
-                    }
-                }),
-                client: client,
-                blacklist: client.blacklist
-            });
-
-            self.elements = {
-                formadd: self.root.querySelector('.kodirpc-bm-add'),
-                list: self.root.querySelector('.kodirpc-bm-list'),
-                flash: html2element(`<div class="kodirpc-server-flash" style="cursor:pointer;overflow:hidden;position: absolute; bottom:128px; right: 12px;width:400px;text-align: center;"></div>`),
-                vinfo: html2element(`<small class="kodirpc-server-version" style="position: absolute;bottom:16px;left:16px;" />`),
-                inputs: {},
-                buttons: {
-                    save: self.dialog.elements.buttons.yes,
-                    close: self.dialog.elements.buttons.no
-                }
-            };
-
-            self.root.querySelectorAll('input[name], select[name]').forEach(el => {
-                let name = el.getAttribute("name");
-                self.elements.inputs[name] = el;
-            });
-            self.root.querySelectorAll('button[name]').forEach(el => {
-                let name = el.getAttribute("name");
-                self.elements.buttons[name] = el;
-            });
-
-            self.events = {
-                submit(e){
-                    e.preventDefault();
-
-
-                    if (self.elements.inputs.url.value.length > 0) {
-                        if (self.blacklist.add(self.elements.inputs.url.value)) {
-                            flash.info = "URL added to blacklist.";
-                            self.trigger('init');
-                        } else flash.error = "Invalid URL";
-
-                    }
-                },
-
-                init(){
-                    self.elements.inputs.url.value = null;
-                    self.elements.buttons.save.disabled = true;
-                    if (self.blacklist.dirty === true) self.elements.buttons.save.disabled = null;
-                    //mk list
-                    const ul = self.elements.list;
-                    ul.querySelectorAll('li').forEach(li => li.remove());
-                    self.blacklist.list.forEach(host => {
-                        ul.appendChild(html2element(`<li data-host="${host}" style="position:relative;text-align:center;">
-                            ${host} <button class="gm-btn gm-btn-no" name="rm" title="Remove"
-                                    style="min-width:auto; padding:7px 16px;margin:0 0 0 0px;position:absolute; top:50%;right:-4px;transform: translateY(-50%);">-</button>
-                        </li>`));
-
-                    });
-                },
-                click(e){
-                    e.stopPropagation();
-                    let target = e.target.closest('button[name="rm"]');
-                    if (target !== null) {
-                        e.preventDefault();
-                        let li = target.parentElement, host = li.data('host');
-                        if (self.blacklist.remove(host)) {
-                            flash.info = "Removed host: " + host;
-                            self.elements.buttons.save.disabled = null;
-                            li.remove();
-                        } else flash.error = "Cannot remove host" + host;
-                    } else if (e.target.closest('button[name="addsite"]') !== null) {
-                        e.preventDefault();
-                        self.elements.inputs.url.value = location.host;
-                    }
-
-                }
-
-
-            };
-
-            const flash = new gmFlash(self.elements.flash);
-
-            new Events(self.root, self);
-
-            Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
-
-            self.dialog.title = self.title;
-            self.dialog.body = self.root;
-            self.dialog.root.appendChild(self.elements.flash);
-            self.dialog.elements.footer.appendChild(self.elements.vinfo);
-            self.elements.vinfo.innerHTML = GMinfo.script.version;
-
-            //save
-            self.dialog.on('confirm', e => {
-                if (self.blacklist.dirty === true) self.client._settings.set('blacklist', self.blacklist.list);
-            });
-
-            if (typeof open === f) self.dialog.on('open', open);
-            if (typeof close === f) self.dialog.on('close', close);
-            self.dialog.open();
-
-        }
-    }
 
 
     class KodiRPCConfigurator {
@@ -905,8 +456,7 @@
                 
                 .kodirpc-configurator{padding:0 24px 24px;}
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
-                
-                
+
                 .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
                 .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
@@ -917,6 +467,9 @@
                 .kodirpc-server-selection .gm-list .gm-btn{width: 96px;}
                 .kodirpc-server-selection .gm-list .active .gm-btn{color: gray;}
                 .kodirpc-server-selection .gm-list .active, .kodirpc-server-selection .gm-list .active .gm-btn{pointer-events:none;}
+                .kodirpc-servers .gm-tabs{margin: 16px 0 8px;}
+                .kodirpc-servers .gm-tabs:before{bottom: -16px;}
+                .kodirpc-servers legend:before{bottom:0;}
                 
             `;
             addstyle(styles);
@@ -932,7 +485,6 @@
         get tab(){
             let retval;
             const self = this;
-
             Object.keys(self.elements.tabs).forEach(tab => {
                 if (self.elements.tabs[tab].classList.contains('active')) retval = tab;
             });
@@ -940,23 +492,59 @@
             return retval;
         }
 
+        set tab(name){
+            const self = this;
+            if (typeof name === s ? name.length > 0 : false) {
+                let el = self.elements.tabs[name];
+                if (el instanceof Element ? el.matches(':not(.active)') : false) Events(el).trigger('click');
+            }
+        }
+
+        addServer(server){
+
+            if (server instanceof KodiRPCServer) {
+                const self = this;
+                let li = this._createServerListItem(server);
+                self.elements.forms.servers.querySelectorAll('.kodirpc-server-selection .gm-list').forEach(ul => {
+                    ul.appendChild(li);
+                });
+            }
+
+        }
+
+        addBlacklistHost(host){
+
+            if (typeof host === s ? host.length > 0 : false) {
+                const self = this;
+                let li = this._createBlacklistItem(host);
+                self.elements.forms.blacklist.querySelectorAll('.gm-list').forEach(ul => {
+                    ul.appendChild(li);
+                });
+            }
+
+
+        }
         _createServerListItem(server){
-
             if (!(server instanceof KodiRPCServer)) throw new Error('Invalid Argument');
-
             let li = doc.createElement('li'),
                     button = html2element(`<button class="gm-btn gm-btn-yes" name="server_select">Edit</button>`),
                     rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">Remove</button>`);
-            button.data({
-                uniqid: server.uniqid
-            });
-            rm.data({
+            li.data({
                 uniqid: server.uniqid
             });
             li.innerHTML = server.name;
             li.appendChild(button);
             li.appendChild(rm);
+            return li;
+        }
 
+        _createBlacklistItem(host){
+            let li = doc.createElement('li'),
+                    btn = html2element(`<button title="Remove Hostname" name="rm_url" class="gm-btn gm-btn-no">-</button>`);
+
+            li.data('host', host);
+            li.innerHTML = host;
+            li.appendChild(btn);
             return li;
         }
 
@@ -1013,7 +601,7 @@
                                     </fieldset>
                                     <h2>Hostnames</h2>
                                     <ul class="gm-list"></ul>
-                                    <div class="gm-flash warning">Blacklist is empty.</div>
+                                    <div class="gm-flash">Blacklist is empty.</div>
                                 </form>
                                 <form class="kodirpc-servers" autocomplete="off" name="servers">
                                     <ul class="gm-tabs">
@@ -1073,6 +661,7 @@
                                         <li style="text-align: center;">Copyright &copy; 2020 <a href="${GMinfo.script.namespace}" target="_blank">NGSOFT</a></li>
                                     </ul>
                                 </div>
+
                                 
                             </div>`;
             const self = this;
@@ -1096,9 +685,7 @@
                 client: new KodiRPCClient(),
                 data: {},
                 events: {
-
                     init(e){
-
                         self.cansave = false;
                         //loads data
                         const data = self.data = {};
@@ -1113,6 +700,31 @@
                             },
                             set(val){}
                         });
+                        Object.defineProperty(data, 'uniqids', {
+                            get(){
+                                return this.servers.map(server => server.uniqid);
+                            },
+                            set(val){}
+                        });
+                        Object.defineProperty(data, 'current', {
+                            get(){
+                                let uniqid = self.elements.inputs.uniqid.value || "";
+                                if (uniqid.length > 0) {
+                                    let index = this.map[uniqid];
+                                    if (typeof index === n) return this.servers[index] || null;
+                                }
+                                return null;
+                            },
+                            set(val){
+                                if (val instanceof KodiRPCServer) val = val.uniqid;
+                                if (typeof val === s ? val.length > 0 : false) {
+                                    if (this.uniqids.includes(val)) {
+                                        self.elements.inputs.uniqid.value = val;
+                                        Events(self.elements.inputs.uniqid).trigger("change");
+                                    }
+                                }
+                            }
+                        });
 
                         //init forms
                         Object.keys(self.elements.forms).forEach(name => {
@@ -1121,14 +733,16 @@
 
                     },
                     change(e){
-                        console.debug(e);
                         e.stopPropagation();
                         let target, name;
-
                         if ((target = e.target.closest('input[name], select[name], textarea[name]')) !== null) {
                             e.preventDefault();
                             name = target.getAttribute('name');
                             if (typeof self.actions.change[name] === f) self.actions.change[name].call(target, e);
+                            let form = target.form, formName = form.getAttribute('name');
+                            if (typeof formName === s ? formName.length > 0 : false) {
+                                if (typeof self.actions.form_change[formName] === f) self.actions.form_change[formName].call(target, e);
+                            }
                         }
                     },
 
@@ -1168,8 +782,6 @@
                                 if (typeof self.actions.form_submit[name] === f) self.actions.form_submit[name].call(form, e);
                             }
                         }
-
-
                     },
                     keydown(e){
                         let target = e.target.closest('input');
@@ -1198,15 +810,14 @@
                             if ((typeof name === s) && (name.length > 0)) {
                                 let act = tag + "_show";
                                 if (typeof self.actions[act][name] === f) self.actions[act][name].call(t, e);
-                                console.debug(act, name);
                             }
                         }
                     },
                     "form.init": function(e){
                         let form = e.target.closest('form');
                         if (form !== null) {
-                            let name;
-                            if ((name = form.getAttribute('name')) !== null) {
+                            let name= form.getAttribute('name');
+                            if (typeof name === s ? name.length > 0 : false) {
                                 if (typeof self.actions.form_init[name] === f) self.actions.form_init[name].call(form, e);
                             }
                         }
@@ -1222,32 +833,13 @@
                                     input.checked = self.data.config[name] === true;
                                 }
                             }
-                            Events(form).on('change', e => {
-                                if (e.target.matches('[type="checkbox"][name]')) {
-                                    let name = e.target.getAttribute('name');
-                                    self.data.config[name] = e.target.checked === true;
-                                    self.cansave = true;
-                                }
-                            });
                         },
                         blacklist(e){
                             const form = e.target.closest('form'),  inputs = self.elements.inputs;
                             inputs.url.value = null;
                             inputs.url.classList.remove('error');
-                            let ul = form.querySelector('ul.gm-list');
-                            if (ul instanceof Element) {
-                                ul.querySelectorAll('li').forEach(li => li.remove());
-
-                                self.data.blacklist.list.forEach(host => {
-                                    let li = doc.createElement('li'),
-                                            btn = html2element(`<button title="Remove Hostname" name="rm_url" class="gm-btn gm-btn-no">-</button>`);
-
-                                    btn.data('host', host);
-                                    li.innerHTML = host;
-                                    li.appendChild(btn);
-                                    ul.appendChild(li);
-                                });
-                            }
+                            form.querySelectorAll('.gm-list li').forEach(li => li.remove());
+                            self.data.blacklist.list.forEach(host => self.addBlacklistHost(host));
                         },
                         servers(e){
                             const form = e.target.closest('form'), inputs = self.elements.inputs, servers = self.data.servers;
@@ -1268,16 +860,8 @@
                                 let input = form[i];
                                 if (input.tagName === "INPUT") input.value = null;
                             }
-
-                            const ul = form.querySelector('.gm-list');
-                            if (ul !== null) {
-                                ul.querySelectorAll('li').forEach(li => li.remove());
-                                servers.forEach((server, i) => {
-                                    let li = self._createServerListItem(server);
-                                    ul.appendChild(li);
-                                    if (i === 0) Events(li.querySelector('[name="server_select"]')).trigger('click', {keeptab: servers.length > 1});
-                                });
-                            }
+                            form.querySelectorAll('.gm-list li').forEach(li => li.remove());
+                            servers.forEach(server => self.addServer(server));
 
                         }
 
@@ -1285,20 +869,20 @@
                     form_submit: {
                         blacklist(e){
                             const input = self.elements.inputs.url;
+                            input.classList.remove('error');
                             let host = input.value;
                             if(host.length > 0) {
                                 if (self.data.blacklist.has(host)) input.classList.add('error');
                                 else if (self.data.blacklist.add(host)) {
                                     self.cansave = true;
-                                    Events(this).trigger('form.init');
+                                    input.value = null;
+                                    self.addBlacklistHost(host);
                                 }
                                 else input.classList.add('error');
                             }
                         }
                     },
-                    form_show: {
-
-                    },
+                    form_show: {},
                     fieldset_show: {
                         server_add(){
                             const inputs = self.elements.inputs;
@@ -1309,16 +893,84 @@
                             inputs.add_host.classList.remove('error');
                         }
                     },
-                    change: {
+                    form_change: {
+                        basics(e){
+                            if (e.target.matches('[type="checkbox"][name]')) {
+                                let name = e.target.getAttribute('name');
+                                self.data.config[name] = e.target.checked === true;
+                                self.cansave = true;
+                            }
+                        },
+                        servers(e){
+                            let inputs = self.elements.inputs, ignore = [
+                                inputs.uniqid, inputs.url, inputs.pass, inputs.port
+                            ];
+                            let t = this;
 
+                            if (ignore.includes(t)) return;
+                            let name = t.getAttribute('name');
+                            console.debug(e);
+
+
+
+
+
+
+
+
+
+
+
+                        }
+                    },
+                    change: {
+                        //loads server configuration
+                        uniqid(e){
+                            const tabs = self.elements.tabs,
+                                    inputs = self.elements.inputs,
+                                    list = ["name", "host", "port", "pathname", "user"],
+                                    tablist = ["edit", "auth"],
+                                    data = self.data;
+                            let uniqid = this.value || null,
+                                    valid = false;
+
+                            //reset form
+                            inputs.pass.value = null;
+                            inputs.pass.classList.remove('error');
+                            list.forEach(name => {
+                                let input = inputs[name];
+                                input.classList.remove('error');
+                                input.value = null;
+                            });
+
+                            //loads data
+                            let server = data.current;
+                            if (server !== null) {
+                                valid = true;
+                                list.forEach(name => inputs[name].value = server[name]);
+                                this.form.querySelectorAll('.kodirpc-server-selection .gm-list li').forEach(li => {
+                                    let uid = li.data('uniqid');
+                                    li.classList[uid === uniqid ? "add" : "remove"]('active');
+                                });
+                            }
+                            tablist.forEach(name => tabs[name].classList[valid === true ? "remove" : "add"]('disabled'));
+                            if (valid === false) {
+                                this.value = uniqid = null;
+                                self.tab = "selection";
+                            } else self.tab = "edit";
+
+                        }
                     },
                     click: {
                         rm_url(){
-                            let host = this.data('host');
-                            if (typeof host === s) {
-                                if (self.data.blacklist.remove(host)) {
-                                    this.parentElement.remove();
-                                    self.cansave = true;
+                            let li = this.parentElement;
+                            if (li !== null) {
+                                let host = li.data('host') || "";
+                                if (host.length > 0) {
+                                    if (self.data.blacklist.remove(host)) {
+                                        self.cansave = true;
+                                        li.remove();
+                                    }
                                 }
                             }
                         },
@@ -1332,33 +984,44 @@
                             let name = inputs.add_name.value, host = inputs.add_host.value,
                                     server = self.data.add,
                                     names = self.data.servers.map(x => x.name),
-                            hosts = self.data.servers.map(x => x.host);
+                                    hosts = self.data.servers.map(x => x.host), errors = [];
                             inputs.add_name.classList.remove('error');
                             inputs.add_host.classList.remove('error');
-                            if (!names.includes(name)) {
-                                if (!hosts.includes(host)) {
-                                    server.name = name;
-                                    server.host = host;
-                                    if (server.name === name) {
-                                        if (server.host === host) {
-                                            //continue here
-                                            let list = this.form.querySelector('.kodirpc-server-selection .gm-list'),
-                                                    li = self._createServerListItem(server);
-                                            if (list !== null) {
-                                                list.appendChild(li);
-                                                self.data.servers.push(server);
-                                                self.cansave = true;
-                                                li.querySelector('[name="server_select"]').click();
-                                            }
-                                        } else inputs.add_host.classList.add('error');
-                                    } else inputs.add_name.classList.add('error');
-                                } else inputs.add_host.classList.add('error');
-                            } else inputs.add_name.classList.add('error');
+
+
+                            server.name = name;
+                            if (names.includes(name)) errors.push(inputs.add_name);
+                            else if (server.name !== name) errors.push(inputs.add_name);
+
+                            server.host = host;
+                            if (hosts.includes(host)) errors.push(inputs.add_host);
+                            else if (server.host !== host) errors.push(inputs.add_host);
+
+                            if (errors.length === 0) {
+                                self.data.servers.push(server);
+                                self.cansave = true;
+                                self.addServer(server);
+                                self.data.current = server;
+                                //[inputs.add_name, inputs.add_host].forEach(i => i.value = null);
+                            }
+
+                            errors.forEach(x => x.classList.add('error'));
+
                         },
 
 
                         server_select(e){
 
+                            let li = this.parentElement;
+
+                            if (li !== null) {
+                                let uniqid = li.data('uniqid');
+                                if (typeof uniqid === s ? uniqid.length > 0 : false) self.data.current = uniqid;
+
+                            }
+                            //self.elements.tabs.edit.classList.remove('disabled');
+                            //self.elements.tabs.auth.classList.remove('disabled');
+                            /*
                             let uniqid = this.data('uniqid');
                             if (typeof uniqid === s) {
                                 let index = self.data.map[uniqid];
@@ -1371,33 +1034,36 @@
                                         });
                                         this.parentElement.siblings().forEach(li => li.classList.remove('active'));
                                         this.parentElement.classList.add('active');
-                                        self.elements.tabs.edit.classList.remove('disabled');
-                                        self.elements.tabs.auth.classList.remove('disabled');
+
                                         let keeptab = false;
                                         if (e.data instanceof Object) keeptab = e.data.keeptab;
                                         if (keeptab !== true) self.elements.tabs.edit.click();
                                     }
                                 }
-                            }
+                            }*/
                         },
                         server_remove(){
                             if (self.data.servers.length < 2) return;
-                            let uniqid = this.data('uniqid');
-                            if (typeof uniqid === s) {
-                                let index = self.data.map[uniqid];
-                                if (typeof index === n) {
-                                    let server = self.data.servers[index];
-                                    if (server instanceof KodiRPCServer) {
-                                        const button = this;
-                                        ask("Do you want to remove " + server.name + "?", () => {
-                                            button.parentElement.remove();
-                                            self.data.servers.splice(index, 1);
-                                            self.cansave = true;
-                                        }, null, {
-                                            title: "Remove RPC Server"
-                                        });
+
+                            let li = this.parentElement;
+                            if (li !== null) {
+                                let uniqid = li.data('uniqid');
+                                if (typeof uniqid === s ? uniqid.length > 0 : false) {
+                                    let index = self.data.map[uniqid];
+                                    if (typeof index === n) {
+                                        let server = self.data.servers[index];
+                                        if (server instanceof KodiRPCServer) {
+                                            ask("Do you want to remove " + server.name + "?", () => {
+                                                li.remove();
+                                                self.data.servers.splice(index, 1);
+                                                self.cansave = true;
+                                            }, null, {
+                                                title: "Remove RPC Server"
+                                            });
+                                        }
                                     }
                                 }
+
                             }
                         }
                     }
