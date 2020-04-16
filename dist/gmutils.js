@@ -1927,13 +1927,13 @@ class gmStyles {
             }
             .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
             .gm-btn + .gm-btn{margin-left: 16px;}
-            .gm-dialog-header .gm-btn-close{padding: 3px 16px;position: absolute;top: 10px;right: 12px;}
+            .gm-dialog-header .gm-btn-close{padding: 4px 20px 3px;min-width: auto;float:right; margin: 4px -8px 0 0;}
+            .gm-dialog-header .gm-btn-close:hover,.gm-dialog-header .gm-btn-close:active{background-color: #fafafa;color: rgb(28, 29, 30);background-color: rgba(0,0,0,.25);border-color: rgba(0,0,0,0)}
             .gm-btn-no{ color: rgb(219, 40, 40); }
             .gm-btn-no:hover, .gm-btn-no:active{ background-color: rgb(219, 40, 40); color: rgb(255, 255, 255); }
             .gm-btn-yes{ color: rgb(30, 130, 205); }
             .gm-btn-yes:hover, .gm-btn-yes:active{ background-color: rgb(30, 130, 205);color: rgb(255, 255, 255); }
-            .gm-btn-close{min-width: auto;}
-            .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;}
+            .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;clear:both;}
             .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
             .gm-dialog-header{background-color: rgba(0,0,0,.03);}
             .gm-dialog-body{
@@ -2010,6 +2010,8 @@ class gmStyles {
             .gm-header.error{background-color: #f14668;}
             .gm-header.warning {background-color: #ffdd57;color: rgba(0,0,0,.7);}
             .gm-header.info {background-color: #3298dc;color: #fff;}
+            .gm-header *{color: #fff;}
+            .gm-header.warning *{color: rgba(0,0,0,.7);}
         `;
 
         //gmList
