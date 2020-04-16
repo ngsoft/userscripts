@@ -911,11 +911,12 @@
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
                 .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
                 .kodirpc-about li:last-child strong{}
-                .kodirpc-basics li{cursor: pointer;}
+                .kodirpc-basics li, .kodirpc-server-selection li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
                 .kodirpc-server-selection [name="server_remove"]{float:left; margin: -8px 0 0 -8px !important;}
                 .kodirpc-server-selection .gm-list .gm-btn{width: 96px;}
-                .kodirpc-server-selection .gm-list .active .gm-btn{pointer-events:none;color: gray;}
+                .kodirpc-server-selection .gm-list .active .gm-btn{color: gray;}
+                .kodirpc-server-selection .gm-list .active, .kodirpc-server-selection .gm-list .active .gm-btn{pointer-events:none;}
                 
             `;
             addstyle(styles);
@@ -926,6 +927,17 @@
 
         get cansave(){
             return this.elements.buttons.save.disabled !== true;
+        }
+
+        get tab(){
+            let retval;
+            const self = this;
+
+            Object.keys(self.elements.tabs).forEach(tab => {
+                if (self.elements.tabs[tab].classList.contains('active')) retval = tab;
+            });
+
+            return retval;
         }
 
         _createServerListItem(server){
@@ -1010,6 +1022,16 @@
                                         <li class="gm-tab" data-tab=".kodirpc-server-edit">Server Edit</li>
                                         <li class="gm-tab" data-tab=".kodirpc-server-auth">Credentials</li>
                                     </ul>
+                                    <fieldset class="kodirpc-server-add" name="server_add">
+                                        <legend>Add a Server</legend>
+                                        <label>Name:</label>
+                                        <input type="text" name="add_name" value="" placeholder="Name">
+                                        <label>Hostname:</label>
+                                        <input type="text" name="add_host" value="" placeholder="Hostname">
+                                        <div style="text-align: right;margin: 16px 0 0;">
+                                            <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
+                                        </div>
+                                    </fieldset>
                                     <fieldset class="kodirpc-server-selection">
                                         <legend>Select Server</legend>
                                         <input name="uniqid" type="hidden" value="">
@@ -1039,16 +1061,7 @@
                                             <button class="gm-btn" name="check">Check Connection</button>
                                         </div>
                                     </fieldset>
-                                    <fieldset class="kodirpc-server-add" name="server_add">
-                                        <legend>Add a Server</legend>
-                                        <label>Name:</label>
-                                        <input type="text" name="add_name" value="" placeholder="Name">
-                                        <label>Hostname:</label>
-                                        <input type="text" name="add_host" value="" placeholder="Hostname">
-                                        <div style="text-align: right;margin: 16px 0 0;">
-                                            <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
-                                        </div>
-                                    </fieldset>
+                                    
                                 </form>
                                 <div class="kodirpc-about">
                                     <h1 style="font-size:32px;text-align:left;">${GMinfo.script.name}</h1>
@@ -1108,6 +1121,7 @@
 
                     },
                     change(e){
+                        console.debug(e);
                         e.stopPropagation();
                         let target, name;
 
@@ -1126,9 +1140,8 @@
                             prevent = true;
                             name = target.getAttribute('name');
                             if (typeof self.actions.click[name] === f) self.actions.click[name].call(target, e);
-                        }
 
-                        if ((target = e.target.closest('.kodirpc-basics li')) !== null) {
+                        } else if ((target = e.target.closest('.kodirpc-basics li')) !== null) {
                             prevent = true;
 
                             let input = target.querySelector('input[type="checkbox"][name]');
@@ -1137,7 +1150,12 @@
                                 Events(input).trigger('change');
                             }
 
+                        } else if ((target = e.target.closest('.kodirpc-server-selection li')) !== null) {
+                            prevent = true;
+                            target.querySelector('button[name="server_select"]').click();
                         }
+
+
                         if (prevent === true) e.preventDefault();
                     },
                     submit(e){
@@ -1152,6 +1170,26 @@
                         }
 
 
+                    },
+                    keydown(e){
+                        let target = e.target.closest('input');
+                        const inputs = self.elements.inputs;
+                        if (e.keyCode === 13) {
+                            if(target !== null){
+                                if (target === inputs.url) return;
+                                e.preventDefault();
+                                Events(target).trigger('change');
+                                //rotate inputs
+                                let next, list = Array.from(target.parentElement.children).filter(el => el.tagName === "INPUT");
+                                list.forEach((el, i) => {
+                                    if (el === target) next = i + 1;
+                                });
+                                if (typeof list[next] === u) next = 0;
+                                list[next].focus();
+                            }
+                            
+
+                        }
                     },
                     "gmtab.show": function(e){
                         const t = e.target, tag = t.tagName.toLowerCase();
@@ -1237,7 +1275,7 @@
                                 servers.forEach((server, i) => {
                                     let li = self._createServerListItem(server);
                                     ul.appendChild(li);
-                                    if (servers.length === 1) Events(button).trigger('click');
+                                    if (i === 0) Events(li.querySelector('[name="server_select"]')).trigger('click', {keeptab: servers.length > 1});
                                 });
                             }
 
@@ -1319,7 +1357,8 @@
                         },
 
 
-                        server_select(){
+                        server_select(e){
+
                             let uniqid = this.data('uniqid');
                             if (typeof uniqid === s) {
                                 let index = self.data.map[uniqid];
@@ -1334,12 +1373,15 @@
                                         this.parentElement.classList.add('active');
                                         self.elements.tabs.edit.classList.remove('disabled');
                                         self.elements.tabs.auth.classList.remove('disabled');
-                                        self.elements.tabs.edit.click();
+                                        let keeptab = false;
+                                        if (e.data instanceof Object) keeptab = e.data.keeptab;
+                                        if (keeptab !== true) self.elements.tabs.edit.click();
                                     }
                                 }
                             }
                         },
                         server_remove(){
+                            if (self.data.servers.length < 2) return;
                             let uniqid = this.data('uniqid');
                             if (typeof uniqid === s) {
                                 let index = self.data.map[uniqid];
@@ -1350,6 +1392,7 @@
                                         ask("Do you want to remove " + server.name + "?", () => {
                                             button.parentElement.remove();
                                             self.data.servers.splice(index, 1);
+                                            self.cansave = true;
                                         }, null, {
                                             title: "Remove RPC Server"
                                         });
