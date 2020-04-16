@@ -1815,91 +1815,168 @@ class gmFlash {
  */
 class gmTabs {
 
-    constructor(root){
+    constructor(root, params){
         root = root instanceof Element ? root : doc.body;
-        if (typeof root.gmTabs !== u) return;
 
+        params = params instanceof Object ? params : {};
         const self = this, events = {
             init(e){
-                self.root.querySelectorAll('.gm-tabs').forEach(gmtabs => {
-                    let hasactive = gmtabs.querySelector('.gm-tab.active') !== null, first = gmtabs.querySelector('.gm-tab');
-                    if ((hasactive === false) && (first instanceof Element)) first.classList.add('active');
-                    let tabs = gmtabs.querySelectorAll('.gm-tab'), tabp = (tabs.length > 0) ? ((1 / tabs.length) * 100) : null;
+
+                self.root.querySelectorAll(gmTabsSelector).forEach(container => {
+                    //no selected tab
+                    if (container.querySelector(`${gmTabSelector}${selectedSelector}`) === null) {
+                        let first = container.querySelector(`${gmTabSelector}${datasetSelector}:not(${disabledSelector})`);
+                        if (first !== null) first.classList.add(selectedClass);
+                    }
+                    //dimensions
+                    let tabs = container.querySelectorAll(gmTabSelector),
+                            percent = tabs.length > 0 ? ((1 / tabs.length) * 100) : null;
+
                     tabs.forEach(tab => {
-                        tab.style.width = tabp + "%";
-                        let selector = tab.data('tab');
-                        if (typeof selector === s) {
-                            let type = tab.classList.contains('active') ? "gmtab.show" : "gmtab.hide";
+                        if (autosize === true) tab.style.width = `${percent}%`;
+
+                        let targetSelector = tab.data(dataset);
+                        if (typeof targetSelector === s ? targetSelector.length > 0 : false) {
+                            let hidden = tab.matches(selectedSelector) ? null : true;
                             try {
-                                self.root.querySelectorAll(selector).forEach(el => Events(el).trigger(type));
+                                self.root.querySelectorAll(targetSelector).forEach(target => target.hidden = hidden);
                             } catch (e) {
-                                console.warn(e.message);
+                                console.error(e.message);
+                                tab.classList.add(disabledClass);
                             }
-                        }
+
+                        } else tab.classList.add(disabledClass);
                     });
                 });
+
+
+
             },
-            show(e){
-                e.target.hidden = null;
+
+            open(e){
+                let t = e.target;
+                t.hidden = null;
+                transition.start(t, () => {
+                    Events(t).trigger(eventPrefix + "show");
+                });
             },
-            hide(e){
+            close(e){
+                if (animate === true) e.target.classList.remove(...animateClasses);
                 e.target.hidden = true;
+                Events(e.target).trigger(eventPrefix + "hide");
+            },
+
+            toggle(e){
+                
+                let t = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
+
+                if (t !== null) {
+                    let open = t.matches(`:not(${selectedSelector})`), selectorTarget = t.data(dataset), type = eventPrefix;
+                    type += open === true ? "open" : "close";
+                    self.root.querySelectorAll(selectorTarget).forEach(target => Events(target).trigger(type));
+                    t.classList.toggle(selectedClass);
+                }
             },
             click(e){
-                let target = e.target.closest('.gm-tabs .gm-tab');
-                if (target !== null) {
-                    target.closest('.gm-tabs').querySelectorAll('.gm-tab').forEach(tab => {
-                        let selector;
-                        if (tab === target) {
-                            tab.classList.add('active');
-                            selector = tab.data('tab');
-                            if (typeof selector === s) {
-                                try {
-                                    self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.show'));
-                                } catch (e) {
-                                    console.warn(e.message);
-                                }
-                            }
-                            return;
-                        }
-                        if (tab.classList.contains('active')) {
-                            tab.classList.remove('active');
-                            selector = tab.data('tab');
-                            if (typeof selector === s) {
-                                try {
-                                    self.root.querySelectorAll(selector).forEach(el => Events(el).trigger('gmtab.hide'));
-                                } catch (e) {
-                                    console.warn(e.message);
-                                }
-                            }
-                        }
+                let t = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
+                if (t !== null) {
+                    e.preventDefault();
+                                t.closest(gmTabsSelector).querySelectorAll(`${gmTabSelector}:not(${disabledSelector})`).forEach(tab => {
+                        // close active tab and open current clicked tab
+                        if (tab.matches(selectedSelector) || tab === t) Events(tab).trigger(eventPrefix + "toggle");
+
                     });
                 }
             }
         };
 
+
+        const transition = {
+
+            start(el, callback){
+                if (el instanceof Element) {
+                    if (animate === true) {
+                        transition.cleanup(el);
+                        setTimeout(() => {
+                            typeof callback === f ? callback() : null;
+                            transition.cleanup(el)
+                        }, animateDuration);
+                        el.style["animation-duration"] = animateDuration + "ms";
+                        el.classList.add(...animateClasses);
+                    } else typeof callback === f ? callback() : null;
+                }
+
+            },
+            cleanup(el){
+                if (el instanceof Element) {
+                    if (animate === true) {
+                        el.classList.remove(...animateClasses);
+                        el.style["animation-duration"] = null;
+                    }
+                }
+            }
+        };
+
+
+        const cfg = {
+            gmtabs: 'gm-tabs',
+            gmtab: 'gm-tab',
+            selected: 'active',
+            disabled: 'disabled',
+            dataset: 'tab',
+            prefix: 'gmtab.',
+            events: {},
+            autosize: true,
+            animate: true,
+            animateClasses: 'fadeIn',
+            animateDuration: 750
+        };
+
         Object.assign(this, {
-            root: root
+            root: root,
+            config: Object.assign({}, cfg, params)
         });
 
-        Object.defineProperty(root, 'gmTabs', {
-            value: this, configurable: true
+        Object.keys(cfg).forEach(key => {
+            let val = cfg[key];
+            if (typeof self.config[key] !== typeof val) self.config[key] = val;
         });
+        const gmTabsClass = this.config.gmtabs,
+                gmtabClass = this.config.gmtab,
+                selectedClass = this.config.selected,
+                disabledClass = this.config.disabled,
+                dataset = this.config.dataset,
+                gmTabsSelector = '.' + gmTabsClass,
+                gmTabSelector = '.' + gmtabClass,
+                selectedSelector = '.' + selectedClass,
+                disabledSelector = '.' + disabledClass,
+                datasetSelector = '[data-' + dataset + ']',
+                eventPrefix = this.config.prefix,
+                autosize = this.config.autosize === true,
+                animate = this.config.animate === true,
+                animateClasses = this.config.animateClasses.split(' '),
+                animateDuration = this.config.animateDuration;
+
+
         new Events(root, this);
         Object.keys(events).forEach(evt => {
-            let type = 'gmtab.' + evt;
+            let type = eventPrefix + evt;
             self.on(type, events[evt]);
+        });
+        Object.keys(self.config.events).forEach(evt => {
+            let type = eventPrefix + evt;
+            self.on(type, self.config.events[evt]);
         });
 
         this.on('click', e => {
-            let target;
-            if ((target = e.target.closest('.gm-tabs .gm-tab')) !== null) {
+            let  target = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
+            if (target !== null) {
                 e.preventDefault();
-                if (!target.classList.contains('active')) Events(target).trigger('gmtab.click');
+                if (target.matches(`:not(${selectedSelector})`)) Events(target).trigger(eventPrefix + 'click');
             }
         });
 
-        this.trigger('gmtab.init');
+        this.trigger(eventPrefix + 'init');
 
         new gmStyles();
     }
