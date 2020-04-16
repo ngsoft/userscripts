@@ -1861,7 +1861,6 @@ class gmTabs {
                 });
             },
             close(e){
-                if (animate === true) e.target.classList.remove(...animateClasses);
                 e.target.hidden = true;
                 Events(e.target).trigger(eventPrefix + "hide");
             },
@@ -1900,9 +1899,11 @@ class gmTabs {
                         setTimeout(() => {
                             typeof callback === f ? callback() : null;
                             transition.cleanup(el)
-                        }, animateDuration);
-                        el.style["animation-duration"] = animateDuration + "ms";
-                        el.classList.add(...animateClasses);
+                        }, animateDuration + 10);
+                        setTimeout(() => {
+                            el.style["animation-duration"] = animateDuration + "ms";
+                            el.classList.add(...animateClasses);
+                        });
                     } else typeof callback === f ? callback() : null;
                 }
 
