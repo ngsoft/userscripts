@@ -928,6 +928,26 @@
             return this.elements.buttons.save.disabled !== true;
         }
 
+        _createServerListItem(server){
+
+            if (!(server instanceof KodiRPCServer)) throw new Error('Invalid Argument');
+
+            let li = doc.createElement('li'),
+                    button = html2element(`<button class="gm-btn gm-btn-yes" name="server_select">Edit</button>`),
+                    rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">Remove</button>`);
+            button.data({
+                uniqid: server.uniqid
+            });
+            rm.data({
+                uniqid: server.uniqid
+            });
+            li.innerHTML = server.name;
+            li.appendChild(button);
+            li.appendChild(rm);
+
+            return li;
+        }
+
 
         constructor(open, close){
             const client = new KodiRPCClient();
@@ -1019,7 +1039,7 @@
                                             <button class="gm-btn" name="check">Check Connection</button>
                                         </div>
                                     </fieldset>
-                                    <fieldset class="kodirpc-server-add">
+                                    <fieldset class="kodirpc-server-add" name="server_add">
                                         <legend>Add a Server</legend>
                                         <label>Name:</label>
                                         <input type="text" name="add_name" value="" placeholder="Name">
@@ -1072,15 +1092,19 @@
                         data.config = self.client.config;
                         data.servers = self.client.servers;
                         data.blacklist = self.client.blacklist;
+                        Object.defineProperty(data, 'map', {
+                            get(){
+                                let  map = {};
+                                this.servers.forEach((server, i) => map[server.uniqid] = i);
+                                return map;
+                            },
+                            set(val){}
+                        });
 
                         //init forms
                         Object.keys(self.elements.forms).forEach(name => {
                             Events(self.elements.forms[name]).trigger("form.init");
                         });
-
-
-                        console.debug(self.data);
-
 
                     },
                     change(e){
@@ -1133,9 +1157,9 @@
                         const t = e.target, tag = t.tagName.toLowerCase();
                         if (["form", "fieldset"].includes(tag)) {
                             let name = t.getAttribute('name');
-                            if ((typeof name === s) && name.length > 0) {
+                            if ((typeof name === s) && (name.length > 0)) {
                                 let act = tag + "_show";
-                                if (typeof self.actions[act][name] === s) self.actions[act][name].call(t, e);
+                                if (typeof self.actions[act][name] === f) self.actions[act][name].call(t, e);
                                 console.debug(act, name);
                             }
                         }
@@ -1190,14 +1214,16 @@
                         servers(e){
                             const form = e.target.closest('form'), inputs = self.elements.inputs, servers = self.data.servers;
                             if (servers.length === 0) servers.push(new KodiRPCServer());
-                            //reset map
-                            self.data.map = {};
+
                             //map tabs add, auth, edit, selection
                             self.elements.tabs = {};
                             form.querySelectorAll('.gm-tabs .gm-tab').forEach(tab => {
                                 let name = tab.data('tab').split('-').pop();
                                 self.elements.tabs [name] = tab;
                             });
+
+                            self.elements.tabs.edit.classList.add('disabled');
+                            self.elements.tabs.auth.classList.add('disabled');
 
                             //reset fields
                             for (let i = 0; i < form.length; i++) {
@@ -1209,19 +1235,7 @@
                             if (ul !== null) {
                                 ul.querySelectorAll('li').forEach(li => li.remove());
                                 servers.forEach((server, i) => {
-                                    self.data.map[server.uniqid] = i;
-                                    let li = doc.createElement('li'),
-                                            button = html2element(`<button class="gm-btn gm-btn-yes" name="server_select">Edit</button>`),
-                                            rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">Remove</button>`);
-                                    button.data({
-                                        uniqid: server.uniqid
-                                    });
-                                    rm.data({
-                                        uniqid: server.uniqid
-                                    });
-                                    li.innerHTML = server.name;
-                                    li.appendChild(rm);
-                                    li.appendChild(button);
+                                    let li = self._createServerListItem(server);
                                     ul.appendChild(li);
                                     if (servers.length === 1) Events(button).trigger('click');
                                 });
@@ -1248,7 +1262,14 @@
 
                     },
                     fieldset_show: {
-
+                        server_add(){
+                            const inputs = self.elements.inputs;
+                            const server = self.data.add = new KodiRPCServer();
+                            inputs.add_host.value = server.host;
+                            inputs.add_name.value = server.name = "New Server " + (self.data.servers.length + 1);
+                            inputs.add_name.classList.remove('error');
+                            inputs.add_host.classList.remove('error');
+                        }
                     },
                     change: {
 
@@ -1267,6 +1288,37 @@
                             self.elements.inputs.url.value = location.hostname;
                         },
 
+
+                        add_confirm(){
+                            const inputs = self.elements.inputs;
+                            let name = inputs.add_name.value, host = inputs.add_host.value,
+                                    server = self.data.add,
+                                    names = self.data.servers.map(x => x.name),
+                            hosts = self.data.servers.map(x => x.host);
+                            inputs.add_name.classList.remove('error');
+                            inputs.add_host.classList.remove('error');
+                            if (!names.includes(name)) {
+                                if (!hosts.includes(host)) {
+                                    server.name = name;
+                                    server.host = host;
+                                    if (server.name === name) {
+                                        if (server.host === host) {
+                                            //continue here
+                                            let list = this.form.querySelector('.kodirpc-server-selection .gm-list'),
+                                                    li = self._createServerListItem(server);
+                                            if (list !== null) {
+                                                list.appendChild(li);
+                                                self.data.servers.push(server);
+                                                self.cansave = true;
+                                                li.querySelector('[name="server_select"]').click();
+                                            }
+                                        } else inputs.add_host.classList.add('error');
+                                    } else inputs.add_name.classList.add('error');
+                                } else inputs.add_host.classList.add('error');
+                            } else inputs.add_name.classList.add('error');
+                        },
+
+
                         server_select(){
                             let uniqid = this.data('uniqid');
                             if (typeof uniqid === s) {
@@ -1280,27 +1332,27 @@
                                         });
                                         this.parentElement.siblings().forEach(li => li.classList.remove('active'));
                                         this.parentElement.classList.add('active');
+                                        self.elements.tabs.edit.classList.remove('disabled');
+                                        self.elements.tabs.auth.classList.remove('disabled');
+                                        self.elements.tabs.edit.click();
                                     }
                                 }
                             }
                         },
                         server_remove(){
-                            console.debug("remove", this.data('uniqid'));
                             let uniqid = this.data('uniqid');
                             if (typeof uniqid === s) {
                                 let index = self.data.map[uniqid];
                                 if (typeof index === n) {
                                     let server = self.data.servers[index];
                                     if (server instanceof KodiRPCServer) {
-                                        console.debug(server);
-
+                                        const button = this;
                                         ask("Do you want to remove " + server.name + "?", () => {
-                                            alert(yes)
+                                            button.parentElement.remove();
+                                            self.data.servers.splice(index, 1);
                                         }, null, {
                                             title: "Remove RPC Server"
                                         });
-
-
                                     }
                                 }
                             }

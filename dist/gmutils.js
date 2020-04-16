@@ -1976,7 +1976,7 @@ class gmStyles {
             .gm-dialog fieldset label + input{margin-top:0;}
             
             .gm-dialog *:not(input):not(textarea), .gm-noselect{-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
-            .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
+            .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none !important;color: gray !important;}
             .gm-dialog [hidden], .gm-dialog .hidden{display:none !important;z-index: -1 !important;}
             .gm-noscroll{overflow: hidden;}
             .gm-flex-center{display: flex;align-items: center;justify-content: center;}
@@ -1994,14 +1994,14 @@ class gmStyles {
         //gmFlash
         styles += `
             .gm-flash {
-                padding: 16px 24px; margin: 8px 0;border: 1px solid transparent;border-radius: 4px;
-                text-align: center;font-size: 18px;
+                padding: 16px 24px; margin: 8px 0;border: 1px solid 1px solid rgba(10, 10, 10, 0.25); border-radius: 4px;
+                text-align: center;font-size: 18px;color: #0a0a0a;
             }
-            .gm-flash {color: #383d41; background-color: #e2e3e5; border-color: #d6d8db;}
-            .gm-flash.success{color: #155724;background-color: #d4edda;border-color: #c3e6cb;}
-            .gm-flash.error{color: #721c24;background-color: #f8d7da;border-color: #f5c6cb;}
-            .gm-flash.warning {color: #856404;background-color: #fff3cd;border-color: #ffeeba;}
-            .gm-flash.info {color: #0c5460;background-color: #d1ecf1;border-color: #bee5eb;}
+            .gm-flash {background-color: #eaeaea;}
+            .gm-flash.success{background-color: #e1faea;}
+            .gm-flash.error{background-color: #f7e4e1;}
+            .gm-flash.warning {background-color: #fff3d9;}
+            .gm-flash.info {background-color: #d7ecfa;}
         `;
         //gmList
         styles += `
