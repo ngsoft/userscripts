@@ -913,7 +913,7 @@
                 .kodirpc-about li:last-child strong{}
                 .kodirpc-basics li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
-                .kodirpc-server-selection [name="server_select"]{float:left; margin: -8px 0 0 -8px !important;}
+                .kodirpc-server-selection [name="server_remove"]{float:left; margin: -8px 0 0 -8px !important;}
                 .kodirpc-server-selection .gm-list .gm-btn{width: 96px;}
                 .kodirpc-server-selection .gm-list .active .gm-btn{pointer-events:none;color: gray;}
                 
@@ -1281,17 +1281,25 @@
                                         this.parentElement.siblings().forEach(li => li.classList.remove('active'));
                                         this.parentElement.classList.add('active');
                                     }
-
-
-
-
                                 }
-
-
                             }
-                            console.debug();
+                        },
+                        server_remove(){
+                            console.debug("remove", this.data('uniqid'));
+                            let uniqid = this.data('uniqid');
+                            if (typeof uniqid === s) {
+                                let index = self.data.map[uniqid];
+                                if (typeof index === n) {
+                                    let server = self.data.servers[index];
+                                    if (server instanceof KodiRPCServer) {
+                                        console.debug(server);
+
+                                        ask("Do you want to remove " + server.name + " server?", x => alert('yes'), x => alert('no'));
 
 
+                                    }
+                                }
+                            }
                         }
                     }
                     

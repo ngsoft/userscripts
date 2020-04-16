@@ -1518,6 +1518,9 @@ class gmDialog {
         if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || this.elements.dialog.classList.contains('gm-dialog-fullscreen'))
             body.style.height = height + "px";
 
+        //only text?
+        this.elements.body.classList.remove('gm-flex-center');
+        if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
     }
 
     constructor(parent, settings){
@@ -1540,6 +1543,7 @@ class gmDialog {
             },
             config: Object.assign({
                 overlayclickclose: true,
+                closebutton: true,
                 fullscreen: false,
                 width: null,
                 height: null,
@@ -1617,6 +1621,9 @@ class gmDialog {
             if (typeof val === s) dialog.style[key] = val;
         });
 
+        //close btn
+        if (conf.closebutton !== true) self.elements.buttons.close.hidden = self.elements.buttons.close.disabled = true;
+
 
         Object.keys(self.config.events).forEach(evt => self.events[evt] = self.config.events[evt]);
         Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
@@ -1684,10 +1691,11 @@ function ask(message, confirm, cancel, params){
     params = params instanceof Object ? params : {};
     const dialog = new gmDialog(doc.body, Object.assign({
         overlayclickclose: false,
+        closebutton: false,
         body: message
     }, params));
-    if (typeof cancel === s) dialog.one('cancel', cancel);
-    dialog.open(success);
+    if (typeof cancel === f) dialog.one('cancel', cancel);
+    dialog.open(confirm);
     return dialog;
 }
 
@@ -1954,15 +1962,17 @@ class gmStyles {
             .gm-dialog [disabled], .gm-dialog .disabled{pointer-events: none;color: gray;}
             .gm-dialog [hidden], .gm-dialog .hidden{display:none !important;z-index: -1 !important;}
             .gm-noscroll{overflow: hidden;}
+            .gm-flex-center{display: flex;align-items: center;justify-content: center;}
             @keyframes fadeIn {from {opacity: 0;}to {opacity: 1;}}
             @keyframes fadeOut {from {opacity: 1;}to {opacity: 0;}}
             .fadeIn {animation-name: fadeIn;animation-duration: .75s;animation-fill-mode: both;}
             .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
 
             @media (max-height: 640px), (max-width: 950px) {
-                .gm-dialog{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);}
+                .gm-dialog{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);transform: unset !important;}
             }
-            .gm-dialog.gm-dialog-fullscreen{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);}
+            .gm-dialog.gm-dialog-fullscreen{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);transform: unset !important;}
+
         `;
         //gmFlash
         styles += `
