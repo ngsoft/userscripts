@@ -1995,14 +1995,23 @@ class gmStyles {
         styles += `
             .gm-flash {
                 padding: 16px 24px; margin: 8px 0;border: 1px solid 1px solid rgba(10, 10, 10, 0.25); border-radius: 4px;
-                text-align: center;font-size: 18px;color: #0a0a0a;
+                text-align: center;font-size: 18px;
             }
-            .gm-flash {background-color: #eaeaea;}
-            .gm-flash.success{background-color: #e1faea;}
-            .gm-flash.error{background-color: #f7e4e1;}
-            .gm-flash.warning {background-color: #fff3d9;}
-            .gm-flash.info {background-color: #d7ecfa;}
+            .gm-flash {background-color: #fafafa;border-color: #363636;color: #4a4a4a;}
+            .gm-flash.success{border-color: #48c774;color: #257942;background-color: #effaf3;}
+            .gm-flash.error{background-color: #feecf0;border-color: #f14668;color: #cc0f35;}
+            .gm-flash.warning {border-color: #ffdd57;color: #947600;background-color: #fffbeb;}
+            .gm-flash.info {border-color: #3298dc;color: #1d72aa;background-color: #eef6fc;}
         `;
+        //gmHeader
+        styles += `
+            .gm-header {background-color: #363636;color: #fff;border: 1px solid rgba(0,0,0,0);}
+            .gm-header.success{background-color: #00d1b2;}
+            .gm-header.error{background-color: #f14668;}
+            .gm-header.warning {background-color: #ffdd57;color: rgba(0,0,0,.7);}
+            .gm-header.info {background-color: #3298dc;color: #fff;}
+        `;
+
         //gmList
         styles += `
             .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;display:block;}
