@@ -1494,6 +1494,10 @@ class gmDialog {
         if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
     }
 
+    get isClosed(){
+        return this.root.parentElement === null;
+    }
+
 
     open(callback){
         if (typeof callback === f) this.one('confirm', callback);
@@ -1638,8 +1642,7 @@ class gmDialog {
                 self.parent.appendChild(self.root);
                 setTimeout(x => self.trigger('show'), 750);
             } else {
-                //restore page scroll
-                doc.body.classList.remove('gm-noscroll');
+
                 self.elements.dialog.classList.add('fadeOut');
                 setTimeout(() => {
                     self.parent.removeChild(self.root);
@@ -1658,6 +1661,14 @@ class gmDialog {
                 self.trigger(type);
             }
 
+        }).on('hide',e=>{
+            //restore page scroll
+            let allclosed = true;
+            doc.documentElement.gmDialog.forEach(dialog => {
+                if (dialog === self) return;
+                if (dialog.isClosed === false) allclosed = false;
+            });
+            if (allclosed === true) doc.body.classList.remove('gm-noscroll');
         });
 
         //autoresize
@@ -1673,6 +1684,13 @@ class gmDialog {
         });
 
         new gmStyles();
+        //register current instance
+        if (typeof doc.documentElement.gmDialog === u) {
+            Object.defineProperty(doc.documentElement, 'gmDialog', {
+                value: [], configurable: true
+            });
+        }
+        doc.documentElement.gmDialog.push(self);
     }
 }
 
