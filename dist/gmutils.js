@@ -1489,6 +1489,9 @@ class gmDialog {
             this.elements.body.innerHTML = null;
             this.elements.body.appendChild(body);
         }
+        //only text?
+        this.elements.body.classList.remove('gm-flex-center');
+        if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
     }
 
 
@@ -1517,10 +1520,6 @@ class gmDialog {
 
         if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || this.elements.dialog.classList.contains('gm-dialog-fullscreen'))
             body.style.height = height + "px";
-
-        //only text?
-        this.elements.body.classList.remove('gm-flex-center');
-        if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
     }
 
     constructor(parent, settings){

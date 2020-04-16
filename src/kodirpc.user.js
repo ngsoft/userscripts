@@ -1294,7 +1294,11 @@
                                     if (server instanceof KodiRPCServer) {
                                         console.debug(server);
 
-                                        ask("Do you want to remove " + server.name + " server?", x => alert('yes'), x => alert('no'));
+                                        ask("Do you want to remove " + server.name + "?", () => {
+                                            alert(yes)
+                                        }, null, {
+                                            title: "Remove RPC Server"
+                                        });
 
 
                                     }
