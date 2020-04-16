@@ -1563,14 +1563,14 @@ class gmDialog {
                     this.trigger("confirm close");
                 },
                 btn_no(){
-                    this.trigger('close');
+                    this.trigger('cancel close');
                 },
                 btn_close(){
-                    this.trigger('close');
+                    this.trigger('cancel close');
                 },
                 keydown(e){
                     if (e.keyCode === 27) {
-                        this.trigger('close');
+                        this.trigger('cancel close');
                     }
                 }
 
@@ -1644,7 +1644,8 @@ class gmDialog {
         }).on('click', e => {
 
 
-            if ((e.target.closest('.gm-dialog') === null) && (self.config.overlayclickclose === true)) self.close();
+            if ((e.target.closest('.gm-dialog') === null) && (self.config.overlayclickclose === true)) self.trigger('cancel close');
+
             let btn = e.target.closest('button[name]');
             if (btn !== null) {
                 let name = btn.getAttribute('name'), type = "btn_" + name;
@@ -1668,6 +1669,28 @@ class gmDialog {
         new gmStyles();
     }
 }
+
+/**
+ *
+ * @param {string} message Message to be shown
+ * @param {function} confirm Confirm Callback
+ * @param {function} [cancel] Cancel Callback
+ * @param {Object} [params]
+ * @returns {gmDialog}
+ */
+function ask(message, confirm, cancel, params){
+    if (typeof confirm !== f) throw new Error("ask() no confirm callback supplied");
+    if (typeof message !== s) throw new Error("ask() no message supplied");
+    params = params instanceof Object ? params : {};
+    const dialog = new gmDialog(doc.body, Object.assign({
+        overlayclickclose: false,
+        body: message
+    }, params));
+    if (typeof cancel === s) dialog.one('cancel', cancel);
+    dialog.open(success);
+    return dialog;
+}
+
 
 /**
  * UserScripts flash messages
@@ -1977,12 +2000,12 @@ class gmStyles {
                 color: rgba(0,0,0,.87);font-weight: 700;display: inline-block;
                 transition: background .1s ease,box-shadow .1s ease,color .1s ease,-webkit-box-shadow .1s ease;
             }
-            .gm-tabs .gm-tab:hover, .gm-tabs .gm-tab:active{background: rgba(0,0,0,.03);color: rgba(0,0,0,.95);}
+            .gm-tabs .gm-tab:hover, .gm-tabs .gm-tab:active, .gm-list > *:hover{background: rgba(0,0,0,.03);color: rgba(0,0,0,.95);}
             .gm-tabs .gm-tab:before{position: absolute;content: "";top: 0;right: 0;height: 100%;width: 1px;background: rgba(34,36,38,.1);}
             .gm-tabs .gm-tab:last-child:before{display:none;}
             .gm-tabs .gm-tab:first-child{border-radius: 4px 0 0 4px;}
             .gm-tabs .gm-tab:last-child{border-radius: 0 4px 0 4px;}
-            .gm-tabs .gm-tab.active{background: rgba(0,0,0,.05);color: rgba(0,0,0,.95);box-shadow: none;}
+            .gm-tabs .gm-tab.active, .gm-list > .active{background: rgba(0,0,0,.05);color: rgba(0,0,0,.95);box-shadow: none;}
         `;
 
 

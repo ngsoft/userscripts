@@ -5,7 +5,7 @@
 // @description  Sends Video Streams to Kodi
 // @author       ngsoft
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.2/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.3/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -913,9 +913,9 @@
                 .kodirpc-about li:last-child strong{}
                 .kodirpc-basics li{cursor: pointer;}
                 .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
+                .kodirpc-server-selection [name="server_select"]{float:left; margin: -8px 0 0 -8px !important;}
                 .kodirpc-server-selection .gm-list .gm-btn{width: 96px;}
-            
-               
+                .kodirpc-server-selection .gm-list .active .gm-btn{pointer-events:none;color: gray;}
                 
             `;
             addstyle(styles);
@@ -1232,7 +1232,7 @@
                     },
                     form_submit: {
                         blacklist(e){
-                            const input = self.elements.inputs.url
+                            const input = self.elements.inputs.url;
                             let host = input.value;
                             if(host.length > 0) {
                                 if (self.data.blacklist.has(host)) input.classList.add('error');
