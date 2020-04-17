@@ -1855,7 +1855,61 @@ class gmFlash {
         return this;
     }
 
+    /**
+     * Display a Info Message
+     * @param {string|HTMLElement}  message     Message to display
+     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]   Classes to add to the message
+     * @param {function}            [start]     Callback to use when message is displayed
+     * @param {function}            [end]       Callback to use when message is removed
+     * @returns {gmFlash}
+     */
+    info(...args){
+        args.push(this.cfg.info);
+        return this.message(...args);
+    }
 
+    /**
+     * Display a Warning Message
+     * @param {string|HTMLElement}  message     Message to display
+     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]   Classes to add to the message
+     * @param {function}            [start]     Callback to use when message is displayed
+     * @param {function}            [end]       Callback to use when message is removed
+     * @returns {gmFlash}
+     */
+    warning(...args){
+        args.push(this.cfg.warning);
+        return this.message(...args);
+    }
+
+    /**
+     * Display a Success Message
+     * @param {string|HTMLElement}  message     Message to display
+     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]   Classes to add to the message
+     * @param {function}            [start]     Callback to use when message is displayed
+     * @param {function}            [end]       Callback to use when message is removed
+     * @returns {gmFlash}
+     */
+    success(...args){
+        args.push(this.cfg.success);
+        return this.message(...args);
+    }
+
+    /**
+     * Display an Error Message
+     * @param {string|HTMLElement}  message     Message to display
+     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]   Classes to add to the message
+     * @param {function}            [start]     Callback to use when message is displayed
+     * @param {function}            [end]       Callback to use when message is removed
+     * @returns {gmFlash}
+     */
+    error(...args){
+        args.push(this.cfg.error);
+        return this.message(...args);
+    }
 
 
 
