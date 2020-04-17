@@ -593,13 +593,16 @@
         }
         _createServerListItem(server){
             if (!(server instanceof KodiRPCServer)) throw new Error('Invalid Argument');
-            let li = doc.createElement('li'),
+            let
+                    li = doc.createElement('li'),
                     button = html2element(`<button class="gm-btn gm-btn-yes" name="server_select">Edit</button>`),
-                    rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">Remove</button>`);
+                    rm = html2element(`<button class="gm-btn gm-btn-no" name="server_remove">Remove</button>`),
+                    span = doc.createElement('span');
             li.data({
                 uniqid: server.uniqid
             });
-            li.innerHTML = server.name;
+            span.innerHTML = server.name;
+            li.appendChild(span);
             li.appendChild(button);
             li.appendChild(rm);
             return li;
@@ -704,7 +707,7 @@
                                             <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
                                         </div>
                                     </fieldset>
-                                    <fieldset class="kodirpc-server-selection">
+                                    <fieldset class="kodirpc-server-selection" name="server_select">
                                         <legend>Select Server</legend>
                                         <input name="uniqid" type="hidden" value="">
                                         <ul class="gm-list"></ul>
@@ -1025,14 +1028,29 @@
                         server_add(){
                             const inputs = self.elements.inputs;
                             const server = self.data.add = new KodiRPCServer();
+                            self.elements.buttons.add_confirm.disabled = null;
                             inputs.add_host.value = server.host;
                             inputs.add_name.value = server.name = "New Server " + (self.data.servers.length + 1); //dirty flag
                             [inputs.add_name, inputs.add_host].forEach(i => {
                                 i.classList.remove('error');
-                                i.data('value', i.value)
+                                i.data('value', i.value);
+                            });
+                        },
+                        server_select(){
+                            const servers = self.data.servers;
+
+                            this.querySelectorAll('.gm-list li').forEach(li => {
+                                let
+                                        span = li.querySelector('span'),
+                                        uniqid = li.data('uniqid'),
+                                        index = self.data.map[uniqid],
+                                        server = self.data.servers[index];
+
+                                span.innerHTML = server.name;
                             });
 
                         }
+
                     },
                     form_show: {},
                     form_change: {
@@ -1042,31 +1060,6 @@
                                 self.data.config[name] = e.target.checked === true;
                                 self.cansave = true;
                             }
-                        },
-                        servers(e){
-                            let inputs = self.elements.inputs, ignore = [
-                                inputs.uniqid, inputs.url, inputs.pass, inputs.port,
-                                inputs.add_name, inputs.add_host, inputs.user
-                            ];
-                            let t = this;
-
-                            if (ignore.includes(t)) return;
-                            let name = t.getAttribute('name'), val = t.value, flash = t.data('flash');
-                            // console.debug(e);
-
-                            const server = self.data.current;
-                            let old = server[name];
-                            t.classList.add('error');
-                            if (val !== old) {
-                                server[name] = val;
-                                if (server[name] === val) {
-                                    t.classList.remove('error');
-                                } else if (typeof flash === s ? flash.length > 0 : false) self.flashbox.error(flash);
-                            } else t.classList.remove('error');
-                            if (["name", "host", "port", "pathname", "user"].every(n => inputs[n].matches(':not(.error)'))) {
-                                self.cansave = server.dirty;
-                            }
-
                         }
                     },
                     change: {
@@ -1163,17 +1156,13 @@
                                 if (input.classList.contains('error')) cansave = false;
                             });
 
-
                             if (cansave === true) {
                                 servers.push(server);
+                                self.tab = "selection";
                                 self.addServer(server);
                                 self.cansave = true;
-
-                                self.flashbox.success(server.name + " added to server list");
-
-                                self.data.current = server; //open editor
+                                self.flashbox.success(server.name + " added to server list.", x => self.data.current = server);
                             }
-
 
                         },
 
@@ -1200,6 +1189,8 @@
                                                 li.remove();
                                                 self.data.servers.splice(index, 1);
                                                 self.cansave = true;
+                                                self.flashbox.success(server.name + " removed from server list.")
+
                                             }, null, {
                                                 title: "Remove RPC Server"
                                             });
