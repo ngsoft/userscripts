@@ -457,7 +457,8 @@
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
                 .kodirpc-configurator .flash-message-box{overflow:hidden;height:64px;margin:8px 0; padding:0;}
                 .kodirpc-configurator .flash-message-box:empty{}
-                .kodirpc-configurator .flash-message-box .gm-flash{font-size: 18px;margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
+                .kodirpc-configurator .flash-message-box .gm-flash{font-size: 24px;margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
+                .kodirpc-configurator .flash-message-box .gm-flash + .gm-flash{display:none;}
                 .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
                 .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
@@ -564,10 +565,10 @@
             let template = `<div class="kodirpc-configurator">
                                 <div class="flash-message-box"></div>
                                 <ul class="gm-tabs">
-                                    <li class="gm-tab" data-tab=".kodirpc-basics">Basics</li>
-                                    <li class="gm-tab" data-tab=".kodirpc-servers">Servers</li>
-                                    <li class="gm-tab" data-tab=".kodirpc-blacklist-manager">Blacklist</li>
-                                    <li class="gm-tab" data-tab=".kodirpc-about">About</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-basics" data-flash="Manage Features">Basics</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-servers" data-flash="Manage Servers">Servers</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-blacklist-manager" data-flash="Manage Blacklist">Blacklist</li>
+                                    <li class="gm-tab" data-tab=".kodirpc-about" data-flash="About ${GMinfo.script.name}">About</li>
                                 </ul>
                                 
                                 <form class="kodirpc-basics" name="basics" autocomplete="off">
@@ -814,6 +815,10 @@
                             
 
                         }
+                    },
+                    "gmtab.select": function(e){
+                        let flash = e.target.data('flash');
+                        if (typeof flash === s) gmFlash.prependTo(self.flashbox).flash(flash, false, 0);
                     },
                     "gmtab.show": function(e){
                         const t = e.target, tag = t.tagName.toLowerCase();

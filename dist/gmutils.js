@@ -2042,6 +2042,7 @@ class gmTabs {
                             let hidden = tab.matches(selectedSelector) ? null : true;
                             try {
                                 self.root.querySelectorAll(targetSelector).forEach(target => target.hidden = hidden);
+                                if (hidden === null) Events(tab).trigger(eventPrefix + "select");
                             } catch (e) {
                                 console.error(e.message);
                                 tab.classList.add(disabledClass);
