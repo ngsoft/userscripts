@@ -959,7 +959,8 @@
                                 let val = this.value;
                                 server.name = val;
                                 if (!self.data.servers.map(x => x.name).includes(val)) this.classList.remove('error');
-                                else gmFlash.after(this).error("Server name " + val + " already exists.")
+                                else gmFlash.after(this).error("Server name " + val + " already exists.");
+                                gmFlash.create(this.parentElement.lastElementChild).error("Server name " + val + " already exists.", 0);
                             }
                         }
                     },
@@ -1544,7 +1545,6 @@
 
     new KodiRPCConfigurator();
 
-    gmFlash.create(doc.body).flash('test message');
 
     (() => {
         const elements = [];

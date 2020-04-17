@@ -1754,11 +1754,12 @@ class gmFlash {
 
     /**
      * Display a Flash Message
-     * @param {string|HTMLElement}  message     Message to display
-     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
-     * @param {string}              [classes]   Classes to add to the message
-     * @param {function}            [start]     Callback to use when message is displayed
-     * @param {function}            [end]       Callback to use when message is removed
+     * @param {string|HTMLElement}  message         Message to display
+     * @param {number}              [timeout]       Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]       Classes to add to the message
+     * @param {function}            [start]         Callback to use when message is displayed
+     * @param {function}            [end]           Callback to use when message is removed
+     * @param {boolean}             [removeOnClick] Removes message when clicked
      * @returns {gmFlash}
      */
     flash(message){
@@ -1769,6 +1770,7 @@ class gmFlash {
         const cfg = self.config;
         let timeout = cfg.timeout > 0 ? cfg.timeout : null,
                 classes = cfg.classes.length > 0 ? cfg.classes.split(/\s+/) : [],
+                removeOnClick = cfg.removeOnClick === true,
                 start = null,
                 end = null;
         //parse arguments
@@ -1781,6 +1783,7 @@ class gmFlash {
                     if (typeof start === f) end = val;
                     else start = val;
                 }
+                if (typeof val === b) removeOnClick = val;
 
             }
         }
@@ -1792,6 +1795,7 @@ class gmFlash {
 
         const
                 afterContainer = cfg.afterContainer,
+                appendChild = cfg.appendChild,
                 eventPrefix = cfg.prefix,
                 animate = cfg.animate,
                 gmFlashClass = cfg.gmflash,
@@ -1811,7 +1815,7 @@ class gmFlash {
                 
                 //attach element
                 if (afterContainer === true) container.parentElement.insertBefore(div, container.nextElementSibling);
-                else container.insertBefore(div, container.firstElementChild);
+                else container.insertBefore(div, appendChild !== true ? container.firstElementChild : null);
 
                 if (animate === true ? cfg.animateStart === true : false) {
                     let cls = cfg.animateStartClasses.split(/\s+/),
@@ -1837,7 +1841,8 @@ class gmFlash {
                 } else emit.trigger(eventPrefix + "hide " + eventPrefix + "end");
             },
             start(){
-                if (cfg.removeOnClick === true){
+                if (removeOnClick === true) {
+                    div.style.cursor = "pointer";
                     emit.one('click', e => {
                         e.preventDefault();
                         emit.trigger(eventPrefix + "close");
@@ -1868,24 +1873,26 @@ class gmFlash {
 
     /**
      * Display a Message (alias of flash)
-     * @param {string|HTMLElement}  message     Message to display
-     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
-     * @param {string}              [classes]   Classes to add to the message
-     * @param {function}            [start]     Callback to use when message is displayed
-     * @param {function}            [end]       Callback to use when message is removed
+     * @param {string|HTMLElement}  message         Message to display
+     * @param {number}              [timeout]       Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]       Classes to add to the message
+     * @param {function}            [start]         Callback to use when message is displayed
+     * @param {function}            [end]           Callback to use when message is removed
+     * @param {boolean}             [removeOnClick] Removes message when clicked
      * @returns {gmFlash}
      */
-    info(...args){
+    message(...args){
         return this.flash(...args);
     }
 
     /**
      * Display a Info Message
-     * @param {string|HTMLElement}  message     Message to display
-     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
-     * @param {string}              [classes]   Classes to add to the message
-     * @param {function}            [start]     Callback to use when message is displayed
-     * @param {function}            [end]       Callback to use when message is removed
+     * @param {string|HTMLElement}  message         Message to display
+     * @param {number}              [timeout]       Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]       Classes to add to the message
+     * @param {function}            [start]         Callback to use when message is displayed
+     * @param {function}            [end]           Callback to use when message is removed
+     * @param {boolean}             [removeOnClick] Removes message when clicked
      * @returns {gmFlash}
      */
     info(...args){
@@ -1895,11 +1902,12 @@ class gmFlash {
 
     /**
      * Display a Warning Message
-     * @param {string|HTMLElement}  message     Message to display
-     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
-     * @param {string}              [classes]   Classes to add to the message
-     * @param {function}            [start]     Callback to use when message is displayed
-     * @param {function}            [end]       Callback to use when message is removed
+     * @param {string|HTMLElement}  message         Message to display
+     * @param {number}              [timeout]       Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]       Classes to add to the message
+     * @param {function}            [start]         Callback to use when message is displayed
+     * @param {function}            [end]           Callback to use when message is removed
+     * @param {boolean}             [removeOnClick] Removes message when clicked
      * @returns {gmFlash}
      */
     warning(...args){
@@ -1909,11 +1917,12 @@ class gmFlash {
 
     /**
      * Display a Success Message
-     * @param {string|HTMLElement}  message     Message to display
-     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
-     * @param {string}              [classes]   Classes to add to the message
-     * @param {function}            [start]     Callback to use when message is displayed
-     * @param {function}            [end]       Callback to use when message is removed
+     * @param {string|HTMLElement}  message         Message to display
+     * @param {number}              [timeout]       Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]       Classes to add to the message
+     * @param {function}            [start]         Callback to use when message is displayed
+     * @param {function}            [end]           Callback to use when message is removed
+     * @param {boolean}             [removeOnClick] Removes message when clicked
      * @returns {gmFlash}
      */
     success(...args){
@@ -1923,11 +1932,12 @@ class gmFlash {
 
     /**
      * Display an Error Message
-     * @param {string|HTMLElement}  message     Message to display
-     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
-     * @param {string}              [classes]   Classes to add to the message
-     * @param {function}            [start]     Callback to use when message is displayed
-     * @param {function}            [end]       Callback to use when message is removed
+     * @param {string|HTMLElement}  message         Message to display
+     * @param {number}              [timeout]       Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]       Classes to add to the message
+     * @param {function}            [start]         Callback to use when message is displayed
+     * @param {function}            [end]           Callback to use when message is removed
+     * @param {boolean}             [removeOnClick] Removes message when clicked
      * @returns {gmFlash}
      */
     error(...args){
@@ -1948,6 +1958,7 @@ class gmFlash {
             timeout: 2000,
 
             afterContainer: false,
+            appendChild: true,
             removeOnClick: true,
             classes: "",
 
@@ -1981,11 +1992,11 @@ class gmFlash {
 
         Object.keys(conf).forEach(key => {
             let val = conf[key];
-            if (typeof self.config !== typeof val) self.config[key] = val;
+            if (typeof self.config[key] !== typeof val) self.config[key] = val;
         });
 
         if (!(/\.$/.test(self.config.prefix))) self.config.prefix += ".";
-
+        console.debug(this);
         new gmStyles();
     }
 
