@@ -455,10 +455,12 @@
                 
                 .kodirpc-configurator{padding:0 24px 24px;}
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
+
                 .kodirpc-configurator .flash-message-box{overflow:hidden;height:64px;margin:8px 0; padding:0;}
-                .kodirpc-configurator .flash-message-box:empty{}
-                .kodirpc-configurator .flash-message-box .gm-flash{font-size: 24px;margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
+                .kodirpc-configurator .flash-message-box .gm-flash{margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
+                .kodirpc-configurator .flash-message-box .gm-flash:not(.error):not(.warning):not(.info):not(.success){font-size: 24px;}
                 .kodirpc-configurator .flash-message-box .gm-flash + .gm-flash{display:none;}
+            
                 .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
                 .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
@@ -501,13 +503,6 @@
                 let el = self.elements.tabs[name];
                 if (el instanceof Element ? el.matches(':not(.active)') : false) Events(el).trigger('click');
             }
-        }
-
-
-        get flashbox(){
-
-            return this.root.querySelector('.flash-message-box');
-
         }
 
         addServer(server){
@@ -665,7 +660,7 @@
                                     
                                 </form>
                                 <div class="kodirpc-about">
-                                    <h1 style="font-size:32px;text-align:left;">${GMinfo.script.name}</h1>
+                                    <h1 style="text-align:right;">${GMinfo.script.name}</h1>
                                     <ul class="gm-list">
                                         <li><strong>Description:</strong> ${GMinfo.script.description}</li>
                                         <li><strong>Version:</strong> ${GMinfo.script.version}</li>
@@ -818,7 +813,10 @@
                     },
                     "gmtab.select": function(e){
                         let flash = e.target.data('flash');
-                        if (typeof flash === s) gmFlash.prependTo(self.flashbox).flash(flash, false, 0);
+                        if (typeof flash === s ? s.length > 0 : false) {
+                            self.flashbox.root.innerHTML = "";
+                            self.flashbox.message(flash, false, 0);
+                        }
                     },
                     "gmtab.show": function(e){
                         const t = e.target, tag = t.tagName.toLowerCase();
@@ -978,7 +976,7 @@
                                 let val = this.value;
                                 server.name = val;
                                 if (!self.data.servers.map(x => x.name).includes(val)) this.classList.remove('error');
-                                else gmFlash.after(self.flashbox).error("Server name " + val + " already exists.");
+                                else self.flashbox.error("Server name " + val + " already exists.");
                             }
                         },
                         add_host(e){
@@ -989,7 +987,7 @@
                                 let val = this.value;
                                 server.host = val;
                                 if (!self.data.servers.map(x => x.host).includes(val)) this.classList.remove('error');
-                                else gmFlash.after(self.flashbox).error("Server hostname " + val + " already exists.");
+                                else self.flashbox.error("Server hostname " + val + " already exists.");
                             }
                         }
                     },
@@ -1107,7 +1105,9 @@
                 }
             });
 
-
+            self.flashbox = new gmFlash(self.root.querySelector('.flash-message-box'), {
+                appendChild: false
+            });
 
             new Events(self.root, self);
 
