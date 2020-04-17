@@ -26,8 +26,6 @@
     /* jshint -W083 */
 
 
-    // Site Blacklisted?
-
     const gmSettings = new UserSettings({
         config: {
             legacy_mode: true,
@@ -425,9 +423,6 @@
             if (typeof this._listeners === u) {
                 const self = this;
                 this._listeners = {
-                    ready(){
-                        console.debug(this.title, 'version', this.version, 'started.');
-                    },
                     //legacy mode
                     settings(e){
                         let open, close;
@@ -1396,166 +1391,89 @@
         }
     }
 
-
-
     class KodiRPCServerSelector {
+
+        static loadStyles(){
+            if (this.styles === true) return;
+            this.styles = true;
+
+            let styles = `
+                .kodirpc-server-selector, 
+                .kodirpc-server-selector fieldset legend
+                {padding-top:0;padding-bottom:0;}
+
+            `;
+            addstyle(styles);
+        }
+
+        get template(){
+            return `<form class="kodirpc-server-selector">
+                        <fieldset>
+                            <legend>Server Selector</legend>
+                            <ul class="gm-list"></ul>
+                        </fieldset>
+                    </form>`;
+        }
+
+
+        mkSwitch(server){
+
+            if (server instanceof KodiRPCServer) {
+                let
+                        li = doc.createElement('li'),
+                        container = doc.createElement('span'),
+                        slider = doc.createElement('span'),
+                        checkbox = doc.createElement('input');
+                container.classList.add('switch-round-sm');
+                slider.classList.add('slider');
+                Object.assign(checkbox, {
+                    type: "checkbox",
+                    name: server.uniqid
+                });
+                container.appendChild(checkbox);
+                container.appendChild(slider);
+                return container;
+            }
+
+        }
+
+
         constructor(callback){
-            const template = `<form class="kodirpc-server-selector">
-                                
-                                <ul class="kodirpc-server-list gm-list" style="border-radius: 0;border: 0;">
-                                    <li class="kodirpc-server-all" style="position:relative;text-align:center;cursor:pointer;font-weight: 700;">
-                                   
-                                        <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                <input type="checkbox" name="all" title="Send to all" style="z-index:-1;" checked >
-                                                <span class="slider"></span>
-                                        </span>
-                                        Send to all servers
-                                   
-                                </li>
-                                </ul>
-                            </form>`;
-            const self = this, client = new KodiRPCClient();
+
+            if (typeof callback !== f) throw new Error('KodiRPCServerSelector invalid argument');
+
+            const
+                    self = this,
+                    client = new KodiRPCClient();
+
             Object.assign(this, {
-                root: html2element(template),
-                title: GMinfo.script.name + " Server Selector",
+                root: html2element(self.template),
+                servers: client.servers,
+
                 dialog: new gmDialog(doc.body, {
+                    title: GMinfo.script.name,
+                    width: "50%",
                     buttons: {
                         yes: "Send",
                         no: "Cancel"
                     },
                     events: {
-                        show(){
+                        open(){
                             self.trigger('init');
-
                         }
                     }
-                }),
-                client: client,
-                servers: client.servers,
-                selected: []
-
+                })
             });
-
-            self.elements = {
-                allservers: self.root.querySelector('.kodirpc-server-all'),
-                list: self.root.querySelector('.kodirpc-server-list'),
-                vinfo: html2element(`<small class="kodirpc-server-version" style="position: absolute;bottom:16px;left:16px;" />`),
-                inputs: {},
-                buttons: {
-                    save: self.dialog.elements.buttons.yes,
-                    close: self.dialog.elements.buttons.no
-                }
-            };
-
-            self.root.querySelectorAll('input[name], select[name]').forEach(el => {
-                let name = el.getAttribute("name");
-                self.elements.inputs[name] = el;
-            });
-
-            self.events = {
-                submit(e){
-                    e.preventDefault();
-                },
-
-                init(){
-                    const servers = self.servers;
-                    self.elements.list.querySelectorAll('li.kodirpc-server-single').forEach(li => li.remove());
-
-                    servers.forEach((server, id) => {
-
-                        let li = html2element(`<li class="kodirpc-server-single" style="position:relative;text-align:center;cursor:pointer;font-weight: 700;">
-                                                    <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                        <input type="checkbox"
-                                                                    name="single"
-                                                                    data-id="${id}"
-                                                                    style="z-index:-1;" >
-                                                        <span class="slider"></span>
-                                                    </span>
-                                                    ${server.name}
-                                                </li>`);
-
-                        self.elements.list.insertBefore(li, self.elements.allservers);
-
-                    });
-
-
-
-
-                },
-                click(e){
-                    e.preventDefault();
-                    e.stopPropagation();
-                    let target, name;
-                   if ((target = e.target.closest('li')) !== null) {
-                        target = target.querySelector('input[name]');
-                        name = target.getAttribute('name');
-                    }
-                    if ((typeof name === s) && (typeof self.actions[name] === f)) self.actions[name].call(target, e);
-                }
-            };
-
-            self.actions = {
-                all(){
-
-                    let checked = this.checked = this.checked !== true;
-                    self.selected = [];
-                    self.elements.list.querySelectorAll('[name="single"]').forEach(i => {
-                        i.checked = false;
-                        if(checked !== true){
-                            self.selected.push(i.data('id'));
-                            i.checked = true;
-                        }
-
-                    });
-                },
-                single(){
-                    this.checked = this.checked !== true;
-                    self.selected = [];
-                    self.elements.list.querySelectorAll('[name="single"]:checked').forEach(i => {
-                        self.selected.push(i.data('id'));
-                    });
-                    self.elements.inputs.all.checked = self.selected.length === 0;
-                }
-
-            };
-
+            self.dialog.body = self.root;
             new Events(self.root, self);
 
-            Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
+            KodiRPCServerSelector.loadStyles();
 
-            self.dialog.title = self.title;
-            self.dialog.body = self.root;
-            self.dialog.elements.footer.appendChild(self.elements.vinfo);
-            self.elements.vinfo.innerHTML = GMinfo.script.version;
-
-
-            if (typeof callback !== f) throw new Error("No server selection callback.");
-
-            //if only one server?
-            if (self.servers.length === 1) {
-                callback(self.servers);
-            } else if (self.servers.length === 0) throw new Error("Please add a server first.");
-            else {
-                self.dialog.on('confirm', e => {
-                    let servers = [];
-                    if (self.selected.length > 0) {
-                        self.selected.forEach(id => {
-                            servers.push(self.servers[id]);
-                        });
-                    } else servers = self.servers;
-
-                    callback(servers);
-
-                });
-
-                self.dialog.open();
-            }
-
-
-
-
+            self.dialog.open();
         }
     }
+
+
 
     /**
      * Standalone User Interface
@@ -1832,7 +1750,7 @@
     }
 
 
-
+    new KodiRPCServerSelector(x => x);
 
     (() => {
         const elements = [];

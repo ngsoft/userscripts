@@ -2281,9 +2281,9 @@ class gmStyles {
             .fadeOut {animation-name: fadeOut;animation-duration: .75s;animation-fill-mode: both;}
 
             @media (max-height: 640px), (max-width: 950px) {
-                .gm-dialog{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);transform: unset !important;}
+                .gm-dialog{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px) !important;transform: unset !important;}
             }
-            .gm-dialog.gm-dialog-fullscreen{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px);transform: unset !important;}
+            .gm-dialog.gm-dialog-fullscreen{left: 6px !important;right: 6px !important; top:6px !important;bottom: 6px !important;max-height:calc(100% - 12px);width:calc(100% - 12px) !important;transform: unset !important;}
 
         `;
         //gmFlash
