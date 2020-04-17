@@ -455,6 +455,7 @@
                 
                 .kodirpc-configurator{padding:0 24px 24px;}
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
+                .kodirpc-configurator .flash-message-box{}
 
                 .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
@@ -469,6 +470,7 @@
                 .kodirpc-servers .gm-tabs{margin: 16px 0 8px;}
                 .kodirpc-servers .gm-tabs:before{bottom: -16px;}
                 .kodirpc-servers legend:before{bottom:0;}
+
                 
             `;
             addstyle(styles);
@@ -615,6 +617,7 @@
                                         <input type="text" name="add_name" value="" placeholder="Name">
                                         <label>Hostname:</label>
                                         <input type="text" name="add_host" value="" placeholder="Hostname">
+                                        <div class="flash-message-box"></div>
                                         <div style="text-align: right;margin: 16px 0 0;">
                                             <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
                                         </div>
@@ -623,7 +626,7 @@
                                         <legend>Select Server</legend>
                                         <input name="uniqid" type="hidden" value="">
                                         <ul class="gm-list"></ul>
-                                        <div class="gm-flash warning">
+                                        <div class="gm-flash">
                                             Server list is empty.
                                         </div>
                                     </fieldset>
