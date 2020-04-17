@@ -68,8 +68,16 @@
 
 
     class KodiRPCServer {
+
+        get dirty(){
+            return this._dirty === true;
+        }
+
         set name(name){
-            if (typeof name === s) this._params.name = name;
+            if (typeof name === s) {
+                this._params.name = name;
+                this._dirty = true;
+            }
 
         }
         get name(){
@@ -85,14 +93,20 @@
                     if(n > 254) valid = false;
                 });
             } else if (!(/^[a-z](?:[\w\.]+\w)$/.test(h))) valid = false;
-            if (valid === true) this._params.host = h;
+            if (valid === true) {
+                this._params.host = h;
+                this._dirty = true;
+            }
         }
         get host(){
             return this._params.host;
         }
         set pathname(p){
             if (typeof p !== s) return;
-            if (/^\/(?:[\w\-\.@]+[\/]?)+$/.test(p)) this._params.pathname = p;
+            if (/^\/(?:[\w\-\.@]+[\/]?)+$/.test(p)) {
+                this._params.pathname = p;
+                this._dirty = true;
+            }
         }
         get pathname(){
             return this._params.pathname;
@@ -105,6 +119,7 @@
             if (typeof user !== s) return;
             if (/^\w+$/.test(user)) {
                 this._params.username = user;
+
             }
         }
         get user(){
@@ -112,7 +127,10 @@
         }
         set port(p){
             if (typeof p !== n) return;
-            if ((p > 0) && (p < 65536)) this._params.port = p;
+            if ((p > 0) && (p < 65536)) {
+                this._params.port = p;
+                this._dirty = true;
+            }
         }
         get port(){
             return this._params.port;
@@ -120,8 +138,10 @@
         set auth(pass){
             if ((typeof pass === s) && (this.user !== null)) {
                 this._params.auth = btoa(this.user + ':' + pass);
+                this._dirty = true;
             } else if (pass === null) {
-                this._params.auth = null;
+                this.user = null;
+                this._dirty = true;
             }
 
         }
@@ -892,6 +912,7 @@
                                     self.cansave = true;
                                     input.value = null;
                                     self.addBlacklistHost(host);
+                                    self.flashbox.success(host + ' added to blacklist');
                                 }
                                 else input.classList.add('error');
                             }
@@ -919,19 +940,44 @@
                         servers(e){
                             let inputs = self.elements.inputs, ignore = [
                                 inputs.uniqid, inputs.url, inputs.pass, inputs.port,
-                                inputs.add_name, inputs.add_host
+                                inputs.add_name, inputs.add_host, inputs.user
                             ];
                             let t = this;
 
                             if (ignore.includes(t)) return;
-                            let name = t.getAttribute('name');
-                            console.debug(e);
+                            let name = t.getAttribute('name'), val = t.value, flash = t.data('flash');
+                            // console.debug(e);
+
+                            const server = self.data.current;
+                            let old = server[name];
+                            t.classList.add('error');
+                            if (val !== old) {
+                                server[name] = val;
+                                if (server[name] === val) {
+                                    t.classList.remove('error');
+                                } else if (typeof flash === s ? flash.length > 0 : false) self.flashbox.error(flash);
+                            } else t.classList.remove('error');
+
+                            self.cansave = (["name", "host", "port", "pathname", "user"].every(n => inputs[n].matches(':not(.error)')) && server.dirty === true);
+
 
 
 
                         }
                     },
                     change: {
+                        display_servers(e){
+                            if (this.checked === false) {
+                                self.elements.inputs.update_servers_online.checked = false;
+                                Events(self.elements.inputs.update_servers_online).trigger('change');
+                            }
+                        },
+                        update_servers_online(){
+                            if (this.checked === true) {
+                                self.elements.inputs.display_servers.checked = true;
+                                Events(self.elements.inputs.display_servers).trigger('change');
+                            }
+                        },
                         //loads server configuration
                         uniqid(e){
                             const tabs = self.elements.tabs,
@@ -965,7 +1011,11 @@
                             if (valid === false) {
                                 this.value = uniqid = null;
                                 self.tab = "selection";
-                            } else self.tab = "edit";
+                                return;
+                            }
+                            self.tab = "edit";
+                            self.flashbox.info("Editing " + server.name);
+
 
                         },
                         add_name(e){
@@ -998,6 +1048,7 @@
                                 let host = li.data('host') || "";
                                 if (host.length > 0) {
                                     if (self.data.blacklist.remove(host)) {
+                                        self.flashbox.success(host + ' removed from blacklist');
                                         self.cansave = true;
                                         li.remove();
                                     }
