@@ -718,13 +718,31 @@
                                     <fieldset class="kodirpc-server-edit" name="server_edit">
                                         <legend>Edit Server</legend>
                                         <label>Name:</label>
-                                        <input type="text" name="name" value="" placeholder="Name" required>
+                                        <input 
+                                            type="text"
+                                            name="name"
+                                            value=""
+                                            placeholder="Name"
+                                            data-error="Name %s is invalid."
+                                            required>
                                         <label>Hostname:</label>
-                                        <input type="text" name="host" value="" placeholder="Hostname" required>
+                                        <input 
+                                            type="text"
+                                            name="host"
+                                            value=""
+                                            placeholder="Hostname"
+                                            data-error="Hostname %s is invalid."
+                                            required>
                                         <label>Port:</label>
-                                        <input type="number" name="port" value="" placeholder="Port" min="1" max="65535" required>
-                                        <label>Endpoint:</label>
-                                        <input type="text" name="pathname" value="" placeholder="Endpoint" required>
+                                        <input 
+                                            type="number"
+                                            name="port"
+                                            value=""
+                                            placeholder="Port"
+                                            min="1"
+                                            max="65535"
+                                            data-error="Port %s is invalid."
+                                            required>
                                     </fieldset>
                                     <fieldset class="kodirpc-server-auth" name="server_auth">
                                         <legend>Credentials</legend>
@@ -1022,6 +1040,18 @@
                             button.disabled = error === true ? true : input.siblings('input.error').length > 0 || null;
                             
 
+                        },
+                        server_edit(){
+                            const
+                                    input = this,
+                                    server = self.data.current;
+                            let name = input.getAttribute('name'),
+                                    value = input.value,
+                                    old = input.data('value') || "",
+                                    invalid = input.data('error') || "";
+
+//there
+
                         }
                     },
                     fieldset_show: {
@@ -1079,7 +1109,7 @@
                         uniqid(e){
                             const tabs = self.elements.tabs,
                                     inputs = self.elements.inputs,
-                                    list = ["name", "host", "port", "pathname", "user"],
+                                    list = ["name", "host", "port", "user"],
                                     tablist = ["edit", "auth"],
                                     data = self.data;
                             let uniqid = this.value || null,
@@ -1189,7 +1219,7 @@
                                                 li.remove();
                                                 self.data.servers.splice(index, 1);
                                                 self.cansave = true;
-                                                self.flashbox.success(server.name + " removed from server list.")
+                                                self.flashbox.success(server.name + " removed from server list.");
 
                                             }, null, {
                                                 title: "Remove RPC Server"

@@ -1775,7 +1775,7 @@ class gmFlash {
      */
     flash(message){
 
-        if (!(message instanceof Element) ? typeof message !== s : false) throw new Error("gmFlash invalid message.");
+        if (!(message instanceof Element) ? (typeof message !== s ? message.length > 0 : false) : false) throw new Error("gmFlash invalid message.");
         const self = this;
         //defaults arguments
         const cfg = self.config;
