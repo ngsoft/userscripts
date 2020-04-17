@@ -109,10 +109,8 @@
                 return;
             }
             if (typeof user !== s) return;
-            if (/^\w+$/.test(user)) {
-                this._params.username = user;
+            this._params.username = user.length > 0 ? user : null;
 
-            }
         }
         set port(p){
             if (typeof p !== n) return;
@@ -122,7 +120,7 @@
             }
         }
         set auth(pass){
-            if ((typeof pass === s) && (this.user !== null)) {
+            if ((typeof pass === s ? pass.length > 0 : false) && (this.user !== null)) {
                 this._params.auth = btoa(this.user + ':' + pass);
                 this._dirty = true;
             } else if (pass === null) this.user = null;
@@ -375,7 +373,7 @@
         checkConnection(server, success, error){
 
 
-            if (!(server instanceof KodiRPCServer) || typeof success !== f || typeof error !== true) throw new Error("Invalid Arguments.");
+            if (!(server instanceof KodiRPCServer) || typeof success !== f || typeof error !== f) throw new Error("Invalid Arguments.");
 
             const self = this;
             let cache = true, complete = x => x;
@@ -667,7 +665,7 @@
                                     <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
                                         <legend>Blacklist Manager</legend>
                                         <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 72px);">
-                                        <button type="submit" title="Add URL" name="add_url" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px;margin:4px 0 0;">Add</button>
+                                        <button type="submit" title="Add URL" name="add_url" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px !important;margin:4px 0 0;">Add</button>
                                         <button class="gm-btn" name="add_current" style="position: absolute;top: 8px;right: 0;">Add Current Site</button>
                                     </fieldset>
                                     <h2>Hostnames</h2>
@@ -1090,23 +1088,25 @@
                             if (name === "user") {
                                 input.data("value", value);
                                 if (dirty === true) {
-                                    server.user = value;
-                                    if (server.user !== value) error = true;
-                                    input.classList[error === true ? "add" : "remove"]('error');
-                                    self.authflashbox.error('Username ' + value + ' is invalid.');
+                                    server.user = value.length > 0 ? value : null;
+                                    inputs.pass.value = null;
                                 }
                             } else if (name === "pass") {
                                 if (value.length > 0) {
-
-
-
+                                    if (inputs.user.value.length === 0) {
+                                        self.authflashbox.error('Username is empty.');
+                                        return;
+                                    }
+                                    server.user = inputs.user.value;
+                                    server.auth = value;
+                                    if (typeof server.auth === s) {
+                                        self.authflashbox.info('A password has been set.');
+                                        if (self.data.cansave !== false) self.cansave = true;
+                                    }
 
                                 }
                             }
-
-
-
-
+                            
 
                         }
                     },
@@ -1223,6 +1223,26 @@
 
                     },
                     click: {
+
+                        rm_pass(){
+                            const
+                                    inputs = self.elements.inputs,
+                                    server = self.data.current;
+                            server.user = inputs.user.value = inputs.pass.value = null;
+                            inputs.user.data('value', null);
+                            self.authflashbox.info('Credentials have been removed.');
+                            if (self.data.cansave !== false) self.cansave = true;
+                        },
+                        check(){
+                            self.authflashbox.info(self.data.current.name + ' connection check.');
+                            self.client.checkConnection(self.data.current, server => {
+                                self.authflashbox.success(server.name + ' connection success.');
+                            }, (server, code) => {
+                                if (code === 401) self.authflashbox.error(server.name + ' connection error(' + code + '), invalid credentials.');
+                                else self.authflashbox.error(server.name + ' connection error(' + code + ').');
+                            }, false);
+
+                        },
                         rm_url(){
                             let li = this.parentElement;
                             if (li !== null) {
@@ -1306,8 +1326,6 @@
                         }
                     }
                     
-
-
                 }
 
             });
@@ -1353,6 +1371,18 @@
 
             //save settings
             self.dialog.on('confirm', e => {
+
+                const
+                        gmstore = self.client._settings,
+                        data = self.data,
+                        tosave = {
+                            config: data.config,
+                            blacklist: data.blacklist.list,
+                            servers: data.servers.map(s => s._params)
+                        };
+
+                Object.keys(tosave).forEach(key => gmstore.set(key, tosave[key]));
+
 
             });
 
@@ -1802,8 +1832,6 @@
     }
 
 
-
-    new KodiRPCConfigurator();
 
 
     (() => {
