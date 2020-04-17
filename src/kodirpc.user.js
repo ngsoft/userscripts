@@ -243,7 +243,7 @@
             let host = this._getHost(url);
             if ((typeof host === s) && (this.has(host))) {
                 this.list.splice(this.list.indexOf(host), 1);
-                this.dirty = true;
+                this._dirty = true;
             }
             return !this.has(url);
         }
@@ -397,14 +397,11 @@
 
             };
 
-            if (item.isHit()) {
-                if (cache === true) {
-                    callback(server, item.get());
-                    complete.call(self, server);
-                    return;
-                }
+            if (item.isHit() ? cache === true : false) {
+                callback(server, item.get());
+                complete.call(self, server);
+                return;
             }
-
             self.sendRPCRequest(server, "Playlist.GetPlaylists", {}, callback, callback, complete);
 
         }
@@ -526,7 +523,9 @@
                 .kodirpc-configurator .flash-message-box .gm-flash{margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
                 .kodirpc-configurator .flash-message-box .gm-flash:not(.error):not(.warning):not(.info):not(.success){font-size: 24px;}
                 .kodirpc-configurator .flash-message-box .gm-flash + .gm-flash{display:none;}
-            
+
+                .kodirpc-configurator input + .flash-message-box{margin: 12px 0 0;}
+
                 .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
                 .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
@@ -750,6 +749,7 @@
                                         <input type="text" name="user" value="" placeholder="Username">
                                         <label>Password:</label>
                                         <input type="password" name="pass" value="" placeholder="Password">
+                                        <div class="flash-message-box"></div>
                                         <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
                                             <button class="gm-btn gm-btn-no" name="rm_pass">Remove password</button>
                                             <button class="gm-btn" name="check">Check Connection</button>
@@ -924,7 +924,7 @@
                             self.flashbox.message(flash, false, 0);
                         }
                     },
-                    "gmtab.show": function(e){
+                    "gmtab.open": function(e){
                         const t = e.target, tag = t.tagName.toLowerCase();
                         if (["form", "fieldset"].includes(tag)) {
                             let name = t.getAttribute('name');
@@ -1070,14 +1070,23 @@
                                 input.classList[error === true ? "add" : "remove"]('error');
                             } else if (input.matches('.error')) error = true;
 
-
                             if (error === true) self.flashbox.error(invalid.replace('%s', value));
-                            if ((input.siblings('input.error,input:invalid').length > 0) || error === true) self.cansave = false;
-                            else if (server.dirty === true) self.cansave = true;
-
-
-//there
-
+                            if ((input.siblings('input.error,input:invalid').length > 0) || error === true) self.cansave = self.data.cansave = false;
+                            else if (server.dirty === true) self.cansave = self.data.cansave = true;
+                        },
+                        server_auth(){
+                            const
+                                    input = this,
+                                    server = self.data.current,
+                                    inputs = self.elements.inputs;
+                            let
+                                    name = input.getAttribute('name'),
+                                    value = input.value,
+                                    old = input.data('value') || "",
+                                    invalid = input.data('error') || "",
+                                    dirty, parsed,
+                                    error = false;
+                            //there
                         }
                     },
                     fieldset_show: {
@@ -1105,6 +1114,20 @@
                                 span.innerHTML = server.name;
                             });
 
+                        },
+                        server_auth(){
+                            self.authflashbox = self.authflashbox || gmFlash.prependTo(self.elements.inputs.pass.nextElementSibling, {
+                                timeout: 1500,
+                                removeOnClick: false,
+                                animateEndDuration: 500,
+                                animateStartDuration: 500,
+                                animate: true,
+                                classes: "gm-header"
+                            });
+                            this.querySelector('legend').innerHTML = `Credentials (${self.data.current.name})`;
+                            self.elements.inputs.pass.value = null;
+                            if (self.data.current.auth !== null) self.authflashbox.info("A password is currently set.");
+                            console.debug(self.authflashbox);
                         }
 
                     },
@@ -1163,6 +1186,7 @@
                                     let uid = li.data('uniqid');
                                     li.classList[uid === uniqid ? "add" : "remove"]('active');
                                 });
+                                delete data.cansave;
                             }
                             tablist.forEach(name => tabs[name].classList[valid === true ? "remove" : "add"]('disabled'));
                             if (valid === false) {
