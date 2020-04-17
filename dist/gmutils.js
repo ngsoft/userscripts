@@ -2076,13 +2076,14 @@ class gmTabs {
                     type += open === true ? "open" : "close";
                     self.root.querySelectorAll(selectorTarget).forEach(target => Events(target).trigger(type));
                     t.classList.toggle(selectedClass);
+                    if (t.classList.contains(selectedClass)) Events(t).trigger(eventPrefix + "select");
                 }
             },
             click(e){
                 let t = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
                 if (t !== null) {
                     e.preventDefault();
-                                t.closest(gmTabsSelector).querySelectorAll(`${gmTabSelector}:not(${disabledSelector})`).forEach(tab => {
+                    t.closest(gmTabsSelector).querySelectorAll(`${gmTabSelector}:not(${disabledSelector})`).forEach(tab => {
                         // close active tab and open current clicked tab
                         if (tab.matches(selectedSelector) || tab === t) Events(tab).trigger(eventPrefix + "toggle");
 
@@ -2277,7 +2278,7 @@ class gmStyles {
         //gmFlash
         styles += `
             .gm-flash {
-                padding: 16px 24px; margin: 8px 0;border: 1px solid 1px solid rgba(10, 10, 10, 0.25); border-radius: 4px;
+                padding: 16px 24px; margin: 8px 0 0;border: 1px solid 1px solid rgba(10, 10, 10, 0.25); border-radius: 4px;
                 text-align: center;font-size: 18px;
             }
             .gm-flash {background-color: #fafafa;border-color: #363636;color: #4a4a4a;}

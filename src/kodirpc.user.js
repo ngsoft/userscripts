@@ -455,8 +455,9 @@
                 
                 .kodirpc-configurator{padding:0 24px 24px;}
                 .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
-                .kodirpc-configurator .flash-message-box{}
-
+                .kodirpc-configurator .flash-message-box{overflow:hidden;height:64px;margin:8px 0; padding:0;}
+                .kodirpc-configurator .flash-message-box:empty{}
+                .kodirpc-configurator .flash-message-box .gm-flash{font-size: 18px;margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
                 .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
                 .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
                 .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
@@ -499,6 +500,13 @@
                 let el = self.elements.tabs[name];
                 if (el instanceof Element ? el.matches(':not(.active)') : false) Events(el).trigger('click');
             }
+        }
+
+
+        get flashbox(){
+
+            return this.root.querySelector('.flash-message-box');
+
         }
 
         addServer(server){
@@ -554,12 +562,14 @@
             const client = new KodiRPCClient();
 
             let template = `<div class="kodirpc-configurator">
+                                <div class="flash-message-box"></div>
                                 <ul class="gm-tabs">
                                     <li class="gm-tab" data-tab=".kodirpc-basics">Basics</li>
                                     <li class="gm-tab" data-tab=".kodirpc-servers">Servers</li>
                                     <li class="gm-tab" data-tab=".kodirpc-blacklist-manager">Blacklist</li>
                                     <li class="gm-tab" data-tab=".kodirpc-about">About</li>
                                 </ul>
+                                
                                 <form class="kodirpc-basics" name="basics" autocomplete="off">
                                     <h1>Basic Configuration</h1>
                                     <ul class="gm-list">
@@ -617,8 +627,8 @@
                                         <input type="text" name="add_name" value="" placeholder="Name">
                                         <label>Hostname:</label>
                                         <input type="text" name="add_host" value="" placeholder="Hostname">
-                                        <div class="flash-message-box"></div>
-                                        <div style="text-align: right;margin: 16px 0 0;">
+                                        
+                                        <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
                                             <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
                                         </div>
                                     </fieldset>
@@ -963,9 +973,18 @@
                                 let val = this.value;
                                 server.name = val;
                                 if (!self.data.servers.map(x => x.name).includes(val)) this.classList.remove('error');
-                                else gmFlash.after(this).error("Server name " + val + " already exists.");
-                                gmFlash.prependTo(this.parentElement).error("Server name " + val + " already exists.", 0, false);
-                                // gmFlash.appendTo(this.parentElement).error("Server name " + val + " already exists.", 0, false);
+                                else gmFlash.after(self.flashbox).error("Server name " + val + " already exists.");
+                            }
+                        },
+                        add_host(e){
+                            const server = self.data.add;
+                            this.classList.add('error');
+
+                            if (this.value.length > 0) {
+                                let val = this.value;
+                                server.host = val;
+                                if (!self.data.servers.map(x => x.host).includes(val)) this.classList.remove('error');
+                                else gmFlash.after(self.flashbox).error("Server hostname " + val + " already exists.");
                             }
                         }
                     },
@@ -1082,8 +1101,6 @@
                         self.elements.inputs[name] = el;
                 }
             });
-            console.debug(self.elements);
-
 
 
 
