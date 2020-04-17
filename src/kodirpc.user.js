@@ -69,9 +69,8 @@
 
     class KodiRPCServer {
         set name(name){
-            if (typeof name === s) {
-                this._params.name = name;
-            }
+            if (typeof name === s) this._params.name = name;
+
         }
         get name(){
             return this._params.name;
@@ -903,21 +902,14 @@
                         },
                         servers(e){
                             let inputs = self.elements.inputs, ignore = [
-                                inputs.uniqid, inputs.url, inputs.pass, inputs.port
+                                inputs.uniqid, inputs.url, inputs.pass, inputs.port,
+                                inputs.add_name, inputs.add_host
                             ];
                             let t = this;
 
                             if (ignore.includes(t)) return;
                             let name = t.getAttribute('name');
                             console.debug(e);
-
-
-
-
-
-
-
-
 
 
 
@@ -959,6 +951,15 @@
                                 self.tab = "selection";
                             } else self.tab = "edit";
 
+                        },
+                        add_name(e){
+                            const server = self.data.add;
+                            this.classList.add('error');
+                            if (this.value.length > 0) {
+                                let val = this.value;
+                                server.name = this.value;
+                                if (!self.data.servers.map(x => x.name).includes(val)) this.classList.remove('error');
+                            }
                         }
                     },
                     click: {
@@ -1011,40 +1012,15 @@
 
 
                         server_select(e){
-
                             let li = this.parentElement;
-
                             if (li !== null) {
                                 let uniqid = li.data('uniqid');
                                 if (typeof uniqid === s ? uniqid.length > 0 : false) self.data.current = uniqid;
-
                             }
-                            //self.elements.tabs.edit.classList.remove('disabled');
-                            //self.elements.tabs.auth.classList.remove('disabled');
-                            /*
-                            let uniqid = this.data('uniqid');
-                            if (typeof uniqid === s) {
-                                let index = self.data.map[uniqid];
-                                if (typeof index === n) {
-                                    let server = self.data.servers[index];
-                                    if (server instanceof KodiRPCServer) {
-                                        const inputs = self.elements.inputs;
-                                        ["uniqid", "name", "host", "port", "pathname", "user"].forEach(name => {
-                                            inputs[name].value = server[name];
-                                        });
-                                        this.parentElement.siblings().forEach(li => li.classList.remove('active'));
-                                        this.parentElement.classList.add('active');
 
-                                        let keeptab = false;
-                                        if (e.data instanceof Object) keeptab = e.data.keeptab;
-                                        if (keeptab !== true) self.elements.tabs.edit.click();
-                                    }
-                                }
-                            }*/
                         },
                         server_remove(){
                             if (self.data.servers.length < 2) return;
-
                             let li = this.parentElement;
                             if (li !== null) {
                                 let uniqid = li.data('uniqid');
@@ -1565,7 +1541,9 @@
 
 
 
-    new KodiRPCConfigurator();
+    //new KodiRPCConfigurator();
+
+    gmFlash.create(doc.body).flash('test message');
 
     (() => {
         const elements = [];

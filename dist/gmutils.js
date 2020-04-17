@@ -1717,93 +1717,197 @@ function ask(message, confirm, cancel, params){
 }
 
 
+
+
 /**
  * UserScripts flash messages
  */
 class gmFlash {
 
+    static after(element, params){
+        let instance;
+        params = isPlainObject(params) ? params : {};
+        params.after = true;
+        if (element instanceof Element) instance = new this(element, params);
+        return instance;
+    }
 
-    _create(message, classname, onshow, onhide){
-        classname = classname || "";
-        if (typeof message === s) {
-            const self = this;
-            let el = doc.createElement('div');
-            el.classList.add('gm-flash');
-            if (classname.length > 0) el.classList.add(...classname.split(' '));
-            el.innerHTML = message;
-            const evts = Events(el);
-            if (typeof onshow === f) evts.one('show', onshow);
-            if (typeof onhide === f) evts.one('hide', onhide);
-            evts.on('open close', e => {
-                e.stopPropagation();
-                if (e.type === "open") {
-                    if (self.config.fade === true) {
-                        el.classList.add('fadeInFlash');
-                        setTimeout(x => evts.trigger('show'), 750);
-                    } else evts.trigger('show');
-                } else if (self.config.fade === true) {
-                    el.classList.remove('fadeInFlash');
-                    el.classList.add('fadeOutFlash');
-                    setTimeout(x => evts.trigger('hide'), 750);
-                } else evts.trigger('hide');
-            });
+    static create(element, params){
+        let instance;
+        params = isPlainObject(params) ? params : {};
+        if (element instanceof Element) instance = new this(element, params);
 
-            let parent = self.root, before = null;
-            if (self.config.after === true) {
-                parent = self.root.parentElement;
-                before = self.root.nextElementSibling;
-            }
-            evts.on('show hide', e => {
-                e.stopPropagation();
-                if (e.type === 'show') {
-                    if (self.config.timeout > 0) setTimeout(x => evts.trigger('close'), self.config.timeout);
-                    if (typeof self.config.onshow === f) self.config.onshow.call(el, e);
-                } else {
-                    if (typeof self.config.onhide === f) self.config.onhide.call(el, e);
-                    el.remove();
+        return instance;
+    }
+
+
+    /**
+     * Display a Flash Message
+     * @param {string|HTMLElement}  message     Message to display
+     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]   Classes to add to the message
+     * @param {function}            [start]     Callback to use when message is displayed
+     * @param {function}            [end]       Callback to use when message is removed
+     * @returns {gmFlash}
+     */
+    flash(message){
+
+        if (!(message instanceof Element) ? typeof message !== s : false) throw new Error("gmFlash invalid message.");
+        const self = this;
+        //defaults arguments
+        const cfg = self.config;
+        let timeout = cfg.timeout > 0 ? cfg.timeout : null,
+                classes = cfg.classes.length > 0 ? cfg.classes.split(/\s+/) : [],
+                start = null,
+                end = null;
+        //parse arguments
+        if (arguments.length > 1) {
+            for (let i = 1; i < arguments.length; i++) {
+                let val = arguments[i];
+                if (typeof val === n) timeout = val > 0 ? val : null;
+                if (typeof val === s ? val.length > 0 : false) val.split(/\s+/).forEach(c => classes.push(c));
+                if (typeof val === f) {
+                    if (typeof start === f) end = val;
+                    else start = val;
                 }
-            });
-            evts.on('click', (e) => {
-                e.stopPropagation();
-                evts.trigger('hide');
-            });
-            parent.insertBefore(el, before);
-            evts.trigger('open');
+
+            }
         }
+        start = typeof start === f ? start : x => x;
+        end = typeof end === f ? end : x => x;
+
+
+        console.debug(cfg);
+
+        const
+                afterContainer = cfg.afterContainer,
+                eventPrefix = cfg.prefix,
+                animate = cfg.animate,
+                gmFlashClass = cfg.gmflash,
+                container = self.root,
+                div = doc.createElement('div'),
+                emit = new Events(div);
+
+        const events = {
+        
+            init(){
+                div.classList.add(gmFlashClass, ...classes);
+                if (typeof message === s) div.innerHTML = message;
+                else div.appendChild(message);
+                emit.trigger(eventPrefix + "open");
+            },
+            open(){
+                
+                //attach element
+                if (afterContainer === true) container.parentElement.insertBefore(div, container.nextElementSibling);
+                else container.insertBefore(div, container.firstElementChild);
+
+                if (animate === true ? cfg.animateStart === true : false) {
+                    let cls = cfg.animateStartClasses.split(/\s+/),
+                            duration = cfg.animateStartDuration;
+                    div.style["animation-duration"] = duration + "ms";
+                    div.classList.add(...cls);
+                    setTimeout(() => {
+                        div.style["animation-duration"] = null;
+                        div.classList.remove(...cls);
+                        emit.trigger(eventPrefix + "show " + eventPrefix + "start");
+                    }, duration + 10);
+                } else emit.trigger(eventPrefix + "show " + eventPrefix + "start");
+            },
+            close(){
+                if (animate === true ? cfg.animateEnd === true : false) {
+                    let cls = cfg.animateEndClasses.split(/\s+/),
+                            duration = cfg.animateEndDuration;
+                    div.style["animation-duration"] = duration + "ms";
+                    div.classList.add(...cls);
+                    setTimeout(() => {
+                        emit.trigger(eventPrefix + "hide " + eventPrefix + "end");
+                    }, duration + 10);
+                } else emit.trigger(eventPrefix + "hide " + eventPrefix + "end");
+            },
+            start(){
+                if (cfg.removeOnClick === true){
+                    emit.one('click', e => {
+                        e.preventDefault();
+                        emit.trigger(eventPrefix + "close");
+                    });
+                }
+                if (timeout !== null) {
+                    setTimeout(() => {
+                        emit.trigger(eventPrefix + "close");
+                    }, timeout);
+                }
+            },
+            end(){
+                div.remove();
+            }
+        }
+
+        Object.keys(events).forEach(key => emit.on(eventPrefix + key, events[key]));
+
+        emit
+                .on(eventPrefix + "start", cfg.start)
+                .one(eventPrefix + "start", start)
+                .on(eventPrefix + "end", cfg.end)
+                .one(eventPrefix + "end", end)
+                .trigger(eventPrefix + "init");
+
+        return this;
     }
 
 
-    set message(message){
-        this._create(message);
-    }
-    set info(message){
-        this._create(message, 'info');
-    }
 
-    set warning(message){
-        this._create(message, 'warning');
-    }
-    set success(message){
-        this._create(message, 'success');
-    }
-    set error(message){
-        this._create(message, 'error');
-    }
+
 
 
     constructor(container, params){
-        params = params || {};
-        const self = this;
+
+        if (!(container instanceof Element)) throw new Error('gmFlash constructor needs a binding Element.');
+        params = isPlainObject(params) ? params : {};
+
+
+        const self = this, conf = {
+            timeout: 2000,
+
+            afterContainer: false,
+            removeOnClick: true,
+            classes: "",
+
+            start: x => x,
+            end: x => x,
+
+
+            gmflash: "gm-flash",
+            prefix: "gmflash.",
+            info: "info",
+            warning: "warning",
+            success: "success",
+            error: "error",
+
+            animate: true,
+
+            animateStart: true,
+            animateStartClasses: "fadeIn",
+            animateStartDuration: 750,
+
+
+            animateEnd: true,
+            animateEndClasses: "fadeOut",
+            animateEndDuration: 750
+        };
+
         Object.assign(this, {
             root: container,
-            config: Object.assign({
-                timeout: 2000,
-                fade: true,
-                after: false,
-                onshow: null,
-                onhide: null
-            }, params)
+            config: Object.assign({}, conf, params)
         });
+
+        Object.keys(conf).forEach(key => {
+            let val = conf[key];
+            if (typeof self.config !== typeof val) self.config[key] = val;
+        });
+
+        if (!(/\.$/.test(self.config.prefix))) self.config.prefix += ".";
+
         new gmStyles();
     }
 
@@ -1898,7 +2002,7 @@ class gmTabs {
                         transition.cleanup(el);
                         setTimeout(() => {
                             typeof callback === f ? callback() : null;
-                            transition.cleanup(el)
+                            transition.cleanup(el);
                         }, animateDuration + 10);
                         setTimeout(() => {
                             el.style["animation-duration"] = animateDuration + "ms";
@@ -1942,6 +2046,9 @@ class gmTabs {
             let val = cfg[key];
             if (typeof self.config[key] !== typeof val) self.config[key] = val;
         });
+
+        if (!(/\.$/.test(this.config.prefix))) this.config.prefix += ".";
+
         const gmTabsClass = this.config.gmtabs,
                 gmtabClass = this.config.gmtab,
                 selectedClass = this.config.selected,
@@ -1955,7 +2062,7 @@ class gmTabs {
                 eventPrefix = this.config.prefix,
                 autosize = this.config.autosize === true,
                 animate = this.config.animate === true,
-                animateClasses = this.config.animateClasses.split(' '),
+                animateClasses = this.config.animateClasses.split(/\s+/),
                 animateDuration = this.config.animateDuration;
 
 
