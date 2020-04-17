@@ -1743,14 +1743,27 @@ class gmFlash {
      * @param {Object} [params]
      * @returns {gmFlash}
      */
-    static create(element, params){
+    static appendTo(element, params){
         let instance;
         params = isPlainObject(params) ? params : {};
         if (element instanceof Element) instance = new this(element, params);
 
         return instance;
     }
+    /**
+     * Creates gmFlash instance that displays message inside the provided element
+     * @param {HTMLElement} element
+     * @param {Object} [params]
+     * @returns {gmFlash}
+     */
+    static prependTo(element, params){
+        let instance;
+        params = isPlainObject(params) ? params : {};
+        params.appendChild = false;
+        if (element instanceof Element) instance = new this(element, params);
 
+        return instance;
+    }
 
     /**
      * Display a Flash Message
@@ -1789,9 +1802,6 @@ class gmFlash {
         }
         start = typeof start === f ? start : x => x;
         end = typeof end === f ? end : x => x;
-
-
-        console.debug(cfg);
 
         const
                 afterContainer = cfg.afterContainer,
@@ -1996,7 +2006,6 @@ class gmFlash {
         });
 
         if (!(/\.$/.test(self.config.prefix))) self.config.prefix += ".";
-        console.debug(this);
         new gmStyles();
     }
 
