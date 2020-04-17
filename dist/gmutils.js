@@ -1724,14 +1724,25 @@ function ask(message, confirm, cancel, params){
  */
 class gmFlash {
 
+    /**
+     * Creates gmFlash instance that displays message after the provided element
+     * @param {HTMLElement} element
+     * @param {Object} [params]
+     * @returns {gmFlash}
+     */
     static after(element, params){
         let instance;
         params = isPlainObject(params) ? params : {};
-        params.after = true;
+        params.afterContainer = true;
         if (element instanceof Element) instance = new this(element, params);
         return instance;
     }
-
+    /**
+     * Creates gmFlash instance that displays message inside the provided element
+     * @param {HTMLElement} element
+     * @param {Object} [params]
+     * @returns {gmFlash}
+     */
     static create(element, params){
         let instance;
         params = isPlainObject(params) ? params : {};
@@ -1856,6 +1867,19 @@ class gmFlash {
     }
 
     /**
+     * Display a Message (alias of flash)
+     * @param {string|HTMLElement}  message     Message to display
+     * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
+     * @param {string}              [classes]   Classes to add to the message
+     * @param {function}            [start]     Callback to use when message is displayed
+     * @param {function}            [end]       Callback to use when message is removed
+     * @returns {gmFlash}
+     */
+    info(...args){
+        return this.flash(...args);
+    }
+
+    /**
      * Display a Info Message
      * @param {string|HTMLElement}  message     Message to display
      * @param {number}              [timeout]   Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
@@ -1865,8 +1889,8 @@ class gmFlash {
      * @returns {gmFlash}
      */
     info(...args){
-        args.push(this.cfg.info);
-        return this.message(...args);
+        if (args.length > 0) args.push(this.config.info);
+        return this.flash(...args);
     }
 
     /**
@@ -1879,8 +1903,8 @@ class gmFlash {
      * @returns {gmFlash}
      */
     warning(...args){
-        args.push(this.cfg.warning);
-        return this.message(...args);
+        if (args.length > 0) args.push(this.config.warning);
+        return this.flash(...args);
     }
 
     /**
@@ -1893,8 +1917,8 @@ class gmFlash {
      * @returns {gmFlash}
      */
     success(...args){
-        args.push(this.cfg.success);
-        return this.message(...args);
+        if (args.length > 0) args.push(this.config.success);
+        return this.flash(...args);
     }
 
     /**
@@ -1907,8 +1931,8 @@ class gmFlash {
      * @returns {gmFlash}
      */
     error(...args){
-        args.push(this.cfg.error);
-        return this.message(...args);
+        if (args.length > 0) args.push(this.config.error);
+        return this.flash(...args);
     }
 
 
