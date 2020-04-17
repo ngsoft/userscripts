@@ -2207,19 +2207,25 @@ class gmStyles {
                 background-color: #FFF; border-radius: 6px;border: none; min-width: 256px; width: 60%;
             }
             .gm-dialog.gm-dialog-screencenter{top: 50%;left: 50%;right:auto;bottom:auto;transform: translate(-50%, -50%);}
-            .gm-btn{
-                padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;
+            .gm-btn, button.gm-btn{
+                padding: 8px 24px;border-radius: 4px; border: 1px solid rgba(0,0,0,0);cursor: pointer;display: inline-block;outline: 0;
                 background-color: rgba(0,0,0,.125);border: 1px solid rgba(255,255,255,.25);color: rgb(28, 29, 30);
-                font-size: 16px;font-weight: 600;min-width: 96px;margin: 8px 4px;
+                font-size: 16px;font-weight: 600;min-width: 96px;margin: 8px 4px;text-decoration: none;text-shadow: none;box-shadow: none;
             }
-            .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
+            .gm-btn:hover, .gm-btn:active,
+            button.gm-btn:hover, button.gm-btn:active
+            {background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
             .gm-dialog-footer .gm-btn + .gm-btn{margin-left: 16px;}
-            .gm-dialog-header .gm-btn-close{padding: 4px 20px 3px;min-width: auto;float:right; margin: 4px -8px 0 0;}
-            .gm-dialog-header .gm-btn-close:hover,.gm-dialog-header .gm-btn-close:active{background-color: #fafafa;color: rgb(28, 29, 30);background-color: rgba(0,0,0,.25);border-color: rgba(0,0,0,0)}
-            .gm-btn-no{ color: rgb(219, 40, 40); }
-            .gm-btn-no:hover, .gm-btn-no:active{ background-color: rgb(219, 40, 40); color: rgb(255, 255, 255); }
-            .gm-btn-yes{ color: rgb(30, 130, 205); }
-            .gm-btn-yes:hover, .gm-btn-yes:active{ background-color: rgb(30, 130, 205);color: rgb(255, 255, 255); }
+            .gm-dialog-header button.gm-btn-close{padding: 4px 20px 3px;min-width: auto;float:right; margin: 4px -8px 0 0;}
+            .gm-dialog-header button.gm-btn-close:hover,.gm-dialog-header button.gm-btn-close:active{background-color: #fafafa;color: rgb(28, 29, 30);background-color: rgba(0,0,0,.25);border-color: rgba(0,0,0,0)}
+            button..gm-btn-no, .gm-btn-no{ color: rgb(219, 40, 40); }
+            button..gm-btn-no:hover, button..gm-btn-no:active, 
+            .gm-btn-no:hover, .gm-btn-no:active
+            {background-color: rgb(219, 40, 40); color: rgb(255, 255, 255); }
+            button.gm-btn-yes, .gm-btn-yes{ color: rgb(30, 130, 205); }
+            button.gm-btn-yes:hover, button.gm-btn-yes:active,
+            .gm-btn-yes:hover, .gm-btn-yes:active
+            {background-color: rgb(30, 130, 205);color: rgb(255, 255, 255); }
             .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;clear:both;}
             .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
             .gm-dialog-header{background-color: rgba(0,0,0,.03);}
@@ -2293,8 +2299,8 @@ class gmStyles {
         //gmHeader
         styles += `
             .gm-header {background-color: #363636;color: #fff;border: 1px solid rgba(0,0,0,0);}
-            .gm-header.success{background-color: #00d1b2;}
-            .gm-header.error{background-color: #f14668;}
+            .gm-header.success{background-color: #00d1b2;color: #fff;}
+            .gm-header.error{background-color: #f14668;color: #fff;}
             .gm-header.warning {background-color: #ffdd57;color: rgba(0,0,0,.7);}
             .gm-header.info {background-color: #3298dc;color: #fff;}
             .gm-header *{color: #fff;}

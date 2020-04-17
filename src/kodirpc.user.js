@@ -1083,10 +1083,31 @@
                                     name = input.getAttribute('name'),
                                     value = input.value,
                                     old = input.data('value') || "",
-                                    invalid = input.data('error') || "",
-                                    dirty, parsed,
+                                    dirty = value !== old,
                                     error = false;
                             //there
+                            
+                            if (name === "user") {
+                                input.data("value", value);
+                                if (dirty === true) {
+                                    server.user = value;
+                                    if (server.user !== value) error = true;
+                                    input.classList[error === true ? "add" : "remove"]('error');
+                                    self.authflashbox.error('Username ' + value + ' is invalid.');
+                                }
+                            } else if (name === "pass") {
+                                if (value.length > 0) {
+
+
+
+
+                                }
+                            }
+
+
+
+
+
                         }
                     },
                     fieldset_show: {
@@ -1117,7 +1138,7 @@
                         },
                         server_auth(){
                             self.authflashbox = self.authflashbox || gmFlash.prependTo(self.elements.inputs.pass.nextElementSibling, {
-                                timeout: 1500,
+                                timeout: 3000,
                                 removeOnClick: false,
                                 animateEndDuration: 500,
                                 animateStartDuration: 500,
@@ -1127,7 +1148,6 @@
                             this.querySelector('legend').innerHTML = `Credentials (${self.data.current.name})`;
                             self.elements.inputs.pass.value = null;
                             if (self.data.current.auth !== null) self.authflashbox.info("A password is currently set.");
-                            console.debug(self.authflashbox);
                         }
 
                     },
