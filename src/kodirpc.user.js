@@ -750,7 +750,8 @@
                                         <input type="text" name="user" value="" placeholder="Username">
                                         <label>Password:</label>
                                         <input type="password" name="pass" value="" placeholder="Password">
-                                        <div style="text-align: right;margin: 16px 0 0;">
+                                        <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
+                                            <button class="gm-btn gm-btn-no" name="rm_pass">Remove password</button>
                                             <button class="gm-btn" name="check">Check Connection</button>
                                         </div>
                                     </fieldset>
@@ -1035,7 +1036,7 @@
                                 }
                                 input.classList[error === true ? "add" : "remove"]('error');
 
-                            }
+                            } else if (input.matches('.error')) error = true;
                             
                             button.disabled = error === true ? true : input.siblings('input.error').length > 0 || null;
                             
@@ -1045,10 +1046,35 @@
                             const
                                     input = this,
                                     server = self.data.current;
-                            let name = input.getAttribute('name'),
+                            let
+                                    name = input.getAttribute('name'),
                                     value = input.value,
                                     old = input.data('value') || "",
-                                    invalid = input.data('error') || "";
+                                    invalid = input.data('error') || "",
+                                    dirty, parsed,
+                                    error = false;
+
+                            try {
+                                parsed = JSON.parse(value);
+                            } catch (x) {
+                                parsed = value;
+                            }
+                            value = parsed;
+                            dirty = value !== old;
+                            input.data('value', value);
+                            //validation
+                            if (input.matches(':invalid')) error = true;
+                            else if (dirty === true) {
+                                server[name] = value;
+                                if (server[name] !== value) error = true;
+                                input.classList[error === true ? "add" : "remove"]('error');
+                            } else if (input.matches('.error')) error = true;
+
+
+                            if (error === true) self.flashbox.error(invalid.replace('%s', value));
+                            if ((input.siblings('input.error,input:invalid').length > 0) || error === true) self.cansave = false;
+                            else if (server.dirty === true) self.cansave = true;
+
 
 //there
 
@@ -1122,13 +1148,17 @@
                                 let input = inputs[name];
                                 input.classList.remove('error');
                                 input.value = null;
+                                input.data('value', null);
                             });
 
                             //loads data
                             let server = data.current;
                             if (server !== null) {
                                 valid = true;
-                                list.forEach(name => inputs[name].value = server[name]);
+                                list.forEach(name => {
+                                    inputs[name].value = server[name];
+                                    inputs[name].data('value', server[name]);
+                                });
                                 this.form.querySelectorAll('.kodirpc-server-selection .gm-list li').forEach(li => {
                                     let uid = li.data('uniqid');
                                     li.classList[uid === uniqid ? "add" : "remove"]('active');

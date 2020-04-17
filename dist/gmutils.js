@@ -1869,7 +1869,7 @@ class gmFlash {
             end(){
                 div.remove();
             }
-        }
+        };
 
         Object.keys(events).forEach(key => emit.on(eventPrefix + key, events[key]));
 
@@ -2213,7 +2213,7 @@ class gmStyles {
                 font-size: 16px;font-weight: 600;min-width: 96px;margin: 8px 4px;
             }
             .gm-btn:hover, .gm-btn:active{  background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); }
-            .gm-btn + .gm-btn{margin-left: 16px;}
+            .gm-dialog-footer .gm-btn + .gm-btn{margin-left: 16px;}
             .gm-dialog-header .gm-btn-close{padding: 4px 20px 3px;min-width: auto;float:right; margin: 4px -8px 0 0;}
             .gm-dialog-header .gm-btn-close:hover,.gm-dialog-header .gm-btn-close:active{background-color: #fafafa;color: rgb(28, 29, 30);background-color: rgba(0,0,0,.25);border-color: rgba(0,0,0,0)}
             .gm-btn-no{ color: rgb(219, 40, 40); }
