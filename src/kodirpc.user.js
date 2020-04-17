@@ -5,7 +5,8 @@
 // @description  Sends Video Streams to Kodi
 // @author       ngsoft
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.3/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/mitchellmebane/GM_fetch@master/GM_fetch.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.3/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -69,20 +70,13 @@
 
     class KodiRPCServer {
 
-        get dirty(){
-            return this._dirty === true;
-        }
-
         set name(name){
             if (typeof name === s) {
                 this._params.name = name;
                 this._dirty = true;
             }
-
         }
-        get name(){
-            return this._params.name;
-        }
+        
         set host(h){
             if (typeof h !== s) return;
             let valid = true;
@@ -98,9 +92,8 @@
                 this._dirty = true;
             }
         }
-        get host(){
-            return this._params.host;
-        }
+        
+        
         set pathname(p){
             if (typeof p !== s) return;
             if (/^\/(?:[\w\-\.@]+[\/]?)+$/.test(p)) {
@@ -108,12 +101,11 @@
                 this._dirty = true;
             }
         }
-        get pathname(){
-            return this._params.pathname;
-        }
+        
         set user(user){
             if (user === null) {
                 this._params.username = this._params.auth = null;
+                this._dirty = true;
                 return;
             }
             if (typeof user !== s) return;
@@ -122,9 +114,6 @@
 
             }
         }
-        get user(){
-            return this._params.username;
-        }
         set port(p){
             if (typeof p !== n) return;
             if ((p > 0) && (p < 65536)) {
@@ -132,18 +121,30 @@
                 this._dirty = true;
             }
         }
-        get port(){
-            return this._params.port;
-        }
         set auth(pass){
             if ((typeof pass === s) && (this.user !== null)) {
                 this._params.auth = btoa(this.user + ':' + pass);
                 this._dirty = true;
-            } else if (pass === null) {
-                this.user = null;
-                this._dirty = true;
-            }
-
+            } else if (pass === null) this.user = null;
+        }
+        
+        
+        get name(){
+            return this._params.name;
+        }
+        get host(){
+            return this._params.host;
+        }
+        
+        get pathname(){
+            return this._params.pathname;
+        }
+        
+        get user(){
+            return this._params.username;
+        }
+        get port(){
+            return this._params.port;
         }
         get auth(){
             return this._params.auth;
@@ -165,10 +166,15 @@
         }
 
         get online(){
-            let item = cache.getItem(this.uniqid);
+            let item = cache.getItem(this.uniqid), val;
             if (!item.isHit()) return null;
-            return item.get();
+            return typeof (val = item.get()) !== n ? isPlainObject(val) : false;
         }
+        
+        get dirty(){
+            return this._dirty === true;
+        }
+
 
         constructor(params){
             let defs = {
@@ -195,9 +201,8 @@
         get dirty(){
             return this._dirty;
         }
-        set dirty(flag){
-            this._dirty = flag === true;
-        }
+
+
         _getHost(url){
             let host;
             if (typeof url === s) {
@@ -229,7 +234,7 @@
             let host = this._getHost(url);
             if ((typeof host === s) && !(this.has(host))) {
                 this.list.push(host);
-                this.dirty = true;
+                this._dirty = true;
             }
             return this.has(url);
         }
@@ -292,6 +297,10 @@
             return this.settings.config;
         }
 
+        get cache(){
+            return cache;
+        }
+
 
         sendRPCRequest(server, method, params, success, error, complete){
             params = params || {};
@@ -315,22 +324,18 @@
                             try {
                                 response = JSON.parse(xhr.response);
                             } catch (e) {
-                                response = {
-                                    error: {
-                                        code: 404
-                                    }
-                                };
+                                response = {error: {code: -32700}}; // ERR_JSON_PARSE
                             }
                             if (typeof response.result !== u) {
-                                success.call(self, response, server);
-                            } else error.call(self, response.error.code, server);
+                                success.call(self, server, response);
+                            } else error.call(self, server, response.error.code);
 
-                        } else error.call(self, xhr.status, server);
+                        } else error.call(self, server, xhr.status);
                         
                         complete.call(self, server);
                     },
                     onerror(xhr){
-                        error.call(self, xhr.status, server);
+                        error.call(self, server, xhr.status);
                         complete.call(self, server);
                     }
                 });
@@ -357,6 +362,53 @@
             }, success, error, complete);
 
         }
+
+        /**
+         * Check Server Connection
+         * @param {KodiRPCServer}   server      Server to use
+         * @param {function}        success     Called on success
+         * @param {function}        error       Called on error
+         * @param {function}        [complete]  Called when request is complete
+         * @param {boolean}         [cache]     Use Cached value
+         * @returns {undefined}
+         */
+        checkConnection(server, success, error){
+
+
+            if (!(server instanceof KodiRPCServer) || typeof success !== f || typeof error !== true) throw new Error("Invalid Arguments.");
+
+            const self = this;
+            let cache = true, complete = x => x;
+            if (arguments.length > 3) {
+                for (let i = 3; i < arguments.length; i++) {
+                    let val = arguments[i];
+                    if (typeof val === f) complete = val;
+                    if (typeof val === b) cache = val;
+                }
+            }
+            
+            let item = self.cache.getItem(server.uniqid);
+
+            let callback = (server, response) => {
+                item.set(response);
+                self.cache.save(item);
+                if (typeof response === n) error.call(self, server, response);
+                else if (isPlainObject(response)) success.call(self, server, response);
+
+            };
+
+            if (item.isHit()) {
+                if (cache === true) {
+                    callback(server, item.get());
+                    complete.call(self, server);
+                    return;
+                }
+            }
+
+            self.sendRPCRequest(server, "Playlist.GetPlaylists", {}, callback, callback, complete);
+
+        }
+
 
 
     }
@@ -413,15 +465,8 @@
             const self = this, servers = self.client.servers;
 
             servers.forEach(server => {
-                let item = self.cache.getItem(server.uniqid);
-                if (item.isHit()) return;
-                self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, () => {
-                    item.set(true);
-                }, () => {
-                    item.set(false);
-                }, () => {
-                    self.cache.save(item);
-                    self.trigger(self.prefix + '.update', {server: server});
+                self.client.checkConnection(server,x=>x,x=>x,s=>{
+                    self.trigger(self.prefix + 'update', {server: s});
                 });
             });
         }
@@ -435,14 +480,14 @@
             Object.assign(this, {
                 title: 'KodiRPC Module',
                 version: GMinfo.script.version,
-                prefix: 'kodirpc',
+                prefix: 'kodirpc.',
                 cache: cache
 
             });
             new Events(doc.body, this);
             const events = this.events;
             Object.keys(events).forEach(evt => {
-                let type = self.prefix + '.' + evt;
+                let type = self.prefix + evt;
                 self.on(type, events[evt]);
             });
 
@@ -452,11 +497,12 @@
             }, (self.cache.ttl + 2000));
             self.checkServersConnection();
 
-            self.one(self.prefix + '.ready', e => {
+            self.one(self.prefix + 'ready', e => {
                 self.ready = true;
+                console.debug(this.title, 'version', this.version, 'started.');
             });
 
-            self.trigger(self.prefix + '.ready', {
+            self.trigger(self.prefix + 'ready', {
                 client: self.clients
             });
         }
@@ -526,7 +572,6 @@
         }
 
         addServer(server){
-
             if (server instanceof KodiRPCServer) {
                 const self = this;
                 let li = this._createServerListItem(server);
@@ -538,7 +583,6 @@
         }
 
         addBlacklistHost(host){
-
             if (typeof host === s ? host.length > 0 : false) {
                 const self = this;
                 let li = this._createBlacklistItem(host);
@@ -546,8 +590,6 @@
                     ul.appendChild(li);
                 });
             }
-
-
         }
         _createServerListItem(server){
             if (!(server instanceof KodiRPCServer)) throw new Error('Invalid Argument');
@@ -640,9 +682,23 @@
                                     <fieldset class="kodirpc-server-add" name="server_add">
                                         <legend>Add a Server</legend>
                                         <label>Name:</label>
-                                        <input type="text" name="add_name" value="" placeholder="Name">
+                                        <input 
+                                            type="text"
+                                            name="add_name"
+                                            value=""
+                                            placeholder="Name"
+                                            data-exists="Server name %s already exists."
+                                            data-error="Server name %s is invalid."
+                                        >
                                         <label>Hostname:</label>
-                                        <input type="text" name="add_host" value="" placeholder="Hostname">
+                                        <input 
+                                            type="text"
+                                            name="add_host"
+                                            value=""
+                                            placeholder="Hostname"
+                                            data-exists="Server hostname %s already exists."
+                                            data-error="Server hostname %s is invalid."
+                                        >
                                         
                                         <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
                                             <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
@@ -656,7 +712,7 @@
                                             Server list is empty.
                                         </div>
                                     </fieldset>
-                                    <fieldset class="kodirpc-server-edit">
+                                    <fieldset class="kodirpc-server-edit" name="server_edit">
                                         <legend>Edit Server</legend>
                                         <label>Name:</label>
                                         <input type="text" name="name" value="" placeholder="Name" required>
@@ -667,7 +723,7 @@
                                         <label>Endpoint:</label>
                                         <input type="text" name="pathname" value="" placeholder="Endpoint" required>
                                     </fieldset>
-                                    <fieldset class="kodirpc-server-auth">
+                                    <fieldset class="kodirpc-server-auth" name="server_auth">
                                         <legend>Credentials</legend>
                                         <label>Username:</label>
                                         <input type="text" name="user" value="" placeholder="Username">
@@ -771,6 +827,14 @@
                             if (typeof formName === s ? formName.length > 0 : false) {
                                 if (typeof self.actions.form_change[formName] === f) self.actions.form_change[formName].call(target, e);
                             }
+                            let fieldset = target.closest('fieldset[name]');
+                            if (fieldset !== null) {
+                                let fieldsetName = fieldset.getAttribute('name') || "";
+                                if (fieldsetName.length > 0 ? typeof self.actions.fieldset_change[fieldsetName] === f : false) {
+                                    self.actions.fieldset_change[fieldsetName].call(target, e);
+                                }
+                            }
+
                         }
                     },
 
@@ -918,17 +982,59 @@
                             }
                         }
                     },
-                    form_show: {},
+                    
+                    fieldset_change: {
+                        server_add(e){
+                            const
+                                    input = this,
+                                    server = self.data.add,
+                                    servers = self.data.servers,
+                                    button = self.elements.buttons.add_confirm;
+                            let
+                                    name = input.getAttribute('name'),
+                                    value = input.value,
+                                    old = input.data('value') || "",
+                                    key = name.split('_').pop(),
+                                    invalid = input.data('error'),
+                                    exists = input.data('exists'),
+                                    error = false,
+                                    dirty = old !== value;
+
+                            input.data('value', value);
+                            //validation
+                            if (dirty === true) {
+                                if (servers.map(x => x[key]).includes(value)) {
+                                    self.flashbox.error(exists.replace('%s', value));
+                                    error = true;
+                                }
+                                server[key] = value;
+                                if (server[key] !== value) {
+                                    self.flashbox.error(invalid.replace('%s', value));
+                                    error = true;
+                                }
+                                input.classList[error === true ? "add" : "remove"]('error');
+
+                            }
+                            
+                            button.disabled = error === true ? true : input.siblings('input.error').length > 0 || null;
+                            
+
+                        }
+                    },
                     fieldset_show: {
                         server_add(){
                             const inputs = self.elements.inputs;
                             const server = self.data.add = new KodiRPCServer();
                             inputs.add_host.value = server.host;
-                            inputs.add_name.value = server.name = "New Server " + (self.data.servers.length + 1);
-                            inputs.add_name.classList.remove('error');
-                            inputs.add_host.classList.remove('error');
+                            inputs.add_name.value = server.name = "New Server " + (self.data.servers.length + 1); //dirty flag
+                            [inputs.add_name, inputs.add_host].forEach(i => {
+                                i.classList.remove('error');
+                                i.data('value', i.value)
+                            });
+
                         }
                     },
+                    form_show: {},
                     form_change: {
                         basics(e){
                             if (e.target.matches('[type="checkbox"][name]')) {
@@ -957,11 +1063,9 @@
                                     t.classList.remove('error');
                                 } else if (typeof flash === s ? flash.length > 0 : false) self.flashbox.error(flash);
                             } else t.classList.remove('error');
-
-                            self.cansave = (["name", "host", "port", "pathname", "user"].every(n => inputs[n].matches(':not(.error)')) && server.dirty === true);
-
-
-
+                            if (["name", "host", "port", "pathname", "user"].every(n => inputs[n].matches(':not(.error)'))) {
+                                self.cansave = server.dirty;
+                            }
 
                         }
                     },
@@ -1017,29 +1121,9 @@
                             self.flashbox.info("Editing " + server.name);
 
 
-                        },
-                        add_name(e){
-                            const server = self.data.add;
-                            this.classList.add('error');
-
-                            if (this.value.length > 0) {
-                                let val = this.value;
-                                server.name = val;
-                                if (!self.data.servers.map(x => x.name).includes(val)) this.classList.remove('error');
-                                else self.flashbox.error("Server name " + val + " already exists.");
-                            }
-                        },
-                        add_host(e){
-                            const server = self.data.add;
-                            this.classList.add('error');
-
-                            if (this.value.length > 0) {
-                                let val = this.value;
-                                server.host = val;
-                                if (!self.data.servers.map(x => x.host).includes(val)) this.classList.remove('error');
-                                else self.flashbox.error("Server hostname " + val + " already exists.");
-                            }
                         }
+
+
                     },
                     click: {
                         rm_url(){
@@ -1061,6 +1145,28 @@
 
 
                         add_confirm(){
+                            const
+                                    inputs = [
+                                        self.elements.inputs.add_name,
+                                        self.elements.inputs.add_host
+                                    ],
+                                    server = self.data.add,
+                                    servers = self.data.servers;
+
+                            let cansave = true;
+
+
+                            inputs.forEach(input => {
+                                //validation
+                                input.data('value', null); console.debug(input);
+                                self.actions.fieldset_change.server_add.call(input);
+                                if (input.classList.contains('error')) cansave = false;
+
+                            });
+
+                            //if (cansave === false) this.disabled = true;
+
+                            /*
                             const inputs = self.elements.inputs;
                             let name = inputs.add_name.value, host = inputs.add_host.value,
                                     server = self.data.add,
@@ -1087,6 +1193,7 @@
                             }
 
                             errors.forEach(x => x.classList.add('error'));
+                            */
 
                         },
 

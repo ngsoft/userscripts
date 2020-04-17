@@ -1392,9 +1392,7 @@ HTMLElement.prototype.siblings = function(selector){
         for (let i = 0; i < list.length; i++) {
             let el = list[i];
             if(el === self) continue;
-            if (selector !== null) {
-                if (!el.matches(selector)) continue;
-            }
+            if (selector !== null ? el.matches(selector) === false : false) continue;
             retval.push(el);
         }
     }
