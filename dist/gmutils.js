@@ -1769,7 +1769,7 @@ class gmFlash {
      * @param {number}              [timeout]       Timeout for the message to disappear (defaults 2000ms, set it to 0 to disable it)
      * @param {string}              [classes]       Classes to add to the message
      * @param {function}            [start]         Callback to use when message is displayed
-     * @param {function}            [end]           Callback to use when message is removed
+     * @param {function}            [end]           Callback to use when message is removed 
      * @param {boolean}             [removeOnClick] Removes message when clicked
      * @returns {gmFlash}
      */
@@ -1797,6 +1797,10 @@ class gmFlash {
                 if (typeof val === b) removeOnClick = val;
 
             }
+        }
+        if (typeof start === f ? typeof end !== f : false) {
+            end = start;
+            start = x => x;
         }
         start = typeof start === f ? start : x => x;
         end = typeof end === f ? end : x => x;

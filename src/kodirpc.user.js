@@ -1161,39 +1161,19 @@
                                 input.data('value', null); console.debug(input);
                                 self.actions.fieldset_change.server_add.call(input);
                                 if (input.classList.contains('error')) cansave = false;
-
                             });
 
-                            //if (cansave === false) this.disabled = true;
 
-                            /*
-                            const inputs = self.elements.inputs;
-                            let name = inputs.add_name.value, host = inputs.add_host.value,
-                                    server = self.data.add,
-                                    names = self.data.servers.map(x => x.name),
-                                    hosts = self.data.servers.map(x => x.host), errors = [];
-                            inputs.add_name.classList.remove('error');
-                            inputs.add_host.classList.remove('error');
-
-
-                            server.name = name;
-                            if (names.includes(name)) errors.push(inputs.add_name);
-                            else if (server.name !== name) errors.push(inputs.add_name);
-
-                            server.host = host;
-                            if (hosts.includes(host)) errors.push(inputs.add_host);
-                            else if (server.host !== host) errors.push(inputs.add_host);
-
-                            if (errors.length === 0) {
-                                self.data.servers.push(server);
-                                self.cansave = true;
+                            if (cansave === true) {
+                                servers.push(server);
                                 self.addServer(server);
-                                self.data.current = server;
-                                //[inputs.add_name, inputs.add_host].forEach(i => i.value = null);
+                                self.cansave = true;
+
+                                self.flashbox.success(server.name + " added to server list");
+
+                                self.data.current = server; //open editor
                             }
 
-                            errors.forEach(x => x.classList.add('error'));
-                            */
 
                         },
 
