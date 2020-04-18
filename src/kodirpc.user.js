@@ -1510,48 +1510,33 @@
 
                 li.appendChild(container);
                 li.appendChild(label);
-                
-                let obj = {
-                    uniqid: server.uniqid,
-                    root: li,
-                    input: checkbox,
-                    label: label,
-                    server: server
-                };
-                Object.defineProperties(obj, {
-                    form: {
-                        set(v){},
-                        get(){
-                            return this.input.form;
-                        }
-                    }
-                });
-                Object.defineProperties(checkbox, {
-                    infos: {
-                        set(v){}, get(){
-                            return obj;
-                        }
-                    }
-                });
-                Object.defineProperties(li, {
-                    checked: {
-                        set(v){
-                            checkbox.checked = v === true;
-                        },
-                        get(){
-                            return checkbox.checked === true;
-                        }
-                    }
-                });
-
-                new Events(checkbox, obj);
-
                 li.addEventListener('click', function(e){
                     e.preventDefault();
-                    this.checked = this.checked !== true;
-                    obj.trigger('change');
+                    checkbox.checked = checkbox.checked !== true;
+                    Events(checkbox).trigger('change');
                 });
 
+                Object.defineProperties(checkbox, {
+                    uniqid: {value: server.uniqid, configurable: true},
+                    server: {value: server, configurable: true}
+                });
+
+                Object.defineProperties(li, {
+                    checked: {
+                        get(){
+                            return checkbox.checked === true;
+                        },
+                        set(v){
+                            checkbox.checked = v !== false;
+                        }
+                    },
+                    input: {
+                        get(){
+                            return checkbox;
+                        },
+                        set(v){}
+                    }
+                });
                 return li;
             }
 
@@ -1586,23 +1571,36 @@
                             servers.forEach(server => {
                                 let li = self.mkSwitch(server);
                                 if (typeof last[server.uniqid] !== u) li.checked = true;
+                                inputs.push(li.input);
                                 ul.appendChild(li);
                             });
 
-
-
-
-                        },
-                        change(e){
-                            console.debug(e);
-                            console.debug(this);
                         }
                     }
                 })
             });
             self.dialog.body = self.root;
-            //self.dialog.elements.body.classList.add('gm-flex-center');
+
+            const inputs = [], save = self.dialog.elements.buttons.yes;
+
             new Events(self.root, self);
+
+            self.on('change', e => {
+                let input = e.target.closest('input[name]');
+                save.disabled = inputs.every(x => x.checked === false) ? true : null;
+            });
+
+            self.dialog.on('confirm', e => {
+                let list = inputs.filter(x => x.checked === true).map(x => x.server);
+                client.last = list;
+                callback.call(client, list);
+            });
+
+
+            if (self.servers.length === 1) return callback.call(client, self.servers);
+
+            else if (self.servers.length === 0) return alert("There are no Kodi RPC servers configured.");
+
 
             KodiRPCServerSelector.loadStyles();
 
@@ -1887,7 +1885,7 @@
     }
 
 
-    new KodiRPCServerSelector(x => x);
+    new KodiRPCServerSelector(console.warn);
 
 
     (() => {
