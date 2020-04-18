@@ -1681,6 +1681,12 @@ class gmDialog {
             self.setSize();
         });
 
+        //mozilla firefox scroll hack
+        if (/firefox/i.test(navigator.userAgent) ? document.documentElement.style["scrollbar-width"] === undef : false) {
+            dialog.classList.add('gm-moz-scrollable');
+        }
+
+
         new gmStyles();
         //register current instance
         if (typeof doc.documentElement.gmDialog === u) {
@@ -2231,11 +2237,11 @@ class gmStyles {
             .gm-dialog-header, .gm-dialog-footer{min-height: 56px;padding: 8px 24px 12px 24px;background-color: rgba(0,0,0,.03);position: relative;clear:both;}
             .gm-dialog-header, .gm-dialog-body {border-bottom:1px solid rgba(0,0,0,.125);}
             .gm-dialog-header{background-color: rgba(0,0,0,.03);}
-            .gm-dialog-body{
-                min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;
-                padding: 24px 48px 24px 24px;color: #333;position:relative;overflow-y:scroll; margin: 0 -24px 0 0;
-            }
-            .gm-dialog-body > *{margin: -24px; padding: 8px 24px;text-align: left;font-size: 20px;}
+            .gm-dialog-body{ min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;color: #333;position:relative;padding: 0;margin:0;}
+            .gm-dialog-body{overflow-y:scroll;scrollbar-width: none;ms-overflow-style: none;}
+            .gm-dialog-body::-webkit-scrollbar { width: 0; height: 0;}
+            .gm-moz-scrollable .gm-dialog-body {margin-right: -67px;padding-right: 50px;}
+            .gm-dialog-body > *{margin: 0; padding: 8px 24px;text-align: left;font-size: 20px;}
             .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
             .gm-dialog-body h2{font-size: 24px;position:relative;padding: 8px 0 16px;margin: 0 0 16px;}
             .gm-dialog-body h2:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:0;display:block;content:"";height: 1px;}
@@ -2367,6 +2373,8 @@ class gmStyles {
             [class*="switch"][class*="-sm"] .slider{transform: scale(.55,.55);}
             [class*="switch"][class*="-md"] .slider{transform: scale(.9,.9);}
             [class*="switch"][class*="-lg"] .slider{transform: scale(1.1,1.1);}
+            .gm-list > * > [class*="switch"]{position: absolute;top: 50%;left:0;transform: translate(0, -50%);}
+             [class*="switch"] + .gm-label{font-size: 18px;font-weight:600;}
         `;
 
         return styles;

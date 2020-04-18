@@ -252,6 +252,54 @@
     }
 
 
+    class KodiRPCServerList extends Array {
+
+
+
+        push(server){
+
+            if (server instanceof KodiRPCServer ? this.map(x => x.uniqid).includes(server.uniqid) === false : false) {
+                super.push(server);
+                Object.defineProperty(this, server.uniqid, {
+                    configurable: true, enumerable: false,
+                    value: server
+                });
+            }
+
+            return this.length;
+        }
+
+        removeServer(server){
+            if (server instanceof KodiRPCServer) return this.remove(server.uniqid);
+        }
+
+        remove(uniqid){
+            if (typeof uniqid === s ? uniqid.length > 0 : false) {
+                if (this[uniqid] instanceof KodiRPCServer) {
+                    let
+                            server = this[uniqid],
+                            index = this.map(x => x.uniqid).indexOf(uniqid);
+                    delete this[uniqid];
+                    if (index > -1) this.splice(index, 1);
+
+                }
+            }
+
+        }
+
+        constructor(list){
+            super();
+            list = list || [];
+
+            if (Array.isArray(list) ? list.every(x => x instanceof KodiRPCServer) : false) {
+
+                const self = this;
+                list.forEach(server => self.push(server));
+
+            }
+        }
+    }
+
     class KodiRPCClient {
 
         get settings(){
@@ -274,15 +322,18 @@
                     return 0;
                 }),
                 blacklist: new KodiRPCBlacklist(this._settings.get('blacklist')),
-                config: this._settings.get('config') || {}
+                config: this._settings.get('config') || {},
+                last: this._settings.get('last') || []
             };
+
+
 
             if (update === true) this._settings.set('servers', retval.servers.map(x => x._params));
             return retval;
         }
 
         get servers(){
-            return this.settings.servers;
+            return new KodiRPCServerList(this.settings.servers);
         }
 
         get blacklist(){
@@ -292,6 +343,24 @@
         get config(){
             return this.settings.config;
         }
+
+        get last(){
+            let
+                    last = this.settings.last,
+                    retval;
+            const servers = this.servers;
+            if (last.length > 0) {
+                retval = servers.filter(x => last.includes(x.uniqid));
+            } else retval = Array.from(servers);
+            return new KodiRPCServerList(retval);
+        }
+        set last(list){
+            if (Array.isArray(list) && list.every(s => s instanceof KodiRPCServer)) {
+                let last = list.map(s => s.uniqid);
+                this._settings.set('last', last);
+            }
+        }
+
 
         get cache(){
             return cache;
@@ -1401,7 +1470,10 @@
                 .kodirpc-server-selector, 
                 .kodirpc-server-selector fieldset legend
                 {padding-top:0;padding-bottom:0;}
-
+                .kodirpc-server-selector fieldset legend{margin-bottom:0;}
+                .kodirpc-server-selector fieldset legend:before{display: none;}
+                .kodirpc-server-selector .gm-list{border-radius: 0; padding:0;margin: 0;cursor: pointer;}
+                .kodirpc-server-selector .gm-list input{z-index:-1;visibility:hidden;}
             `;
             addstyle(styles);
         }
@@ -1421,18 +1493,55 @@
             if (server instanceof KodiRPCServer) {
                 let
                         li = doc.createElement('li'),
+                        label = doc.createElement('span'),
                         container = doc.createElement('span'),
                         slider = doc.createElement('span'),
                         checkbox = doc.createElement('input');
                 container.classList.add('switch-round-sm');
                 slider.classList.add('slider');
+                label.classList.add('gm-label');
                 Object.assign(checkbox, {
                     type: "checkbox",
                     name: server.uniqid
                 });
+                label.innerHTML = server.name;
                 container.appendChild(checkbox);
                 container.appendChild(slider);
-                return container;
+
+                li.appendChild(container);
+                li.appendChild(label);
+                
+                let obj = {
+                    uniqid: server.uniqid,
+                    root: li,
+                    input: checkbox,
+                    label: label,
+                    server: server
+                };
+                Object.defineProperties(obj, {
+                    form: {
+                        set(v){},
+                        get(){
+                            return this.input.form;
+                        }
+                    }
+                });
+
+                new Events(obj.root, obj);
+
+                obj.on('click', function(e){
+                    e.preventDefault();
+                    let change = new Event('change', {bubbles: true, cancelable: true});
+                    this.input.checked = this.input.checked !== true;
+                    this.input.dispatchEvent(change);
+                });
+
+                /* Events(li).on('click', e => {
+                    e.preventDefault();
+                    checkbox.checked = checkbox.checked !== true;
+                    Events(checkbox).trigger('change');
+                });*/
+                return obj;
             }
 
         }
@@ -1449,7 +1558,7 @@
             Object.assign(this, {
                 root: html2element(self.template),
                 servers: client.servers,
-
+                last: client.last,
                 dialog: new gmDialog(doc.body, {
                     title: GMinfo.script.name,
                     width: "50%",
@@ -1459,12 +1568,26 @@
                     },
                     events: {
                         open(){
-                            self.trigger('init');
+                            const
+                                    servers = self.servers,
+                                    last = self.last;
+                            let ul = self.root.querySelector('.gm-list');
+                            servers.forEach(server => {
+                                let sw = self.mkSwitch(server);
+
+                                if (typeof last[server.uniqid] !== u) sw.input.checked = true;
+
+                                ul.appendChild(sw.root);
+                            });
+                        },
+                        change(e){
+                            console.debug(e);
                         }
                     }
                 })
             });
             self.dialog.body = self.root;
+            //self.dialog.elements.body.classList.add('gm-flex-center');
             new Events(self.root, self);
 
             KodiRPCServerSelector.loadStyles();
@@ -1751,6 +1874,7 @@
 
 
     new KodiRPCServerSelector(x => x);
+
 
     (() => {
         const elements = [];
