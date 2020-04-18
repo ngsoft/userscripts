@@ -47,6 +47,394 @@
 
 
 
+
+
+    class KodiRPCUI {
+
+        constructor(video){
+            if (!(video instanceof Element)) return;
+
+            const
+                    self = this,
+                    client = new KodiRPCClient(),
+                    elements = this.template,
+                    prefix = 'kodirpc.',
+                    emit = new Events(doc.body),
+                    media = new Events(video),
+                    notify = gmFlash.prependTo(elements.notify),
+                    events = {},
+                    actions = {},
+                    module = {};
+
+            new Events(elements.root, this);
+            Object.keys(events).forEach(type => self.on(type, events[type]));
+            Object.keys(module).forEach(type => emit.on(prefix + type, module[type]));
+
+
+
+        }
+        static loadStyles(){
+            if (this.styles === true) return;
+            this.styles = true;
+            let styles = `
+
+            `;
+            addstyle(styles);
+        }
+
+        get template(){
+
+            const
+                    template = {
+                        root: '<div class="krpcui"/>',
+                        toolbar: '<div class="krpcui-toolbar" />',
+                        servers: '<ul class="krpcui-servers" />',
+                        notify: '<div class="krpcui-notify" />'
+                    },
+                    buttons = {
+                        send: '<span class="krpcui-control" name="send">Send to Kodi</span>',
+                        settings: '<span class="krpcui-control" name="settings">Settings</span>'
+                    };
+
+            Object.keys(template).forEach(key => template[key] = html2element(template[key]));
+            Object.keys(buttons).forEach(key => {
+                let button = template[key] = html2element(buttons[key]);
+                Object.defineProperties(button, {
+                    name: {
+                        set(name){
+                            if (typeof name === s) this.setAttribute('name', name);
+                        },
+                        get(){
+                            return this.getAttribute('name') || "";
+                        }
+                    },
+                    disabled: {
+                        set(flag){
+                            if (typeof flag === b ? true : flag === null) this.classList[flag === true ? "add" : "remove"]('disabled');
+                        },
+                        get(){
+                            return this.classList.contains('disabled');
+                        }
+                    }
+                });
+            });
+
+
+            template.root.appendChild(template.toolbar);
+            template.root.appendChild(template.servers);
+            template.toolbar.appendChild(template.send);
+            template.toolbar.appendChild(template.settings);
+
+            return template;
+        }
+
+    }
+
+
+
+
+
+    /**
+     * Standalone User Interface
+     */
+    class KodiRPCUIOld {
+
+        static loadStyles(){
+            if (this.styles === true) return;
+            this.styles = true;
+            let styles = `
+                .KodiRPCUI, .KodiRPCUI button, .KodiRPCUI button:hover, .KodiRPCUI button:active, .KodiRPCUI *, .KodiRPCUI-notify{
+                    margin:0; padding:0; border: none;background-color: transparent;display: inline-block;box-sizing: border-box;
+                    font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#000;font-size: 16px;border: 0;border-radius:0;
+                }
+                .KodiRPCUI{position: absolute; top: 64px;right:32px;z-index: 2147483646;}
+                .KodiRPCUI img{width:64px;height:64px;}
+                .KodiRPCUI button{cursor:pointer;}
+                .KodiRPCUI-expand {}
+                .KodiRPCUI-toolbar, .KodiRPCUI-servers, .KodiRPCUI-servers-title {display: block;background-color: rgba(255, 255, 255, 0.45);display:block;}
+                .KodiRPCUI-toolbar button, .KodiRPCUI-toolbar button:hover, .KodiRPCUI-toolbar button:active{
+                    padding: 16px 24px;border-radius:0;width:150px;
+                }
+                .KodiRPCUI-toolbar button:hover, .KodiRPCUI-toolbar button:active, .KodiRPCUI-servers li:hover , .KodiRPCUI-servers-title:hover{
+                    background-color: rgba(0,0,0,.125);
+                }
+                .KodiRPCUI-servers {list-style-type: none;}
+                .KodiRPCUI-servers li, .KodiRPCUI-servers-title{
+                        width:100%;display: block;position: relative;text-align: center;padding: 16px 24px;
+                        cursor: pointer; border-top: 1px solid rgba(0,0,0,.125);
+                }
+                .KodiRPCUI-servers li:before{
+                    content: "";display: block;border-radius: 50%;box-sizing: border-box;pointer-events: none;white-space: nowrap;
+                    position: absolute;line-height: 0;left: 0;top: 50%;width: 24px;height: 24px;transform: translate(16px, -50%);
+                    border: 1px solid rgba(0,0,0,.45); background-color: rgba(240, 173, 78, .75);
+                }
+                .KodiRPCUI-servers li[data-online]:before{background-color: rgba(220, 53, 69, .75);}
+                .KodiRPCUI-servers li[data-online="true"]:before{background-color: rgba(40, 167, 69, .75);}
+                .KodiRPCUI-notify{z-index: 2147483646;cursor:pointer;position: fixed; bottom:128px; right: 32px;width:400px;text-align: center;}
+                .KodiRPCUI-servers, .KodiRPCUI-servers-title{display: none;}
+                .KodiRPCUI:hover [class*="KodiRPCUI-servers"]{display: block;}
+                .KodiRPCUI [hidden], .KodiRPCUI[hidden]{display: none !important; opacity:0!important; z-index: -1 !important;}
+            `;
+            addstyle(styles);
+        }
+
+        get visible(){
+            let retval = true;
+            if (this.root.hidden === true) retval = false;
+            else if (this.elements.toolbar.hidden === true) retval = false;
+            else if (this.root.parentElement === null) retval = false;
+            return retval;
+        }
+
+        expand(hidden = true){
+            const self = this;
+            hidden = hidden === true ? true : null;
+            self.elements.slist.hidden = self.elements.toolbar.hidden = hidden === true ? null : true;
+            self.elements.expand.hidden = hidden;
+        }
+
+
+        start(){
+            const self = this;
+            doc.body.appendChild(self.notifications);
+            self.video.parentElement.insertBefore(self.root, self.video);
+            new Timer(timer => {
+                if (self.root.parentElement === null) {
+                    timer.stop();
+                    self.root.remove();
+                    self.notifications.remove();
+                }
+            }, 1000);
+
+        }
+
+
+        constructor(video){
+
+            if (!(video instanceof Element)) return;
+            const self = this;
+            const icon = `data:image/png;base64,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`;
+
+
+            const template = `<div class="KodiRPCUI">
+                                    <div class="KodiRPCUI-expand">
+                                        <button name="expand">
+                                            <img src="${icon}">
+                                        </button>
+                                    </div>
+                                    <div class="KodiRPCUI-toolbar">
+                                        <span name="send" class="">Send to Kodi</span>
+                                        <span name="settings" class="">Settings</span>
+                                    </div>
+                                    <ul class="KodiRPCUI-servers"></ul>
+
+
+                                </div>`;
+            const notify = `<div class="KodiRPCUI-notify"></div>`;
+
+
+            Object.assign(this, {
+                root: html2element(template),
+                notifications: html2element(notify),
+                video: video,
+                client: new KodiRPCClient(),
+                cache: cache,
+                events: {
+                    click(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+                        let target = e.target.closest('[name]');
+                        if (target !== null) {
+                            let name = target.getAttribute('name');
+                            if (typeof self.actions[name] === f) self.actions[name].call(self, e);
+                            return;
+                        }
+                        //ck server online
+                        target = e.target.closest('li[data-uniqid]');
+                        if (target !== null) self.actions.check.call(target, e);
+
+                    },
+                    init(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self.elements.slist.querySelectorAll('li').forEach(li => li.remove());
+                        let servers = self.client.servers;
+                        servers.forEach((server, i) => {
+                            let li = html2element(`<li>${server.name}</li>`);
+                            li.data({
+                                uniqid: server.uniqid
+                            });
+                            self.elements.slist.appendChild(li);
+                            li.data('online', server.online);
+
+
+                        });
+                    },
+                    toggle(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self.expand(self.elements.expand.hidden !== true);
+                    },
+                    submit(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+
+                },
+                actions: {
+
+                    check(e){
+                        const target = this;
+                        if (!self.visible) return;
+                        let servers = self.client.servers, id = target.data('uniqid'), server;
+                        servers.forEach(x => {
+                            if (x.uniqid === id) server = x;
+                        });
+
+                        if (server instanceof KodiRPCServer) {
+                            target.data('online', null);
+                            let item = self.cache.getItem(id);
+                            if (typeof e !== u) self.flash.message = "Checking connection to " + server.name;
+                            self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, () => {
+                                item.set(true);
+                            }, () => {
+                                item.set(false);
+                            }, () => {
+                                target.data('online', item.get() === true);
+                                self.cache.save(item);
+                            });
+                        }
+                    },
+
+                    expand(){
+                        self.trigger('init toggle');
+
+                    },
+                    settings(){
+                        self.trigger('kodirpc.settings', {
+                            close(){
+                                self.trigger('init');
+                            }
+                        });
+                    },
+                    send(){
+                        let url = null, possible = [], match = false;
+
+                        possible.push(self.video.src || "");
+                        possible.push(self.video.data("src") || "");
+                        self.video.querySelectorAll('source[src^="http"]').forEach(source => {
+                            possible.push(source.getAttribute('src'));
+                        });
+
+                        possible.forEach(src => {
+                            if (match === true) return;
+                            if (/^http/i.test(src)) {
+                                match = true;
+                                url = src;
+                            }
+                        });
+
+                        if (url !== null) {
+                            self.trigger('kodirpc.send', {
+                                link: url,
+                                success(json, server){
+                                    self.flash.success = "Stream sent to " + server.name;
+                                },
+                                error(code, server){
+                                    self.flash.error = "Cannot send stream to " + server.name + " (" + code + ")";
+                                },
+                                complete(s){
+
+                                    self.expand(false);
+                                }
+                            });
+
+                            self.flash.info = "Sending stream to Kodi.";
+
+                        }
+
+
+                    }
+                }
+            });
+
+            self.elements = {
+                toolbar: self.root.querySelector('.KodiRPCUI-toolbar'),
+                slist: self.root.querySelector('.KodiRPCUI-servers'),
+                expand: self.root.querySelector('.KodiRPCUI-expand'),
+                buttons: {}
+            };
+
+            self.root.querySelectorAll('button[name]').forEach(btn => {
+                let name = btn.getAttribute('name');
+                self.elements.buttons[name] = btn;
+            });
+
+            self.flash = new gmFlash(self.notifications);
+            new Events(self.root, self);
+
+            Object.keys(self.events).forEach(type => self.on(type, self.events[type]));
+
+            KodiRPCUI.loadStyles();
+
+
+            Events(self.video).on('play pause', e => {
+                self.root.hidden = e.type === "play" ? true : null;
+            });
+
+            Events(doc.body).on('click', e => {
+                if (e.target.closest('.KodiRPCUI, [class*="gm-"]') === null) self.expand(false);
+            });
+
+            setTimeout(() => {
+                self.root.hidden = self.video.paused === true ? null : true;
+            }, 1000);
+
+            let module = doc.documentElement.KodiRPCModule;
+            if ((module instanceof KodiRPCModule) && (module.ready === true)) return self.start();
+
+            Events(doc.body)
+                    .on('kodirpc.ready', e => self.start())
+                    .on('kodirpc.update', e => {
+                        let server = e.data.server;
+                        self.elements.slist.querySelectorAll('li[data-uniqid]').forEach(li => {
+                            if (li.data('uniqid') === server.uniqid) li.data('online', server.online);
+                        });
+                    });
+            new KodiRPCModule();
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     JSON.RPCRequest = function(method, params, id){
         params = params || {};
         if ((typeof method === s) && (params instanceof Object)) {
@@ -577,33 +965,33 @@
             if (this.styles === true) return;
             this.styles = true;
             let styles = `
-                
-                .kodirpc-configurator{padding:0 24px 24px;}
-                .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
 
-                .kodirpc-configurator .flash-message-box{overflow:hidden;height:64px;margin:8px 0; padding:0;}
-                .kodirpc-configurator .flash-message-box .gm-flash{margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
-                .kodirpc-configurator .flash-message-box .gm-flash:not(.error):not(.warning):not(.info):not(.success){font-size: 24px;}
-                .kodirpc-configurator .flash-message-box .gm-flash + .gm-flash{display:none;}
+                                    .kodirpc-configurator{padding:0 24px 24px;}
+                                    .kodirpc-configurator .gm-list{padding:0;border-radius:0;margin-top:0;}
 
-                .kodirpc-configurator input + .flash-message-box{margin: 12px 0 0;}
+                                    .kodirpc-configurator .flash-message-box{overflow:hidden;height:64px;margin:8px 0; padding:0;}
+                                    .kodirpc-configurator .flash-message-box .gm-flash{margin:0;height:64px;max-height:64px;display: flex;align-items: center;justify-content: center;}
+                                    .kodirpc-configurator .flash-message-box .gm-flash:not(.error):not(.warning):not(.info):not(.success){font-size: 24px;}
+                                    .kodirpc-configurator .flash-message-box .gm-flash + .gm-flash{display:none;}
 
-                .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
-                .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
-                .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
-                .kodirpc-about li:last-child strong{}
-                .kodirpc-basics li, .kodirpc-server-selection li{cursor: pointer;}
-                .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
-                .kodirpc-server-selection [name="server_remove"]{float:left; margin: -8px 0 0 -8px !important;}
-                .kodirpc-server-selection .gm-list .gm-btn{width: 96px;}
-                .kodirpc-server-selection .gm-list .active .gm-btn{color: gray;}
-                .kodirpc-server-selection .gm-list .active, .kodirpc-server-selection .gm-list .active .gm-btn{pointer-events:none;}
-                .kodirpc-servers .gm-tabs{margin: 16px 0 8px;}
-                .kodirpc-servers .gm-tabs:before{bottom: -16px;}
-                .kodirpc-servers legend:before{bottom:0;}
+                                    .kodirpc-configurator input + .flash-message-box{margin: 12px 0 0;}
 
-                
-            `;
+                                    .kodirpc-about li{text-align:right;position:relative;font-weight: normal;}
+                                    .kodirpc-about li strong{width:112px;display:inline-block;padding: 0 12px 0 0;float:left;text-align:left;}
+                                    .kodirpc-about li:last-child, .kodirpc-about li:last-child strong{text-align:center;float:none;}
+                                    .kodirpc-about li:last-child strong{}
+                                    .kodirpc-basics li, .kodirpc-server-selection li{cursor: pointer;}
+                                    .kodirpc-basics li input[type="checkbox"]{z-index:-1;}
+                                    .kodirpc-server-selection [name="server_remove"]{float:left; margin: -8px 0 0 -8px !important;}
+                                    .kodirpc-server-selection .gm-list .gm-btn{width: 96px;}
+                                    .kodirpc-server-selection .gm-list .active .gm-btn{color: gray;}
+                                    .kodirpc-server-selection .gm-list .active, .kodirpc-server-selection .gm-list .active .gm-btn{pointer-events:none;}
+                                    .kodirpc-servers .gm-tabs{margin: 16px 0 8px;}
+                                    .kodirpc-servers .gm-tabs:before{bottom: -16px;}
+                                    .kodirpc-servers legend:before{bottom:0;}
+
+
+                                `;
             addstyle(styles);
         }
         set cansave(flag){
@@ -620,7 +1008,6 @@
             Object.keys(self.elements.tabs).forEach(tab => {
                 if (self.elements.tabs[tab].classList.contains('active')) retval = tab;
             });
-
             return retval;
         }
 
@@ -672,7 +1059,6 @@
         _createBlacklistItem(host){
             let li = doc.createElement('li'),
                     btn = html2element(`<button title="Remove Hostname" name="rm_url" class="gm-btn gm-btn-no">-</button>`);
-
             li.data('host', host);
             li.innerHTML = host;
             li.appendChild(btn);
@@ -682,156 +1068,153 @@
 
         constructor(open, close){
             const client = new KodiRPCClient();
-
             let template = `<div class="kodirpc-configurator">
-                                <div class="flash-message-box"></div>
-                                <ul class="gm-tabs">
-                                    <li class="gm-tab" data-tab=".kodirpc-basics" data-flash="Manage Features">Basics</li>
-                                    <li class="gm-tab" data-tab=".kodirpc-servers" data-flash="Manage Servers">Servers</li>
-                                    <li class="gm-tab" data-tab=".kodirpc-blacklist-manager" data-flash="Manage Blacklist">Blacklist</li>
-                                    <li class="gm-tab" data-tab=".kodirpc-about" data-flash="About ${GMinfo.script.name}">About</li>
-                                </ul>
-                                
-                                <form class="kodirpc-basics" name="basics" autocomplete="off">
-                                    <h1>Basic Configuration</h1>
-                                    <ul class="gm-list">
-                                        <li>
-                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                <input type="checkbox" name="display_servers">
-                                                <span class="slider"></span>
-                                            </span>
-                                            Display Server List
-                                        </li>
-                                        <li>
-                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                <input type="checkbox" name="update_servers_online">
-                                                <span class="slider"></span>
-                                            </span>
-                                            Check Servers Online
-                                        </li>
-                                        <li>
-                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                <input type="checkbox" name="use_blacklist">
-                                                <span class="slider"></span>
-                                            </span>
-                                            Use Blacklist
-                                        </li>
-                                        <li>
-                                            <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                <input type="checkbox" name="legacy_mode">
-                                                <span class="slider"></span>
-                                            </span>
-                                            Use Legacy Mode (Direct Play)
-                                        </li>
-                                    </ul>
-                                </form>
-                                <form class="kodirpc-blacklist-manager" name="blacklist" autocomplete="off">
-                                    <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
-                                        <legend>Blacklist Manager</legend>
-                                        <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 72px);">
-                                        <button type="submit" title="Add URL" name="add_url" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px !important;margin:4px 0 0;">Add</button>
-                                        <button class="gm-btn" name="add_current" style="position: absolute;top: 8px;right: 0;">Add Current Site</button>
-                                    </fieldset>
-                                    <h2>Hostnames</h2>
-                                    <ul class="gm-list"></ul>
-                                    <div class="gm-flash">Blacklist is empty.</div>
-                                </form>
-                                <form class="kodirpc-servers" autocomplete="off" name="servers">
-                                    <ul class="gm-tabs">
-                                        <li class="gm-tab" data-tab=".kodirpc-server-add">Add Server</li>
-                                        <li class="gm-tab active" data-tab=".kodirpc-server-selection">Select Server</li>
-                                        <li class="gm-tab" data-tab=".kodirpc-server-edit">Server Edit</li>
-                                        <li class="gm-tab" data-tab=".kodirpc-server-auth">Credentials</li>
-                                    </ul>
-                                    <fieldset class="kodirpc-server-add" name="server_add">
-                                        <legend>Add a Server</legend>
-                                        <label>Name:</label>
-                                        <input 
-                                            type="text"
-                                            name="add_name"
-                                            value=""
-                                            placeholder="Name"
-                                            data-exists="Server name %s already exists."
-                                            data-error="Server name %s is invalid."
-                                        >
-                                        <label>Hostname:</label>
-                                        <input 
-                                            type="text"
-                                            name="add_host"
-                                            value=""
-                                            placeholder="Hostname"
-                                            data-exists="Server hostname %s already exists."
-                                            data-error="Server hostname %s is invalid."
-                                        >
-                                        
-                                        <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
-                                            <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
-                                        </div>
-                                    </fieldset>
-                                    <fieldset class="kodirpc-server-selection" name="server_select">
-                                        <legend>Select Server</legend>
-                                        <input name="uniqid" type="hidden" value="">
-                                        <ul class="gm-list"></ul>
-                                        <div class="gm-flash">
-                                            Server list is empty.
-                                        </div>
-                                    </fieldset>
-                                    <fieldset class="kodirpc-server-edit" name="server_edit">
-                                        <legend>Edit Server</legend>
-                                        <label>Name:</label>
-                                        <input 
-                                            type="text"
-                                            name="name"
-                                            value=""
-                                            placeholder="Name"
-                                            data-error="Name %s is invalid."
-                                            required>
-                                        <label>Hostname:</label>
-                                        <input 
-                                            type="text"
-                                            name="host"
-                                            value=""
-                                            placeholder="Hostname"
-                                            data-error="Hostname %s is invalid."
-                                            required>
-                                        <label>Port:</label>
-                                        <input 
-                                            type="number"
-                                            name="port"
-                                            value=""
-                                            placeholder="Port"
-                                            min="1"
-                                            max="65535"
-                                            data-error="Port %s is invalid."
-                                            required>
-                                    </fieldset>
-                                    <fieldset class="kodirpc-server-auth" name="server_auth">
-                                        <legend>Credentials</legend>
-                                        <label>Username:</label>
-                                        <input type="text" name="user" value="" placeholder="Username">
-                                        <label>Password:</label>
-                                        <input type="password" name="pass" value="" placeholder="Password">
-                                        <div class="flash-message-box"></div>
-                                        <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
-                                            <button class="gm-btn gm-btn-no" name="rm_pass">Remove password</button>
-                                            <button class="gm-btn" name="check">Check Connection</button>
-                                        </div>
-                                    </fieldset>
-                                    
-                                </form>
-                                <div class="kodirpc-about">
-                                    <h1 style="text-align:right;">${GMinfo.script.name}</h1>
-                                    <ul class="gm-list">
-                                        <li><strong>Description:</strong> ${GMinfo.script.description}</li>
-                                        <li><strong>Version:</strong> ${GMinfo.script.version}</li>
-                                        <li><strong>Author:</strong> ${GMinfo.script.author}</li>
-                                        <li><strong>UUID:</strong> ${GMinfo.script.uuid}</li>
-                                        <li style="text-align: center;">Copyright &copy; 2020 <a href="${GMinfo.script.namespace}" target="_blank">NGSOFT</a></li>
-                                    </ul>
-                                </div>
+                                                    <div class="flash-message-box"></div>
+                                                    <ul class="gm-tabs">
+                                                        <li class="gm-tab" data-tab=".kodirpc-basics" data-flash="Manage Features">Basics</li>
+                                                        <li class="gm-tab" data-tab=".kodirpc-servers" data-flash="Manage Servers">Servers</li>
+                                                        <li class="gm-tab" data-tab=".kodirpc-blacklist-manager" data-flash="Manage Blacklist">Blacklist</li>
+                                                        <li class="gm-tab" data-tab=".kodirpc-about" data-flash="About ${GMinfo.script.name}">About</li>
+                                                    </ul>
 
-                                
-                            </div>`;
+                                                    <form class="kodirpc-basics" name="basics" autocomplete="off">
+                                                        <h1>Basic Configuration</h1>
+                                                        <ul class="gm-list">
+                                                            <li>
+                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                    <input type="checkbox" name="display_servers">
+                                                                    <span class="slider"></span>
+                                                                </span>
+                                                                Display Server List
+                                                            </li>
+                                                            <li>
+                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                    <input type="checkbox" name="update_servers_online">
+                                                                    <span class="slider"></span>
+                                                                </span>
+                                                                Check Servers Online
+                                                            </li>
+                                                            <li>
+                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                    <input type="checkbox" name="use_blacklist">
+                                                                    <span class="slider"></span>
+                                                                </span>
+                                                                Use Blacklist
+                                                            </li>
+                                                            <li>
+                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                    <input type="checkbox" name="legacy_mode">
+                                                                    <span class="slider"></span>
+                                                                </span>
+                                                                Use Legacy Mode (Direct Play)
+                                                            </li>
+                                                        </ul>
+                                                    </form>
+                                                    <form class="kodirpc-blacklist-manager" name="blacklist" autocomplete="off">
+                                                        <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
+                                                            <legend>Blacklist Manager</legend>
+                                                            <input type="text" placeholder="Type an URL" name="url" value="" style="width:calc(100% - 72px);">
+                                                            <button type="submit" title="Add URL" name="add_url" class="gm-btn gm-btn-sm gm-btn-yes" style="float:right;min-width:auto; padding:6px 16px !important;margin:4px 0 0;">Add</button>
+                                                            <button class="gm-btn" name="add_current" style="position: absolute;top: 8px;right: 0;">Add Current Site</button>
+                                                        </fieldset>
+                                                        <h2>Hostnames</h2>
+                                                        <ul class="gm-list"></ul>
+                                                        <div class="gm-flash">Blacklist is empty.</div>
+                                                    </form>
+                                                    <form class="kodirpc-servers" autocomplete="off" name="servers">
+                                                        <ul class="gm-tabs">
+                                                            <li class="gm-tab" data-tab=".kodirpc-server-add">Add Server</li>
+                                                            <li class="gm-tab active" data-tab=".kodirpc-server-selection">Select Server</li>
+                                                            <li class="gm-tab" data-tab=".kodirpc-server-edit">Server Edit</li>
+                                                            <li class="gm-tab" data-tab=".kodirpc-server-auth">Credentials</li>
+                                                        </ul>
+                                                        <fieldset class="kodirpc-server-add" name="server_add">
+                                                            <legend>Add a Server</legend>
+                                                            <label>Name:</label>
+                                                            <input
+                                                                type="text"
+                                                                name="add_name"
+                                                                value=""
+                                                                placeholder="Name"
+                                                                data-exists="Server name %s already exists."
+                                                                data-error="Server name %s is invalid."
+                                                            >
+                                                            <label>Hostname:</label>
+                                                            <input
+                                                                type="text"
+                                                                name="add_host"
+                                                                value=""
+                                                                placeholder="Hostname"
+                                                                data-exists="Server hostname %s already exists."
+                                                                data-error="Server hostname %s is invalid."
+                                                            >
+
+                                                            <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
+                                                                <button class="gm-btn gm-btn-yes" name="add_confirm">Confirm</button>
+                                                            </div>
+                                                        </fieldset>
+                                                        <fieldset class="kodirpc-server-selection" name="server_select">
+                                                            <legend>Select Server</legend>
+                                                            <input name="uniqid" type="hidden" value="">
+                                                            <ul class="gm-list"></ul>
+                                                            <div class="gm-flash">
+                                                                Server list is empty.
+                                                            </div>
+                                                        </fieldset>
+                                                        <fieldset class="kodirpc-server-edit" name="server_edit">
+                                                            <legend>Edit Server</legend>
+                                                            <label>Name:</label>
+                                                            <input
+                                                                type="text"
+                                                                name="name"
+                                                                value=""
+                                                                placeholder="Name"
+                                                                data-error="Name %s is invalid."
+                                                                required>
+                                                            <label>Hostname:</label>
+                                                            <input
+                                                                type="text"
+                                                                name="host"
+                                                                value=""
+                                                                placeholder="Hostname"
+                                                                data-error="Hostname %s is invalid."
+                                                                required>
+                                                            <label>Port:</label>
+                                                            <input
+                                                                type="number"
+                                                                name="port"
+                                                                value=""
+                                                                placeholder="Port"
+                                                                min="1"
+                                                                max="65535"
+                                                                data-error="Port %s is invalid."
+                                                                required>
+                                                        </fieldset>
+                                                        <fieldset class="kodirpc-server-auth" name="server_auth">
+                                                            <legend>Credentials</legend>
+                                                            <label>Username:</label>
+                                                            <input type="text" name="user" value="" placeholder="Username">
+                                                            <label>Password:</label>
+                                                            <input type="password" name="pass" value="" placeholder="Password">
+                                                            <div class="flash-message-box"></div>
+                                                            <div style="text-align: right;margin:16px -8px -16px;padding: 0;">
+                                                                <button class="gm-btn gm-btn-no" name="rm_pass">Remove password</button>
+                                                                <button class="gm-btn" name="check">Check Connection</button>
+                                                            </div>
+                                                        </fieldset>
+
+                                                    </form>
+                                                    <div class="kodirpc-about">
+                                                        <h1 style="text-align:right;">${GMinfo.script.name}</h1>
+                                                        <ul class="gm-list">
+                                                            <li><strong>Description:</strong> ${GMinfo.script.description}</li>
+                                                            <li><strong>Version:</strong> ${GMinfo.script.version}</li>
+                                                            <li><strong>Author:</strong> ${GMinfo.script.author}</li>
+                                                            <li><strong>UUID:</strong> ${GMinfo.script.uuid}</li>
+                                                            <li style="text-align: center;">Copyright &copy; 2020 <a href="${GMinfo.script.namespace}" target="_blank">NGSOFT</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>`;
             const self = this;
             Object.assign(this, {
                 title: GMinfo.script.name + " Settings",
@@ -893,12 +1276,10 @@
                                 }
                             }
                         });
-
                         //init forms
                         Object.keys(self.elements.forms).forEach(name => {
                             Events(self.elements.forms[name]).trigger("form.init");
                         });
-
                     },
                     change(e){
                         e.stopPropagation();
@@ -921,19 +1302,15 @@
 
                         }
                     },
-
                     click(e){
                         e.stopPropagation();
                         let target, name, prevent = false;
-
                         if ((target = e.target.closest('button[name]:not([type="submit"])')) !== null) {
                             prevent = true;
                             name = target.getAttribute('name');
                             if (typeof self.actions.click[name] === f) self.actions.click[name].call(target, e);
-
                         } else if ((target = e.target.closest('.kodirpc-basics li')) !== null) {
                             prevent = true;
-
                             let input = target.querySelector('input[type="checkbox"][name]');
                             if (input instanceof Element) {
                                 input.checked = input.checked !== true;
@@ -963,7 +1340,7 @@
                         let target = e.target.closest('input');
                         const inputs = self.elements.inputs;
                         if (e.keyCode === 13) {
-                            if(target !== null){
+                            if (target !== null) {
                                 if (target === inputs.url) return;
                                 e.preventDefault();
                                 Events(target).trigger('change');
@@ -975,7 +1352,7 @@
                                 if (typeof list[next] === u) next = 0;
                                 list[next].focus();
                             }
-                            
+
 
                         }
                     },
@@ -999,7 +1376,7 @@
                     "form.init": function(e){
                         let form = e.target.closest('form');
                         if (form !== null) {
-                            let name= form.getAttribute('name');
+                            let name = form.getAttribute('name');
                             if (typeof name === s ? name.length > 0 : false) {
                                 if (typeof self.actions.form_init[name] === f) self.actions.form_init[name].call(form, e);
                             }
@@ -1018,7 +1395,7 @@
                             }
                         },
                         blacklist(e){
-                            const form = e.target.closest('form'),  inputs = self.elements.inputs;
+                            const form = e.target.closest('form'), inputs = self.elements.inputs;
                             inputs.url.value = null;
                             inputs.url.classList.remove('error');
                             form.querySelectorAll('.gm-list li').forEach(li => li.remove());
@@ -1027,17 +1404,14 @@
                         servers(e){
                             const form = e.target.closest('form'), inputs = self.elements.inputs, servers = self.data.servers;
                             if (servers.length === 0) servers.push(new KodiRPCServer());
-
                             //map tabs add, auth, edit, selection
                             self.elements.tabs = {};
                             form.querySelectorAll('.gm-tabs .gm-tab').forEach(tab => {
                                 let name = tab.data('tab').split('-').pop();
                                 self.elements.tabs [name] = tab;
                             });
-
                             self.elements.tabs.edit.classList.add('disabled');
                             self.elements.tabs.auth.classList.add('disabled');
-
                             //reset fields
                             for (let i = 0; i < form.length; i++) {
                                 let input = form[i];
@@ -1045,7 +1419,6 @@
                             }
                             form.querySelectorAll('.gm-list li').forEach(li => li.remove());
                             servers.forEach(server => self.addServer(server));
-
                         }
 
                     },
@@ -1054,19 +1427,17 @@
                             const input = self.elements.inputs.url;
                             input.classList.remove('error');
                             let host = input.value;
-                            if(host.length > 0) {
+                            if (host.length > 0) {
                                 if (self.data.blacklist.has(host)) input.classList.add('error');
                                 else if (self.data.blacklist.add(host)) {
                                     self.cansave = true;
                                     input.value = null;
                                     self.addBlacklistHost(host);
                                     self.flashbox.success(host + ' added to blacklist');
-                                }
-                                else input.classList.add('error');
+                                } else input.classList.add('error');
                             }
                         }
                     },
-                    
                     fieldset_change: {
                         server_add(e){
                             const
@@ -1083,7 +1454,6 @@
                                     exists = input.data('exists'),
                                     error = false,
                                     dirty = old !== value;
-
                             input.data('value', value);
                             //validation
                             if (dirty === true) {
@@ -1097,12 +1467,8 @@
                                     error = true;
                                 }
                                 input.classList[error === true ? "add" : "remove"]('error');
-
                             } else if (input.matches('.error')) error = true;
-                            
                             button.disabled = error === true ? true : input.siblings('input.error').length > 0 || null;
-                            
-
                         },
                         server_edit(){
                             const
@@ -1115,7 +1481,6 @@
                                     invalid = input.data('error') || "",
                                     dirty, parsed,
                                     error = false;
-
                             try {
                                 parsed = JSON.parse(value);
                             } catch (x) {
@@ -1131,7 +1496,6 @@
                                 if (server[name] !== value) error = true;
                                 input.classList[error === true ? "add" : "remove"]('error');
                             } else if (input.matches('.error')) error = true;
-
                             if (error === true) self.flashbox.error(invalid.replace('%s', value));
                             if ((input.siblings('input.error,input:invalid').length > 0) || error === true) self.cansave = self.data.cansave = false;
                             else if (server.dirty === true) self.cansave = self.data.cansave = true;
@@ -1148,7 +1512,7 @@
                                     dirty = value !== old,
                                     error = false;
                             //there
-                            
+
                             if (name === "user") {
                                 input.data("value", value);
                                 if (dirty === true) {
@@ -1170,7 +1534,7 @@
 
                                 }
                             }
-                            
+
 
                         }
                     },
@@ -1188,17 +1552,14 @@
                         },
                         server_select(){
                             const servers = self.data.servers;
-
                             this.querySelectorAll('.gm-list li').forEach(li => {
                                 let
                                         span = li.querySelector('span'),
                                         uniqid = li.data('uniqid'),
                                         index = self.data.map[uniqid],
                                         server = self.data.servers[index];
-
                                 span.innerHTML = server.name;
                             });
-
                         },
                         server_auth(){
                             self.authflashbox = self.authflashbox || gmFlash.prependTo(self.elements.inputs.pass.nextElementSibling, {
@@ -1247,7 +1608,6 @@
                                     data = self.data;
                             let uniqid = this.value || null,
                                     valid = false;
-
                             //reset form
                             inputs.pass.value = null;
                             inputs.pass.classList.remove('error');
@@ -1257,7 +1617,6 @@
                                 input.value = null;
                                 input.data('value', null);
                             });
-
                             //loads data
                             let server = data.current;
                             if (server !== null) {
@@ -1280,8 +1639,6 @@
                             }
                             self.tab = "edit";
                             self.flashbox.info("Editing " + server.name);
-
-
                         }
 
 
@@ -1305,7 +1662,6 @@
                                 if (code === 401) self.authflashbox.error(server.name + ' connection error(' + code + '), invalid credentials.');
                                 else self.authflashbox.error(server.name + ' connection error(' + code + ').');
                             }, false);
-
                         },
                         rm_url(){
                             let li = this.parentElement;
@@ -1323,8 +1679,6 @@
                         add_current(){
                             self.elements.inputs.url.value = location.hostname;
                         },
-
-
                         add_confirm(){
                             const
                                     inputs = [
@@ -1333,17 +1687,14 @@
                                     ],
                                     server = self.data.add,
                                     servers = self.data.servers;
-
                             let cansave = true;
-
-
                             inputs.forEach(input => {
                                 //validation
-                                input.data('value', null); console.debug(input);
+                                input.data('value', null);
+                                console.debug(input);
                                 self.actions.fieldset_change.server_add.call(input);
                                 if (input.classList.contains('error')) cansave = false;
                             });
-
                             if (cansave === true) {
                                 servers.push(server);
                                 self.tab = "selection";
@@ -1353,8 +1704,6 @@
                             }
 
                         },
-
-
                         server_select(e){
                             let li = this.parentElement;
                             if (li !== null) {
@@ -1378,7 +1727,6 @@
                                                 self.data.servers.splice(index, 1);
                                                 self.cansave = true;
                                                 self.flashbox.success(server.name + " removed from server list.");
-
                                             }, null, {
                                                 title: "Remove RPC Server"
                                             });
@@ -1389,7 +1737,7 @@
                             }
                         }
                     }
-                    
+
                 }
 
             });
@@ -1405,7 +1753,6 @@
                 }
 
             };
-
             self.root.querySelectorAll('input[name], select[name], textarea[name], form[name], fieldset[name], button[name]').forEach(el => {
                 let name = el.getAttribute("name"), tag = el.tagName.toLowerCase();
                 switch (tag) {
@@ -1419,20 +1766,15 @@
                         self.elements.inputs[name] = el;
                 }
             });
-
             self.flashbox = new gmFlash(self.root.querySelector('.flash-message-box'), {
                 appendChild: false
             });
-
             new Events(self.root, self);
-
             Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
-
             self.dialog.title = self.title;
             self.dialog.body = self.root;
             self.dialog.elements.footer.appendChild(self.elements.vinfo);
             self.elements.vinfo.innerHTML = GMinfo.script.version;
-
             //save settings
             self.dialog.on('confirm', e => {
 
@@ -1444,19 +1786,13 @@
                             blacklist: data.blacklist.list,
                             servers: data.servers.map(s => s._params)
                         };
-
                 Object.keys(tosave).forEach(key => gmstore.set(key, tosave[key]));
-
-
             });
-
             if (typeof open === f) self.dialog.on('open', open);
             if (typeof close === f) self.dialog.on('close', close);
             new gmTabs(self.root);
-
             KodiRPCConfigurator.loadStyles();
             self.dialog.open();
-
         }
     }
 
@@ -1465,26 +1801,25 @@
         static loadStyles(){
             if (this.styles === true) return;
             this.styles = true;
-
             let styles = `
-                .kodirpc-server-selector, 
-                .kodirpc-server-selector fieldset legend
-                {padding-top:0;padding-bottom:0;}
-                .kodirpc-server-selector fieldset legend{margin-bottom:0;}
-                .kodirpc-server-selector fieldset legend:before{display: none;}
-                .kodirpc-server-selector .gm-list{border-radius: 0; padding:0;margin: 0;cursor: pointer;}
-                .kodirpc-server-selector .gm-list [class*="gm-switch"] input{z-index:-1;visibility:hidden;}
-            `;
+                                    .kodirpc-server-selector,
+                                    .kodirpc-server-selector fieldset legend
+                                    {padding-top:0;padding-bottom:0;}
+                                    .kodirpc-server-selector fieldset legend{margin-bottom:0;}
+                                    .kodirpc-server-selector fieldset legend:before{display: none;}
+                                    .kodirpc-server-selector .gm-list{border-radius: 0; padding:0;margin: 0;cursor: pointer;}
+                                    .kodirpc-server-selector .gm-list [class*="gm-switch"] input{z-index:-1;visibility:hidden;}
+                                `;
             addstyle(styles);
         }
 
         get template(){
             return `<form class="kodirpc-server-selector">
-                        <fieldset>
-                            <legend>Server Selector</legend>
-                            <ul class="gm-list"></ul>
-                        </fieldset>
-                    </form>`;
+                                            <fieldset>
+                                                <legend>Server Selector</legend>
+                                                <ul class="gm-list"></ul>
+                                            </fieldset>
+                                        </form>`;
         }
 
 
@@ -1507,7 +1842,6 @@
                 label.innerHTML = server.name;
                 container.appendChild(checkbox);
                 container.appendChild(slider);
-
                 li.appendChild(container);
                 li.appendChild(label);
                 li.addEventListener('click', function(e){
@@ -1515,12 +1849,10 @@
                     checkbox.checked = checkbox.checked !== true;
                     Events(checkbox).trigger('change');
                 });
-
                 Object.defineProperties(checkbox, {
                     uniqid: {value: server.uniqid, configurable: true},
                     server: {value: server, configurable: true}
                 });
-
                 Object.defineProperties(li, {
                     checked: {
                         get(){
@@ -1546,13 +1878,11 @@
         constructor(callback){
 
             if (typeof callback !== f) throw new Error('KodiRPCServerSelector invalid argument');
-
             const
                     self = this,
                     client = new KodiRPCClient(),
                     servers = client.servers,
                     last = client.last;
-
             if (servers.length === 1) return callback.call(client, servers);
             else if (servers.length === 0) {
                 return alert("There are no Kodi RPC servers configured.", null, {
@@ -1580,311 +1910,29 @@
                                     inputs.push(li.input);
                                     ul.appendChild(li);
                                 });
-
                             }
                         }
                     }),
                     inputs = [],
                     save = dialog.elements.buttons.yes;
             dialog.body = root;
-
             new Events(root, self);
-
             self.on('change', e => {
                 let input = e.target.closest('input[name]');
                 save.disabled = inputs.every(x => x.checked === false) ? true : null;
             });
-
             dialog.on('confirm', e => {
                 let list = inputs.filter(x => x.checked === true).map(x => x.server);
                 client.last = list;
                 callback.call(client, list);
             });
-
             KodiRPCServerSelector.loadStyles();
-
             dialog.open();
         }
     }
 
 
 
-    /**
-     * Standalone User Interface
-     */
-    class KodiRPCUI {
-
-        static loadStyles(){
-            if (this.styles === true) return;
-            this.styles = true;
-            let styles = `
-                .KodiRPCUI, .KodiRPCUI button, .KodiRPCUI button:hover, .KodiRPCUI button:active, .KodiRPCUI *, .KodiRPCUI-notify{
-                    margin:0; padding:0; border: none;background-color: transparent;display: inline-block;box-sizing: border-box;
-                    font-family: Arial,Helvetica,sans-serif;line-height: 1.5;font-weight: 700;color:#000;font-size: 16px;border: 0;border-radius:0;
-                }
-                .KodiRPCUI{position: absolute; top: 64px;right:32px;z-index: 2147483646;}
-                .KodiRPCUI img{width:64px;height:64px;}
-                .KodiRPCUI button{cursor:pointer;}
-                .KodiRPCUI-expand {}
-                .KodiRPCUI-toolbar, .KodiRPCUI-servers, .KodiRPCUI-servers-title {display: block;background-color: rgba(255, 255, 255, 0.45);display:block;}
-                .KodiRPCUI-toolbar button, .KodiRPCUI-toolbar button:hover, .KodiRPCUI-toolbar button:active{
-                    padding: 16px 24px;border-radius:0;width:150px;
-                }
-                .KodiRPCUI-toolbar button:hover, .KodiRPCUI-toolbar button:active, .KodiRPCUI-servers li:hover , .KodiRPCUI-servers-title:hover{
-                    background-color: rgba(0,0,0,.125);
-                }
-                .KodiRPCUI-servers {list-style-type: none;}
-                .KodiRPCUI-servers li, .KodiRPCUI-servers-title{
-                        width:100%;display: block;position: relative;text-align: center;padding: 16px 24px;
-                        cursor: pointer; border-top: 1px solid rgba(0,0,0,.125);
-                }
-                .KodiRPCUI-servers li:before{
-                    content: "";display: block;border-radius: 50%;box-sizing: border-box;pointer-events: none;white-space: nowrap;
-                    position: absolute;line-height: 0;left: 0;top: 50%;width: 24px;height: 24px;transform: translate(16px, -50%);
-                    border: 1px solid rgba(0,0,0,.45); background-color: rgba(240, 173, 78, .75);
-                }
-                .KodiRPCUI-servers li[data-online]:before{background-color: rgba(220, 53, 69, .75);}
-                .KodiRPCUI-servers li[data-online="true"]:before{background-color: rgba(40, 167, 69, .75);}
-                .KodiRPCUI-notify{z-index: 2147483646;cursor:pointer;position: fixed; bottom:128px; right: 32px;width:400px;text-align: center;}
-                .KodiRPCUI-servers, .KodiRPCUI-servers-title{display: none;}
-                .KodiRPCUI:hover [class*="KodiRPCUI-servers"]{display: block;}
-                .KodiRPCUI [hidden], .KodiRPCUI[hidden]{display: none !important; opacity:0!important; z-index: -1 !important;}
-            `;
-            addstyle(styles);
-        }
-
-        get visible(){
-            let retval = true;
-            if (this.root.hidden === true) retval = false;
-            else if (this.elements.toolbar.hidden === true) retval = false;
-            else if (this.root.parentElement === null) retval = false;
-            return retval;
-        }
-
-        expand(hidden = true){
-            const self = this;
-            hidden = hidden === true ? true : null;
-            self.elements.slist.hidden = self.elements.toolbar.hidden = hidden === true ? null : true;
-            self.elements.expand.hidden = hidden;
-        }
-
-
-        start(){
-            const self = this;
-            doc.body.appendChild(self.notifications);
-            self.video.parentElement.insertBefore(self.root, self.video);
-            new Timer(timer => {
-                if (self.root.parentElement === null) {
-                    timer.stop();
-                    self.root.remove();
-                    self.notifications.remove();
-                }
-            }, 1000);
-
-        }
-
-
-        constructor(video){
-
-            if (!(video instanceof Element)) return;
-            const self = this;
-            const icon = `data:image/png;base64,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`;
-
-
-            const template = `<div class="KodiRPCUI">
-                                    <div class="KodiRPCUI-expand">
-                                        <button name="expand">
-                                            <img src="${icon}">
-                                        </button>
-                                    </div>
-                                    <div class="KodiRPCUI-toolbar" hidden>
-                                        <button name="send">Send to Kodi</button>
-                                        <button name="settings">Settings</button>
-                                    </div>
-                                    <ul class="KodiRPCUI-servers" hidden>
-                                    </ul>
-                                    
-
-                                </div>`;
-            const notify = `<div class="KodiRPCUI-notify">
-                            </div>`;
-
-
-            Object.assign(this, {
-                root: html2element(template),
-                notifications: html2element(notify),
-                video: video,
-                client: new KodiRPCClient(),
-                cache: cache,
-                events: {
-                    click(e){
-                        e.preventDefault();
-                        e.stopPropagation();
-                        let target = e.target.closest('[name]');
-                        if (target !== null) {
-                            let name = target.getAttribute('name');
-                            if (typeof self.actions[name] === f) self.actions[name].call(self, e);
-                            return;
-                        }
-                        //ck server online
-                        target = e.target.closest('li[data-uniqid]');
-                        if (target !== null) self.actions.check.call(target, e);
-
-                    },
-                    init(e){
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.elements.slist.querySelectorAll('li').forEach(li => li.remove());
-                        let servers = self.client.servers;
-                        servers.forEach((server, i) => {
-                            let li = html2element(`<li>${server.name}</li>`);
-                            li.data({
-                                uniqid: server.uniqid
-                            });
-                            self.elements.slist.appendChild(li);
-                            li.data('online', server.online);
-
-                        
-                        });
-                    },
-                    toggle(e){
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.expand(self.elements.expand.hidden !== true);
-                    },
-                    submit(e){
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-
-                },
-                actions: {
-
-                    check(e){
-                        const target = this;
-                        if (!self.visible) return;
-                        let servers = self.client.servers, id = target.data('uniqid'), server;
-                        servers.forEach(x => {
-                            if (x.uniqid === id) server = x;
-                        });
-
-                        if (server instanceof KodiRPCServer) {
-                            target.data('online', null);
-                            let item = self.cache.getItem(id);
-                            if (typeof e !== u) self.flash.message = "Checking connection to " + server.name;
-                            self.client.sendRPCRequest(server, "Playlist.GetPlaylists", {}, () => {
-                                item.set(true);
-                            }, () => {
-                                item.set(false);
-                            },()=>{
-                                target.data('online', item.get() === true);
-                                self.cache.save(item);
-                            });
-                        }
-                    },
-
-                    expand(){
-                        self.trigger('init toggle');
-
-                    },
-                    settings(){
-                        self.trigger('kodirpc.settings', {
-                            close(){
-                                self.trigger('init');
-                            }
-                        });
-                    },
-                    send(){
-                        let url = null, possible = [], match = false;
-
-                        possible.push(self.video.src || "");
-                        possible.push(self.video.data("src") || "");
-                        self.video.querySelectorAll('source[src^="http"]').forEach(source => {
-                            possible.push(source.getAttribute('src'));
-                        });
-
-                        possible.forEach(src => {
-                            if (match === true) return;
-                            if (/^http/i.test(src)) {
-                                match = true;
-                                url = src;
-                            }
-                        });
-
-                        if (url !== null) {
-                            self.trigger('kodirpc.send', {
-                                link: url,
-                                success(json, server){
-                                    self.flash.success = "Stream sent to " + server.name;
-                                },
-                                error(code, server){
-                                    self.flash.error = "Cannot send stream to " + server.name + " (" + code + ")";
-                                },
-                                complete(s){
-
-                                    self.expand(false);
-                                }
-                            });
-
-                            self.flash.info = "Sending stream to Kodi.";
-
-                        }
-
-
-                    }
-                }
-            });
-
-            self.elements = {
-                toolbar: self.root.querySelector('.KodiRPCUI-toolbar'),
-                slist: self.root.querySelector('.KodiRPCUI-servers'),
-                expand: self.root.querySelector('.KodiRPCUI-expand'),
-                buttons: {}
-            };
-
-            self.root.querySelectorAll('button[name]').forEach(btn => {
-                let name = btn.getAttribute('name');
-                self.elements.buttons[name] = btn;
-            });
-
-            self.flash = new gmFlash(self.notifications);
-            new Events(self.root, self);
-
-            Object.keys(self.events).forEach(type => self.on(type, self.events[type]));
-
-            KodiRPCUI.loadStyles();
-            
-
-            Events(self.video).on('play pause', e => {
-                self.root.hidden = e.type === "play" ? true : null;
-            });
-
-            Events(doc.body).on('click', e => {
-                if (e.target.closest('.KodiRPCUI, [class*="gm-"]') === null) self.expand(false);
-            });
-
-            setTimeout(() => {
-                self.root.hidden = self.video.paused === true ? null : true;
-            }, 1000);
-
-            let module = doc.documentElement.KodiRPCModule;
-            if ((module instanceof KodiRPCModule) && (module.ready === true)) return self.start();
-
-            Events(doc.body)
-                    .on('kodirpc.ready', e => self.start())
-                    .on('kodirpc.update', e => {
-                        let server = e.data.server;
-                        self.elements.slist.querySelectorAll('li[data-uniqid]').forEach(li => {
-                            if (li.data('uniqid') === server.uniqid) li.data('online', server.online);
-                        });
-                    });
-            new KodiRPCModule();
-        }
-
-    }
-
-
-    new KodiRPCServerSelector(console.warn);
 
 
     (() => {
