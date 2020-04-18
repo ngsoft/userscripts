@@ -1735,7 +1735,29 @@ function ask(message, confirm, cancel, params){
     dialog.open(confirm);
     return dialog;
 }
+/**
+ *
+ * @param {string} message Message to be shown
+ * @param {function} [confirm] Confirm Callback
+ * @param {Object} [params]
+ * @returns {gmDialog}
+ */
+function alert(message, confirm, params){
+    
+    confirm = typeof confirm === f ? confirm : x => x;
+    if (typeof message !== s) throw new Error("alert() no message supplied");
+    params = params instanceof Object ? params : {};
+    const dialog = new gmDialog(doc.body, Object.assign({
 
+        body: message,
+        buttons: {yes: "OK"}
+    }, params));
+
+    dialog.elements.buttons.no.remove();
+    dialog.on('close', confirm);
+    dialog.open();
+    return dialog;
+}
 
 
 

@@ -1549,62 +1549,61 @@
 
             const
                     self = this,
-                    client = new KodiRPCClient();
+                    client = new KodiRPCClient(),
+                    servers = client.servers,
+                    last = client.last;
 
-            Object.assign(this, {
-                root: html2element(self.template),
-                servers: client.servers,
-                last: client.last,
-                dialog: new gmDialog(doc.body, {
-                    title: GMinfo.script.name,
-                    width: "50%",
-                    buttons: {
-                        yes: "Send",
-                        no: "Cancel"
-                    },
-                    events: {
-                        open(){
-                            const
-                                    servers = self.servers,
-                                    last = self.last;
-                            let ul = self.root.querySelector('.gm-list');
-                            servers.forEach(server => {
-                                let li = self.mkSwitch(server);
-                                if (typeof last[server.uniqid] !== u) li.checked = true;
-                                inputs.push(li.input);
-                                ul.appendChild(li);
-                            });
+            if (servers.length === 1) return callback.call(client, servers);
+            else if (servers.length === 0) {
+                return alert("There are no Kodi RPC servers configured.", null, {
+                    title: GMinfo.script.name
+                });
+            }
 
+
+            const
+                    root = html2element(self.template),
+                    dialog = new gmDialog(doc.body, {
+                        title: GMinfo.script.name,
+                        width: "50%",
+                        buttons: {
+                            yes: "Send",
+                            no: "Cancel"
+                        },
+                        events: {
+                            open(){
+
+                                let ul = root.querySelector('.gm-list');
+                                servers.forEach(server => {
+                                    let li = self.mkSwitch(server);
+                                    if (typeof last[server.uniqid] !== u) li.checked = true;
+                                    inputs.push(li.input);
+                                    ul.appendChild(li);
+                                });
+
+                            }
                         }
-                    }
-                })
-            });
-            self.dialog.body = self.root;
+                    }),
+                    inputs = [],
+                    save = dialog.elements.buttons.yes;
+            dialog.body = root;
 
-            const inputs = [], save = self.dialog.elements.buttons.yes;
-
-            new Events(self.root, self);
+            new Events(root, self);
 
             self.on('change', e => {
                 let input = e.target.closest('input[name]');
                 save.disabled = inputs.every(x => x.checked === false) ? true : null;
             });
 
-            self.dialog.on('confirm', e => {
+            dialog.on('confirm', e => {
                 let list = inputs.filter(x => x.checked === true).map(x => x.server);
                 client.last = list;
                 callback.call(client, list);
             });
 
-
-            if (self.servers.length === 1) return callback.call(client, self.servers);
-
-            else if (self.servers.length === 0) return alert("There are no Kodi RPC servers configured.");
-
-
             KodiRPCServerSelector.loadStyles();
 
-            self.dialog.open();
+            dialog.open();
         }
     }
 
