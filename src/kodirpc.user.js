@@ -1532,14 +1532,24 @@
                             return obj;
                         }
                     }
-                })
+                });
+                Object.defineProperties(li, {
+                    checked: {
+                        set(v){
+                            checkbox.checked = v === true;
+                        },
+                        get(){
+                            return checkbox.checked === true;
+                        }
+                    }
+                });
 
-                new Events(obj.checkbox, obj);
+                new Events(checkbox, obj);
 
                 li.addEventListener('click', function(e){
                     e.preventDefault();
-                    this.input.checked = this.input.checked !== true;
-                    this.trigger('change');
+                    this.checked = this.checked !== true;
+                    obj.trigger('change');
                 });
 
                 return li;
@@ -1575,7 +1585,7 @@
                             let ul = self.root.querySelector('.gm-list');
                             servers.forEach(server => {
                                 let li = self.mkSwitch(server);
-                                if (typeof last[server.uniqid] !== u) sw.input.checked = true;
+                                if (typeof last[server.uniqid] !== u) li.checked = true;
                                 ul.appendChild(li);
                             });
 
@@ -1585,6 +1595,7 @@
                         },
                         change(e){
                             console.debug(e);
+                            console.debug(this);
                         }
                     }
                 })

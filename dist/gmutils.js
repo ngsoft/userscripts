@@ -1625,6 +1625,22 @@ class gmDialog {
         //close btn
         if (conf.closebutton !== true) self.elements.buttons.close.hidden = self.elements.buttons.close.disabled = true;
 
+        //disable buttons
+        Object.keys(self.elements.buttons).forEach(name => {
+            let btn = self.elements.buttons[name];
+            Object.defineProperties(btn, {
+                disabled: {
+                    set(v){
+                        v = v === false ? null : v;
+                        this.classList[v === null ? "remove" : "add"]('disabled');
+                    }, get(){
+                        return this.classList.contains('disabled');
+                    }
+                }
+            });
+        })
+
+
 
         Object.keys(self.config.events).forEach(evt => self.events[evt] = self.config.events[evt]);
         Object.keys(self.events).forEach(evt => self.on(evt, self.events[evt]));
