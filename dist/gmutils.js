@@ -1537,9 +1537,9 @@ class gmDialog {
                 body: html2element('<div class="gm-dialog-body" />'),
                 footer: html2element('<div class="gm-dialog-footer" />'),
                 buttons: {
-                    yes: html2element(`<button class="gm-btn gm-btn-yes" name="yes">Yes</button>`),
-                    no: html2element(`<button class="gm-btn gm-btn-no" name="no">No</button>`),
-                    close: html2element('<button class="gm-btn gm-btn-close" name="close">&times;</button>')
+                    yes: html2element(`<span class="gm-btn gm-btn-yes" name="yes">Yes</span>`),
+                    no: html2element(`<span class="gm-btn gm-btn-no" name="no">No</span>`),
+                    close: html2element('<span class="gm-btn gm-btn-close" name="close">&times;</span>')
                 }
             },
             config: Object.assign({
@@ -1653,7 +1653,7 @@ class gmDialog {
 
             if ((e.target.closest('.gm-dialog') === null) && (self.config.overlayclickclose === true)) self.trigger('cancel close');
 
-            let btn = e.target.closest('button[name]');
+            let btn = e.target.closest('[name].gm-btn');
             if (btn !== null) {
                 let name = btn.getAttribute('name'), type = "btn_" + name;
                 self.trigger(type);
@@ -2224,8 +2224,8 @@ class gmStyles {
             button.gm-btn:hover, button.gm-btn:active
             {background-color: rgb(28, 29, 30);color: rgb(255, 255, 255); border: 1px solid rgba(255,255,255,.25);}
             .gm-dialog-footer .gm-btn + .gm-btn{margin-left: 16px;}
-            .gm-dialog-header button.gm-btn-close{padding: 4px 20px 3px !important;min-width: auto;float:right; margin: 4px -8px 0 0;}
-            .gm-dialog-header button.gm-btn-close:hover,.gm-dialog-header button.gm-btn-close:active{background-color: #fafafa;color: rgb(28, 29, 30);background-color: rgba(0,0,0,.25);border-color: rgba(0,0,0,0)}
+            .gm-dialog-header .gm-btn-close{padding: 4px 20px 3px !important;min-width: auto;float:right; margin: 4px -8px 0 0;}
+            .gm-dialog-header .gm-btn-close:hover,.gm-dialog-header .gm-btn-close:active{background-color: #fafafa;color: rgb(28, 29, 30);background-color: rgba(0,0,0,.25);border-color: rgba(0,0,0,0)}
             button.gm-btn-no, .gm-btn-no{ color: rgb(219, 40, 40); }
             button.gm-btn-no:hover, button.gm-btn-no:active, 
             .gm-btn-no:hover, .gm-btn-no:active
@@ -2241,7 +2241,8 @@ class gmStyles {
             .gm-dialog-body{overflow-y:scroll;scrollbar-width: none;ms-overflow-style: none;}
             .gm-dialog-body::-webkit-scrollbar { width: 0; height: 0;}
             .gm-moz-scrollable .gm-dialog-body {margin-right: -67px;padding-right: 50px;}
-            .gm-dialog-body > *{margin: 0; padding: 8px 24px;text-align: left;font-size: 20px;}
+            .gm-dialog-body > *{margin: 0; padding: 0 24px;text-align: left;font-size: 20px;}
+            .gm-dialog-body > *:last-child{padding-bottom: 24px;}
             .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
             .gm-dialog-body h2{font-size: 24px;position:relative;padding: 8px 0 16px;margin: 0 0 16px;}
             .gm-dialog-body h2:before{background: rgba(34,36,38,.15);position: absolute;width:100%;bottom:0;display:block;content:"";height: 1px;}
