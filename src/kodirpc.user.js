@@ -1473,7 +1473,7 @@
                 .kodirpc-server-selector fieldset legend{margin-bottom:0;}
                 .kodirpc-server-selector fieldset legend:before{display: none;}
                 .kodirpc-server-selector .gm-list{border-radius: 0; padding:0;margin: 0;cursor: pointer;}
-                .kodirpc-server-selector .gm-list input{z-index:-1;visibility:hidden;}
+                .kodirpc-server-selector .gm-list [class*="gm-switch"] input{z-index:-1;visibility:hidden;}
             `;
             addstyle(styles);
         }
@@ -1497,7 +1497,7 @@
                         container = doc.createElement('span'),
                         slider = doc.createElement('span'),
                         checkbox = doc.createElement('input');
-                container.classList.add('switch-round-sm');
+                container.classList.add('gm-switch-round-sm');
                 slider.classList.add('slider');
                 label.classList.add('gm-label');
                 Object.assign(checkbox, {
@@ -1526,26 +1526,23 @@
                         }
                     }
                 });
+                Object.defineProperties(checkbox, {
+                    infos: {
+                        set(v){}, get(){
+                            return obj;
+                        }
+                    }
+                })
 
-                new Events(obj.root, obj);
+                new Events(obj.checkbox, obj);
 
-                obj.on('click', function(e){
+                li.addEventListener('click', function(e){
                     e.preventDefault();
-                    let change = new Event('change', {bubbles: true, cancelable: true});
                     this.input.checked = this.input.checked !== true;
-                    this.input.dispatchEvent(change);
+                    this.trigger('change');
                 });
 
-
-
-
-
-                /* Events(li).on('click', e => {
-                    e.preventDefault();
-                    checkbox.checked = checkbox.checked !== true;
-                    Events(checkbox).trigger('change');
-                });*/
-                return obj;
+                return li;
             }
 
         }
@@ -1577,33 +1574,12 @@
                                     last = self.last;
                             let ul = self.root.querySelector('.gm-list');
                             servers.forEach(server => {
-                                let sw = self.mkSwitch(server);
-
+                                let li = self.mkSwitch(server);
                                 if (typeof last[server.uniqid] !== u) sw.input.checked = true;
-
-                                ul.appendChild(sw.root);
+                                ul.appendChild(li);
                             });
 
 
-                            //spanbtn
-
-                            let test = html2element('<span />');
-                            Object.defineProperties(test, {
-                                name: {
-                                    get(){
-                                        return test.getAttribute('name');
-                                    },
-                                    set(name){
-                                        test.setAttribute("name", "" + name);
-                                    }
-                                }
-                            });
-
-                            test.name = "ggt";
-                            test.classList.add('gm-btn', 'gm-btn-no');
-                            self.root.appendChild(test);
-
-                            console.debug(test);
 
 
                         },
