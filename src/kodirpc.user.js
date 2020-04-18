@@ -1536,6 +1536,10 @@
                     this.input.dispatchEvent(change);
                 });
 
+
+
+
+
                 /* Events(li).on('click', e => {
                     e.preventDefault();
                     checkbox.checked = checkbox.checked !== true;
@@ -1579,6 +1583,29 @@
 
                                 ul.appendChild(sw.root);
                             });
+
+
+                            //spanbtn
+
+                            let test = html2element('<span />');
+                            Object.defineProperties(test, {
+                                name: {
+                                    get(){
+                                        return test.getAttribute('name');
+                                    },
+                                    set(name){
+                                        test.setAttribute("name", "" + name);
+                                    }
+                                }
+                            });
+
+                            test.name = "ggt";
+                            test.classList.add('gm-btn', 'gm-btn-no');
+                            self.root.appendChild(test);
+
+                            console.debug(test);
+
+
                         },
                         change(e){
                             console.debug(e);
