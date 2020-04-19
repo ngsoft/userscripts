@@ -57,8 +57,8 @@
 .viki-plus .viki-plus-fedit ul:empty,.viki-plus .viki-plus-fedit ul:empty + div {display:none;}
 
 .hidden, .hidden *,
-div.ads, div.ad, div.ad-1, div[id*="-ad-"]
-[id*="hola_"]{
+div.ads, div.ad, div.ad-1, div[id*="-ad-"],[id*="hola_"]
+{
     position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
     height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
     display: inline !important;z-index: -1 !important;
