@@ -19,12 +19,12 @@
 // @include      *
 // ==/UserScript==
 
+
 ((doc, undef) => {
 
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
-
 
     const gmSettings = new UserSettings({
         config: {

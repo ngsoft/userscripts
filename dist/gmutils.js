@@ -305,7 +305,7 @@ function trigger(el, type, data) {
     if (el instanceof EventTarget) {
         if (typeof type === s) {
             let event;
-            type.split(" ").forEach((t) => {
+            type.split(/\s+/).forEach((t) => {
                 if (el.parentElement === null) event = new Event(type);
                 else event = new Event(t, {bubbles: true, cancelable: true});
                 event.data = data;
@@ -560,7 +560,7 @@ Events.prototype = {
             else if (isPlainObject(options)) Object.keys(params).forEach(key => {
                 params[key] = options[key] === true;
             });
-            type.split(' ').forEach(type => {
+            type.split(/\s+/).forEach(type => {
                 self.events.push({
                     type: type,
                     listener: listener,
@@ -613,7 +613,7 @@ Events.prototype = {
                         break;
                 }
             }
-            type.split(' ').forEach(type => {
+            type.split(/\s+/).forEach(type => {
                 self.events = self.events.filter(evt => {
                     if (typeof callback === f) {
                         if (type === evt.type && params.capture === evt.params.capture && callback === evt.listener) {
@@ -640,7 +640,7 @@ Events.prototype = {
         if (typeof type === s) {
             const self = this;
             data = data !== undef ? data : {};
-            type.split(' ').forEach(type => {
+            type.split(/\s+/).forEach(type => {
                 let event;
                 if (self.target.parentElement === null) event = new Event(type);
                 else event = new Event(type, {
@@ -1638,7 +1638,7 @@ class gmDialog {
                     }
                 }
             });
-        })
+        });
 
 
 
