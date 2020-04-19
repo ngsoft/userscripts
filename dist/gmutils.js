@@ -509,12 +509,52 @@ const find = (function () {
 
 })();
 
+/**
+ * Node Finder v2
+ */
+
+const NodeFinder = (function(){
+
+
+
+    class NodeFinder extends MutationObserver {
+
+        start(){
+
+        }
+        stop(){
+
+        }
+
+        constructor(base, selector, callback){
+
+            super(mutations => {
+
+            });
+
+
+
+        }
+    }
+
+
+    return function Finder(){
+
+    };
+})();
+
+
+
+
+
+
+
 
 /**
  * Resize Sensor
- *
+ * @param {HTMLElement|string} element Element or selector
+ * @param {function} callback Callback to use ob resize
  */
-
 const ResizeSensor = (function(){
 
     const

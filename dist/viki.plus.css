@@ -28,7 +28,7 @@
 
 .viki-plus [class*="icon-"]{font-size: 12px;}
 
-.video-js video {object-fit: cover;}
+.video-js video {object-fit: fill;}
 
 .hidden, .hidden *,
 div.ads, div.ad, div.ad-1, div[id*="-ad-"],[id*="hola_"]
