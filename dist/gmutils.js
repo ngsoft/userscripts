@@ -509,6 +509,119 @@ const find = (function () {
 
 })();
 
+
+/**
+ * Resize Sensor
+ *
+ */
+
+const ResizeSensor = (function(){
+
+    const
+            sensors = [],
+            domObserver = new MutationObserver((mutations, obs) => {
+                mutations.forEach(mutation => {
+                    if (mutation.type === "childList" && mutation.removedNodes.length > 0) {
+                        sensors.filter(x => x.started === true).forEach(sensor => {
+                            if (!doc.body.contains(sensor.element)) sensor.stop();
+                        });
+                        if (sensors.every(x => x.started === false)) obs.stop();
+                    }
+                });
+            });
+    Object.assign(domObserver, {
+        started: false,
+        start(){
+            if (this.started === false) {
+                this.started = true;
+                this.observe(doc.body, {childList: true, subtree: true});
+            }
+        },
+        stop(){
+            if (this.started === true) {
+                this.started = false;
+                this.disconnect();
+            }
+        }
+    });
+
+
+    class ResizeSensor {
+
+
+        get element(){
+            return this._params.element;
+        }
+        get started(){
+            return this._params.started;
+        }
+        get currentWidth(){
+            return this.element.offsetWidth;
+        }
+        get currentHeight(){
+            return this.element.offsetHeight;
+        }
+        get previousWidth(){
+            return this._params.width;
+        }
+        get previousHeight(){
+            return this._params.height;
+        }
+
+        start(){
+            if (this._params.started === false) {
+                this._params.width = this.currentWidth;
+                this._params.height = this.currentHeight;
+                this._params.started = true;
+                this._params.observer.observe(this.element, {attributes: true, characterData: true, childList: true, subtree: true});
+                domObserver.start();
+            }
+        }
+        stop(){
+            if (this._params.started === true) {
+                this._params.started = false;
+                this._params.observer.disconnect();
+            }
+        }
+
+        constructor(element, callback){
+            const
+                    self = this,
+                    params = this._params = {
+                        element: element,
+                        width: null,
+                        height: null,
+                        started: false
+                    };
+            let
+                    width = self.currentWidth,
+                    height = self.currentHeight;
+            this._params.observer = new MutationObserver(m => {
+                if (self.currentWidth !== width || self.currentHeight !== height) {
+                    self._params.width = width;
+                    self._params.height = height;
+                    width = self.currentWidth;
+                    height = self.currentHeight;
+                    callback.call(element, self);
+                }
+            });
+            sensors.push(this);
+            this.start();
+        }
+    }
+
+    function sensor(element, callback){
+        if (typeof callback !== f) throw new Error('ResizeSensor invalid callback.');
+        if (typeof element === s) element = doc.querySelectorAll(element);
+        if (element instanceof NodeList) return Array.from(element).map(el => sensor(el, callback));
+        if (!(element instanceof Element)) throw new Error('ResizeSensor invalid element.');
+        return new ResizeSensor(element, callback);
+    }
+    return sensor;
+})();
+
+
+
 /**
  * Small Event Wrapper
  * @param {EventTarget} target
@@ -1467,6 +1580,7 @@ const isoCode = (() => {
 })();
 
 
+
 /**
  * Userscripts Dialog Box
  */
@@ -1551,15 +1665,18 @@ class gmDialog {
         const body = this.elements.body;
 
         body.style["max-height"] = body.style.height = null; //reset style
-        let max = innerHeight,
+        let
+                max = this.root.offsetHeight,
                 dialogHeight = this.elements.dialog.offsetHeight,
-                minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight;
-        minus += 12;
-        let height = max - minus;
-        body.style["max-height"] = height + "px";
+                minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight + this.elements.dialog.offsetTop,
+                available = max - minus - 1,
+                current = body.offsetHeight;
 
-        if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || this.elements.dialog.classList.contains('gm-dialog-fullscreen'))
-            body.style.height = height + "px";
+        if (current > available) body.style["max-height"] = available + "px";
+        if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || this.elements.dialog.classList.contains('gm-dialog-fullscreen')) {
+            body.style.height = available + "px";
+        }
+
     }
 
     constructor(parent, settings){
@@ -1732,8 +1849,11 @@ class gmDialog {
             removeEventListener('resize', l);
         }).on('show', e => {
             addEventListener('resize', l);
+            ResizeSensor(self.elements.body, l);
             self.setSize();
         });
+
+
 
 
         self.setScroll();
@@ -2315,7 +2435,6 @@ class gmStyles {
             .gm-dialog-body{ min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;color: #333;position:relative;padding: 0;margin:0;}
             .gm-dialog-body{overflow-y:scroll;scrollbar-width: none;ms-overflow-style: none;}
             .gm-dialog-body::-webkit-scrollbar { width: 0; height: 0;}
-            /*.gm-moz-scrollable .gm-dialog-body {margin-right: -67px;padding-right: 50px;}*/
             .gm-dialog-body > *{margin: 0; padding: 0 24px;text-align: left;font-size: 20px;}
             .gm-dialog-body > *:last-child{padding-bottom: 24px;}
             .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
