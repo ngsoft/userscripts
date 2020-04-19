@@ -1931,7 +1931,7 @@
         }
     }
 
-
+    new KodiRPCConfigurator();
 
 
 

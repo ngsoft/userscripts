@@ -1507,12 +1507,50 @@ class gmDialog {
     }
 
     /**
+     * Older firefox scroll hack
+     */
+    setScroll(){
+        //mozilla firefox scroll hack
+        //on a up to date version document.documentElement.style["scrollbar-width"] is a string (so CSS is working)
+        if (/firefox/i.test(navigator.userAgent) ? document.documentElement.style["scrollbar-width"] === undef : false) {
+
+            //small css trick to get the scrollbar width (must be 17px but cannot be sure)
+            if (typeof gmDialog.scrollbarSize !== n) {
+                let
+                        scrollable = doc.createElement('div'),
+                        contents = doc.createElement('div'),
+                        scrollablestyle, contentsstyle;
+             
+                scrollable.appendChild(contents);
+                scrollablestyle = contentsstyle = "width: 100%;padding:0;margin:0;display:block;overflow: unset;height:auto;";
+                scrollablestyle += "overflow-y: scroll;opacity:0;z-index:-1;";
+                contentsstyle += "height: 1px;";
+                scrollable.style = scrollablestyle;
+                contents.style = contentsstyle;
+                doc.body.appendChild(scrollable);
+                gmDialog.scrollbarSize = scrollable.offsetWidth - contents.offsetWidth;
+                doc.body.removeChild(scrollable);
+
+            }
+            let
+                    body = this.elements.body,
+                    scrollbarSize = gmDialog.scrollbarSize;
+
+            if (scrollbarSize > 0) {
+                body.style["margin-right"] = `-${ 50 + scrollbarSize }px`; //adds the scrollbar size
+                body.style["padding-right"] = "50px"; // do not add the scrollbar size to prevent layout gap
+            }
+
+        }
+    }
+
+    /**
      * auto resize dialog
      */
     setSize(){
         const body = this.elements.body;
 
-        body.style = null; //reset style
+        body.style["max-height"] = body.style.height = null; //reset style
         let max = innerHeight,
                 dialogHeight = this.elements.dialog.offsetHeight,
                 minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight;
@@ -1697,11 +1735,8 @@ class gmDialog {
             self.setSize();
         });
 
-        //mozilla firefox scroll hack
-        if (/firefox/i.test(navigator.userAgent) ? document.documentElement.style["scrollbar-width"] === undef : false) {
-            dialog.classList.add('gm-moz-scrollable');
-        }
 
+        self.setScroll();
 
         new gmStyles();
         //register current instance
@@ -2280,7 +2315,7 @@ class gmStyles {
             .gm-dialog-body{ min-height: 96px;text-align: center; font-size: 24px; font-weight: normal;line-height: 1.5;color: #333;position:relative;padding: 0;margin:0;}
             .gm-dialog-body{overflow-y:scroll;scrollbar-width: none;ms-overflow-style: none;}
             .gm-dialog-body::-webkit-scrollbar { width: 0; height: 0;}
-            .gm-moz-scrollable .gm-dialog-body {margin-right: -67px;padding-right: 50px;}
+            /*.gm-moz-scrollable .gm-dialog-body {margin-right: -67px;padding-right: 50px;}*/
             .gm-dialog-body > *{margin: 0; padding: 0 24px;text-align: left;font-size: 20px;}
             .gm-dialog-body > *:last-child{padding-bottom: 24px;}
             .gm-dialog-body h1, .gm-dialog-body h2{display:block;font-size: 32px;text-align: left;padding: 16px 0;margin:0;border:0;font-weight: 500;}
