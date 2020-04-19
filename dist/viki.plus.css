@@ -26,10 +26,9 @@
 [class*="switch"][class*="-md"] .slider{transform: scale(.9,.9);}
 [class*="switch"][class*="-lg"] .slider{transform: scale(1.1,1.1);}
 
-
-
 .viki-plus [class*="icon-"]{font-size: 12px;}
 
+.video-js video {object-fit: cover;}
 
 .hidden, .hidden *,
 div.ads, div.ad, div.ad-1, div[id*="-ad-"],[id*="hola_"]
