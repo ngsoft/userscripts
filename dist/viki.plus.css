@@ -27,34 +27,9 @@
 [class*="switch"][class*="-lg"] .slider{transform: scale(1.1,1.1);}
 
 
-.viki-plus .bt-square{line-height:0; padding: 8px;margin:0;vertical-align: top;min-width: 0;transform: translateY(25%);}
+
 .viki-plus [class*="icon-"]{font-size: 12px;}
-.viki-plus button + select{width: calc(100% - 48px);}
 
-.viki-plus-fedit ul, .viki-plus-fedit ul + div{
-     padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);
- }
-.viki-plus-fedit ul li, .viki-plus-fedit ul + div div{
-    height: 48px;text-align: center;
-    border: 0;padding: 12px 0 0 0; position: relative;
- }
-.viki-plus-fedit ul{
-     border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom:0;margin:8px 0 0 0;
- }
- .viki-plus-fedit ul + div{
-     border-top-left-radius: 0; border-top-right-radius: 0;
-     padding: 0 4px;
- }
-.viki-plus-fedit ul li +li, .viki-plus-fedit ul{
-     border-top: 1px solid rgba(0,0,0,.125);
- }
-
-.viki-plus-fedit ul li > *:not(span), .viki-plus-fedit ul +div div > *:not(span){
-    position: absolute;top: 50%;transform: translateY(-50%);
-}
-.viki-plus-fedit .gm-btn-no{top:0; right:0;}
-.viki-plus-fedit li strong, .viki-plus-fedit ul + div strong{left:0;}
-.viki-plus .viki-plus-fedit ul:empty,.viki-plus .viki-plus-fedit ul:empty + div {display:none;}
 
 .hidden, .hidden *,
 div.ads, div.ad, div.ad-1, div[id*="-ad-"],[id*="hola_"]

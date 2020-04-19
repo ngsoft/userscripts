@@ -1668,7 +1668,7 @@ class gmDialog {
         let
                 max = this.root.offsetHeight,
                 dialogHeight = this.elements.dialog.offsetHeight,
-                minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight + this.elements.dialog.offsetTop,
+                minus = this.elements.header.offsetHeight + this.elements.footer.offsetHeight,
                 available = max - minus - 1,
                 current = body.offsetHeight;
 
@@ -1852,9 +1852,6 @@ class gmDialog {
             ResizeSensor(self.elements.body, l);
             self.setSize();
         });
-
-
-
 
         self.setScroll();
 
@@ -2512,7 +2509,8 @@ class gmStyles {
 
         //gmList
         styles += `
-            .gm-list{list-style-type: none; padding: 4px;box-sizing: border-box;border-radius: 4px; border: 1px solid rgba(0,0,0,.125);margin:8px 0;display:block;}
+            .gm-list{list-style-type: none; padding: 0;box-sizing: border-box;border-radius: 0; border: 1px solid rgba(0,0,0,.125);margin:8px 0;display:block;}
+            .gm-list.rounded{border-radius: 4px;}
             .gm-list > *{text-align: center;border: none;padding: 16px; position: relative;font-weight:600;display:block;clear:both;}
             .gm-list > * + *{border-top: 1px solid rgba(0,0,0,.125);}
             .gm-list > * > .gm-btn{min-width:auto; padding:8px 16px !important;margin:-8px -8px 0 0 !important;float: right;} /** tools **/
