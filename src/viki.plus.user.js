@@ -463,6 +463,10 @@
 
                 });
 
+                find('.video-js', vjs => {
+                    dialog.parent = vjs;
+                }, 50000);
+
 
 
                 self.elements.root.querySelectorAll('[name]').forEach(input => {
