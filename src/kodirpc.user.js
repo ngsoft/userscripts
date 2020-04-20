@@ -33,57 +33,11 @@
 
 
 
-    /**
-     * Node Finder v2
-     */
-
-    const NodeFinder = (function(){
 
 
-
-        class NodeFinder extends MutationObserver {
-
-            start(){
-
-            }
-            stop(){
-
-            }
-
-            constructor(base, selector, callback){
-
-                super(mutations => {
-
-                });
-
-
-
-            }
-        }
-
-
-        return function Finder(){
-
-        };
-    })();
-
-
-
-
-
-
-
-
-
-    find('video', video => {
+    NodeFinder.find('video', video => {
         console.debug(video);
     });
 
 
-
-
-
-
-
-
-})();
+})(document);

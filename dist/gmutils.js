@@ -143,6 +143,24 @@ function addstyle(css) {
 }
 
 /**
+ * Tests whenever the given selector is valid
+ * @param {string} selector
+ * @returns {Boolean}
+ */
+function isValidSelector(selector){
+
+    if (typeof selector !== s) return false;
+    let valid = true;
+    try {
+        //throws syntax error on invalid selector
+        valid = doc.createElement('template').querySelector(selector) === null;
+    } catch (e) {
+        valid = false;
+    }
+    return valid;
+}
+
+/**
  * Checks if url is valid
  * @param {string} url
  * @returns {boolean}
@@ -386,7 +404,7 @@ class Timer {
 
 /**
  * Uses Mutation Observer + intervals(some sites blocks observers) to find new nodes
- * And test them against params
+ * And test them against params (Use NodeFinder instead, find is to be removed)
  */
 const find = (function () {
 
@@ -510,7 +528,178 @@ const find = (function () {
 })();
 
 
+class NodeFinderResults extends Array {
 
+    get current(){
+        return this[this.length - 1];
+    }
+
+
+    /**
+     * Use current result as root to find children matching selector
+     * @param {string} selector
+     * @param {function} callback
+     * @returns {NodeFinder}
+     */
+    find(selector, callback){
+        return NodeFinderInitiator(this.current).find(selector, callback);
+    }
+
+    /**
+     * Starts thee dom observer
+     * @returns {NodeFinderResults}
+     */
+    start(){
+        if (this.started === false) {
+            const $this = this;
+            if (doc.readyState === "loading") {
+                doc.addEventListener("DOMContentLoaded", function(){
+                    $this.start();
+                });
+                return this;
+            }
+            this.started = true;
+            //initial search (nodes already in dom)
+            this.root.querySelectorAll(this.selector).forEach(node => {
+                if (!$this.includes(node)) {
+                    $this.push(node);
+                    $this.callback.call(node, node, $this);
+                }
+            });
+
+            this.observer.observe(this.root, {attributes: true, childList: true, subtree: true});
+            return this;
+        }
+    }
+    /**
+     * Stops the dom observer
+     * @returns {NodeFinderResults}
+     */
+    stop(){
+        if (this.started === true) {
+            this.started = false;
+            this.observer.disconnect();
+        }
+        return this;
+    }
+
+
+    constructor(root, selector, callback, finder){
+
+        if (!isValidSelector(selector)) throw new Error('NodeFinder invalid selector.');
+        if (typeof callback !== f) throw new Error('NodeFinder invalid callback.');
+
+        super();
+
+        Object.defineProperties(this, {
+            root: {value: root, enmerable: false, configurable: true, writable: false},
+            selector: {value: selector, enmerable: false, configurable: true, writable: false},
+            callback: {value: callback, enmerable: false, configurable: true, writable: false},
+            observer: {value: callback, enmerable: false, configurable: true, writable: true},
+            started: {value: false, enmerable: false, configurable: true, writable: true},
+            NodeFinder: {value: finder, enmerable: false, configurable: true, writable: false}
+        });
+
+
+        const
+                $this = this,
+                $callback = function(mutations){
+                    let nodes = [];
+                    mutations.forEach(m => {
+                        let node = m.target;
+                        if (nodes.includes(node)) return;
+                        if (node.matches(selector)) nodes.push(node);
+                        else if (m.type === 'childList') {
+                            [m.addedNodes, m.removedNodes].forEach(list => {
+                                list.forEach(node => {
+                                    if (nodes.includes(node)) return;
+                                    if (node instanceof Element ? node.matches(selector) : false) nodes.push(node);
+                                });
+                            });
+                        }
+                    });
+
+                    if (nodes.length > 0) {
+                        nodes.forEach(node => {
+                            if ($this.includes(node)) return;
+                            if (root.contains(node)) {
+                                $this.push(node);
+                                callback.call(node, node, $this);
+                            }
+                        });
+                    }
+                };
+        this.observer = new MutationObserver($callback);
+        this.start();
+    }
+}
+
+
+/**
+ * Node Finder v2
+ * @param {DocumentElement|HTMLElement|string} root single node, selector to use as root for the search
+ * @returns {NodeFinder}
+ */
+function NodeFinder(root){
+    if (this instanceof NodeFinder == false) return new NodeFinder(root);
+    //throw new Error('NodeFinder cannot be instanciated using |new|.');
+    if (typeof root === s) root = doc.querySelector(root);
+    if (root instanceof EventTarget ? typeof root.querySelectorAll === f : false) {
+        Object.defineProperties(this, {
+            root: {value: root, enmerable: false, configurable: true, writable: false},
+            observers: {value: [], enmerable: false, configurable: true, writable: false}
+        });
+        NodeFinder.instances.push(this);
+        return this;
+    }
+    throw new Error('NodeFinder invalid root argument');
+}
+
+
+NodeFinder.instances = [];
+
+
+NodeFinder.fn = NodeFinder.prototype = {
+    /**
+     * Find Nodes if existing or when created
+     * @param {string} selector
+     * @param {function} callback
+     * @returns {NodeFinderRoot}
+     */
+    find(selector, callback){
+        this.observers.push(new NodeFinderResults(this.root, selector, callback, this));
+        return this;
+    },
+
+    /**
+     * Stops all observers for the current root
+     * @return {NodeFinder}
+     */
+    stop(){
+        this.observers.forEach(obs => obs.stop());
+        return this;
+    }
+};
+
+/**
+ * Find Nodes if existing or when created using the full document
+ * @param {string} selector
+ * @param {function} callback
+ * @returns {NodeFinder}
+ */
+NodeFinder.find = function(selector, callback, ...args){
+    return NodeFinder(doc).find(selector, callback, ...args);
+};
+
+/**
+ * Stops all observers
+ * @return {undefined}
+ */
+NodeFinder.stop = function(){
+    this.instances.forEach(finder => {
+        finder.stop();
+    });
+};
 
 
 /**
