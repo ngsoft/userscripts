@@ -12,6 +12,8 @@
 // @grant       GM_deleteValue
 // @grant       GM_listValues
 // @grant       GM_xmlhttpRequest
+// @grant       GM_registerMenuCommand
+// @grant       GM_unregisterMenuCommand
 // @compatible  firefox+tampermonkey
 // @compatible  chrome+tampermonkey
 //
@@ -856,7 +858,6 @@
                 return;
             }
             self.sendRPCRequest(server, "Playlist.GetPlaylists", {}, callback, callback, complete);
-
         }
 
 
@@ -890,6 +891,7 @@
                         new KodiRPCConfigurator(open, close);
                     },
                     send(e){
+                        console.debug(e);
                         if ((typeof e.data !== u) && (typeof e.data.link === s)) {
                             self.client.send(e.data.link, e.data.success, e.data.error, e.data.complete);
                         }
@@ -912,7 +914,7 @@
             const self = this, servers = self.client.servers;
 
             servers.forEach(server => {
-                self.client.checkConnection(server,x=>x,x=>x,s=>{
+                self.client.checkConnection(server, x => x, x => x, s => {
                     self.trigger(self.prefix + 'update', {server: s});
                 });
             });
@@ -1078,37 +1080,39 @@
                                                     </ul>
 
                                                     <form class="kodirpc-basics" name="basics" autocomplete="off">
-                                                        <h1>Basic Configuration</h1>
-                                                        <ul class="gm-list">
-                                                            <li>
-                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                                    <input type="checkbox" name="display_servers">
-                                                                    <span class="slider"></span>
-                                                                </span>
-                                                                Display Server List
-                                                            </li>
-                                                            <li>
-                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                                    <input type="checkbox" name="update_servers_online">
-                                                                    <span class="slider"></span>
-                                                                </span>
-                                                                Check Servers Online
-                                                            </li>
-                                                            <li>
-                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                                    <input type="checkbox" name="use_blacklist">
-                                                                    <span class="slider"></span>
-                                                                </span>
-                                                                Use Blacklist
-                                                            </li>
-                                                            <li>
-                                                                <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
-                                                                    <input type="checkbox" name="legacy_mode">
-                                                                    <span class="slider"></span>
-                                                                </span>
-                                                                Use Legacy Mode (Direct Play)
-                                                            </li>
-                                                        </ul>
+                                                        <fieldset>
+                                                            <legend>Basic Configuration</legend>
+                                                            <ul class="gm-list">
+                                                                <li>
+                                                                    <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                        <input type="checkbox" name="display_servers">
+                                                                        <span class="slider"></span>
+                                                                    </span>
+                                                                    Display Server List
+                                                                </li>
+                                                                <li>
+                                                                    <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                        <input type="checkbox" name="update_servers_online">
+                                                                        <span class="slider"></span>
+                                                                    </span>
+                                                                    Check Servers Online
+                                                                </li>
+                                                                <li>
+                                                                    <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                        <input type="checkbox" name="use_blacklist">
+                                                                        <span class="slider"></span>
+                                                                    </span>
+                                                                    Use Blacklist
+                                                                </li>
+                                                                <li>
+                                                                    <span class="switch-round-sm" style="position:absolute; top:50%;left:-4px;transform: translateY(-50%);">
+                                                                        <input type="checkbox" name="legacy_mode">
+                                                                        <span class="slider"></span>
+                                                                    </span>
+                                                                    Use Legacy Mode (Direct Play)
+                                                                </li>
+                                                            </ul>
+                                                        </fieldset>
                                                     </form>
                                                     <form class="kodirpc-blacklist-manager" name="blacklist" autocomplete="off">
                                                         <fieldset class="kodirpc-bm-add" style="padding: 8px 0;">
@@ -1280,6 +1284,8 @@
                         Object.keys(self.elements.forms).forEach(name => {
                             Events(self.elements.forms[name]).trigger("form.init");
                         });
+
+                        self.ready = true;
                     },
                     change(e){
                         e.stopPropagation();
@@ -1637,6 +1643,9 @@
                                 self.tab = "selection";
                                 return;
                             }
+
+                            let mt = self.root.querySelector('[data-tab=".kodirpc-servers"]');
+                            if (!mt.classList.contains('active')) Events(mt).trigger('click');
                             self.tab = "edit";
                             self.flashbox.info("Editing " + server.name);
                         }
@@ -1931,8 +1940,36 @@
         }
     }
 
-    new KodiRPCConfigurator();
 
+
+    let cfgu;
+
+    GM_registerMenuCommand("KodiRPC Settings", () => {
+        if (cfgu === undef) cfgu = new KodiRPCConfigurator();
+        else cfgu.dialog.open();
+    }, "");
+
+
+
+    function send(url){
+        
+
+
+            Events(doc.body).trigger('kodirpc.send', {
+                link: url,
+                success(json, server){
+                    console.debug(json, server);
+                },
+                error(code, server){
+                    console.debug(code, server);
+                },
+                complete(s){
+                    console.debug(s);
+                }
+            });
+
+
+    }
 
 
     (() => {
@@ -1942,11 +1979,92 @@
             timeout: 0,
             interval: 1000,
             onload(el){
+                console.debug(el);
                 let video = el.closest('video');
                 if(elements.includes(video)) return;
                 if (video.parentElement !== null) {
                     elements.push(video);
-                    new KodiRPCUI(video);
+
+                    let url = null, possible = [], match = false;
+
+                    possible.push(video.src || "");
+                    possible.push(video.data("src") || "");
+                    video.querySelectorAll('source[src^="http"]').forEach(source => {
+                        possible.push(source.getAttribute('src'));
+                    });
+
+                    possible.forEach(src => {
+                        if (match === true) return;
+                        if (/^http/i.test(src)) {
+                            match = true;
+                            url = src;
+                        }
+                    });
+                    if (url !== null) {
+
+                        let sendVideo = function(){
+                            GM_registerMenuCommand("Send Stream to Kodi", () => {
+                                send(url);
+                                console.debug(url);
+                            }, "");
+                        };
+
+                        let module = doc.documentElement.KodiRPCModule;
+                        if ((module instanceof KodiRPCModule) && (module.ready === true)) return sendVideo();
+                        else {
+
+                            const commands = {};
+                            
+                            Events(doc.body)
+                                    .on('kodirpc.ready', e => sendVideo())
+                                    .on('kodirpc.update', e => {
+
+                                        let server = e.data ? e.data.server : null;
+                                        if (server instanceof KodiRPCServer) {
+
+                                            if (typeof commands[server.uniqid] !== u) {
+                                                GM_unregisterMenuCommand(commands[server.uniqid]);
+                                            }
+
+                                            let title = server.name;
+                                            title += " [ ";
+                                            title += server.online ? "ON" : "OFF";
+                                            title += " ]";
+                                            commands[server.uniqid] = GM_registerMenuCommand(title, x => {
+                                                if (cfgu === undef) cfgu = new KodiRPCConfigurator();
+                                                //console.debug(cfgu.dialog);
+                                                if (cfgu.dialog.isClosed) {
+                                                    cfgu.dialog.one('show', e => {
+                                                        cfgu.data.current = server;
+                                                    });
+
+
+                                                } else {
+                                                    if (!cfgu.ready) cfgu.dialog.one('init', e => {
+                                                        cfgu.data.current = server;
+                                                    });
+                                                    else cfgu.data.current = server;
+                                                }
+                                                cfgu.dialog.open();
+                                            }, "");
+
+                                        }
+
+                                    });
+                            new KodiRPCModule();
+                            
+                            
+
+                        }
+
+
+                    }
+
+
+
+
+
+
                 }
             }
         });

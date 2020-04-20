@@ -393,7 +393,7 @@ const find = (function () {
     const obsopts = {
             attributes: true,
             //characterData: true,
-            //childList: true,
+        //childList: true,
             subtree: true
         },
         defaults = {
@@ -1843,20 +1843,23 @@ class gmDialog {
         self.on('open close', e => {
             self.elements.dialog.classList.remove('fadeOut', 'fadeIn');
             if (e.type === "open") {
-                //prevent page scroll
-                doc.body.classList.add('gm-noscroll');
+                if (self.isClosed) {
+                    //prevent page scroll
+                    doc.body.classList.add('gm-noscroll');
+                    self.elements.dialog.classList.add('fadeIn');
+                    self.parent.appendChild(self.root);
+                    setTimeout(x => self.trigger('show'), 750);
+                }
 
-
-                self.elements.dialog.classList.add('fadeIn');
-                self.parent.appendChild(self.root);
-                setTimeout(x => self.trigger('show'), 750);
             } else {
+                if (!self.isClosed) {
+                    self.elements.dialog.classList.add('fadeOut');
+                    setTimeout(() => {
+                        self.parent.removeChild(self.root);
+                        self.trigger('hide');
 
-                self.elements.dialog.classList.add('fadeOut');
-                setTimeout(() => {
-                    self.parent.removeChild(self.root);
-                    self.trigger('hide');
-                }, 750);
+                    }, 750);
+                }
             }
 
         }).on('click', e => {
