@@ -509,43 +509,6 @@ const find = (function () {
 
 })();
 
-/**
- * Node Finder v2
- */
-
-const NodeFinder = (function(){
-
-
-
-    class NodeFinder extends MutationObserver {
-
-        start(){
-
-        }
-        stop(){
-
-        }
-
-        constructor(base, selector, callback){
-
-            super(mutations => {
-
-            });
-
-
-
-        }
-    }
-
-
-    return function Finder(){
-
-    };
-})();
-
-
-
-
 
 
 
