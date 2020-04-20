@@ -2410,81 +2410,107 @@ class gmFlash {
  */
 class gmTabs {
 
+
+    isValidPath(path){
+        return typeof path === s ? /^\/?[a-z][\w\-]+(?:\/[a-z][\w\-]+)?$/i.test(path) : false;
+    }
+
+
+    set path(path){
+
+        if (this.isValidPath(path)) {
+            if (path[0] === '/') path = path.substr(1);
+            const self = this;
+            path.split('/').forEach(name => {
+                self.autopath.filter(x => x.name === name).forEach(item => trigger(item.tab, self.config.prefix + 'select'));
+            });
+        }
+
+    }
+
+
     constructor(root, params){
         root = root instanceof Element ? root : doc.body;
 
         params = params instanceof Object ? params : {};
-        const self = this, events = {
-            init(e){
+        const
+                self = this,
+                events = {
+                    init(e){
+                        let container = e.target.closest(gmTabsSelector);
+                        if (container === null) return;
+                        //no selected tab
+                        if (container.querySelector(`${gmTabSelector}${selectedSelector}`) === null) {
+                            let first = container.querySelector(`${gmTabSelector}${datasetSelector}:not(${disabledSelector})`);
+                            if (first !== null) first.classList.add(selectedClass);
+                        }
+                        //dimensions
+                        let tabs = container.querySelectorAll(gmTabSelector),
+                                percent = tabs.length > 0 ? ((1 / tabs.length) * 100) : null;
+                        tabs.forEach(tab => {
+                            if (autosize === true) tab.style.width = `${percent}%`;
 
-                self.root.querySelectorAll(gmTabsSelector).forEach(container => {
-                    //no selected tab
-                    if (container.querySelector(`${gmTabSelector}${selectedSelector}`) === null) {
-                        let first = container.querySelector(`${gmTabSelector}${datasetSelector}:not(${disabledSelector})`);
-                        if (first !== null) first.classList.add(selectedClass);
-                    }
-                    //dimensions
-                    let tabs = container.querySelectorAll(gmTabSelector),
-                            percent = tabs.length > 0 ? ((1 / tabs.length) * 100) : null;
+                            let targetSelector = tab.data(dataset) || "";
+                            if (isValidSelector(targetSelector)) {
+                                let
+                                        hidden = tab.matches(selectedSelector) ? null : true,
+                                        name = tab.data(nameDataset) || "",
+                                        target = self.root.querySelectorAll(targetSelector);
 
-                    tabs.forEach(tab => {
-                        if (autosize === true) tab.style.width = `${percent}%`;
 
-                        let targetSelector = tab.data(dataset);
-                        if (typeof targetSelector === s ? targetSelector.length > 0 : false) {
-                            let hidden = tab.matches(selectedSelector) ? null : true;
-                            try {
-                                self.root.querySelectorAll(targetSelector).forEach(target => target.hidden = hidden);
-                                if (hidden === null) Events(tab).trigger(eventPrefix + "select");
-                            } catch (e) {
-                                console.error(e.message);
-                                tab.classList.add(disabledClass);
+                                target.forEach(target => target.hidden = hidden);
+                                if (name.length > 0 ? /^[a-z][\w\-]+$/i.test(name) : false) {
+                                    self.autopath.push({
+                                        name: name,
+                                        tab: tab
+                                    });
+                                }
+                                return;
+
                             }
+                            tab.classList.add(disabledClass);
+                        });
 
-                        } else tab.classList.add(disabledClass);
-                    });
-                });
+                        trigger(container, eventPrefix + "ready");
 
+                    },
 
+                    open(e){
+                        let t = e.target;
+                        t.hidden = null;
+                        transition.start(t, () => {
+                            Events(t).trigger(eventPrefix + "show");
+                        });
+                    },
+                    close(e){
+                        e.target.hidden = true;
+                        Events(e.target).trigger(eventPrefix + "hide");
+                    },
 
-            },
+                    select(e){
+                        let t = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
+                        if (t !== null) {
+                            if (t.classList.contains(selectedClass)) return;
+                            if (t.classList.contains(disabledClass)) return;
+                            let siblings = t.closest(gmTabsSelector).querySelectorAll(`${gmTabSelector}:not(${disabledSelector})`);
+                            self.root.querySelectorAll(t.data(dataset)).forEach(x => trigger(x, eventPrefix + "open"));
+                            t.classList.add(selectedClass);
+                            siblings.forEach(x => {
+                                if (x !== t) trigger(x, eventPrefix + "dismiss");
+                            });
+                        }
+                    },
 
-            open(e){
-                let t = e.target;
-                t.hidden = null;
-                transition.start(t, () => {
-                    Events(t).trigger(eventPrefix + "show");
-                });
-            },
-            close(e){
-                e.target.hidden = true;
-                Events(e.target).trigger(eventPrefix + "hide");
-            },
+                    dismiss(e){
+                        let t = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
+                        if (t !== null) {
 
-            toggle(e){
-                
-                let t = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
+                            t.classList.remove(selectedClass);
+                            self.root.querySelectorAll(t.data(dataset)).forEach(x => trigger(x, eventPrefix + "close"));
 
-                if (t !== null) {
-                    let open = t.matches(`:not(${selectedSelector})`), selectorTarget = t.data(dataset), type = eventPrefix;
-                    type += open === true ? "open" : "close";
-                    self.root.querySelectorAll(selectorTarget).forEach(target => Events(target).trigger(type));
-                    t.classList.toggle(selectedClass);
-                    if (t.classList.contains(selectedClass)) Events(t).trigger(eventPrefix + "select");
-                }
-            },
-            click(e){
-                let t = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
-                if (t !== null) {
-                    e.preventDefault();
-                    t.closest(gmTabsSelector).querySelectorAll(`${gmTabSelector}:not(${disabledSelector})`).forEach(tab => {
-                        // close active tab and open current clicked tab
-                        if (tab.matches(selectedSelector) || tab === t) Events(tab).trigger(eventPrefix + "toggle");
-
-                    });
-                }
-            }
-        };
+                        }
+                    }
+                };
 
 
         const transition = {
@@ -2522,6 +2548,7 @@ class gmTabs {
             selected: 'active',
             disabled: 'disabled',
             dataset: 'tab',
+            namedataset: 'name',
             prefix: 'gmtab.',
             events: {},
             autosize: true,
@@ -2532,7 +2559,8 @@ class gmTabs {
 
         Object.assign(this, {
             root: root,
-            config: Object.assign({}, cfg, params)
+            config: Object.assign({}, cfg, params),
+            autopath: []
         });
 
         Object.keys(cfg).forEach(key => {
@@ -2542,16 +2570,19 @@ class gmTabs {
 
         if (!(/\.$/.test(this.config.prefix))) this.config.prefix += ".";
 
-        const gmTabsClass = this.config.gmtabs,
+        const
+                gmTabsClass = this.config.gmtabs,
                 gmtabClass = this.config.gmtab,
                 selectedClass = this.config.selected,
                 disabledClass = this.config.disabled,
                 dataset = this.config.dataset,
+                nameDataset = this.config.namedataset,
                 gmTabsSelector = '.' + gmTabsClass,
                 gmTabSelector = '.' + gmtabClass,
                 selectedSelector = '.' + selectedClass,
                 disabledSelector = '.' + disabledClass,
                 datasetSelector = '[data-' + dataset + ']',
+                namedatasetSelector = '[data-' + nameDataset + ']',
                 eventPrefix = this.config.prefix,
                 autosize = this.config.autosize === true,
                 animate = this.config.animate === true,
@@ -2573,11 +2604,16 @@ class gmTabs {
             let  target = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
             if (target !== null) {
                 e.preventDefault();
-                if (target.matches(`:not(${selectedSelector})`)) Events(target).trigger(eventPrefix + 'click');
+                if (target.matches(`:not(${selectedSelector})`)) Events(target).trigger(eventPrefix + 'select');
             }
         });
 
-        this.trigger(eventPrefix + 'init');
+
+        NodeFinder(self.root).find(gmTabsSelector, container => trigger(container, eventPrefix + 'init'));
+
+        console.debug(this);
+        this.path = "/servers/about";
+        //this.trigger(eventPrefix + 'init');
 
         new gmStyles();
     }
