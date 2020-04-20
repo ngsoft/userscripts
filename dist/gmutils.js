@@ -2608,12 +2608,8 @@ class gmTabs {
             }
         });
 
-
+        //using new NodeFinder to match tabs whenever there are added to the dom (ajax load ...)
         NodeFinder(self.root).find(gmTabsSelector, container => trigger(container, eventPrefix + 'init'));
-
-        console.debug(this);
-        this.path = "/servers/about";
-        //this.trigger(eventPrefix + 'init');
 
         new gmStyles();
     }
