@@ -389,7 +389,7 @@
 
 
 
-    const gmDialog = (function(){
+    const gmDialogNG = (function(){
 
         /**
          * Keeps trace of the current gmDialog instances
@@ -427,12 +427,34 @@
         }
 
 
-        function animate(elem, classes, duration, eventEnd = null){
+        /**
+         * auto resize dialog
+         */
+        function setSize($this){
 
+            const body = $this.body;
+
+            body.style["max-height"] = body.style.height = null; //reset style
+            let
+                    max = $this.overlay.offsetHeight,
+                    dialogHeight = $this.dialog.offsetHeight,
+                    minus = $this.header.offsetHeight + $this.footer.offsetHeight,
+                    available = max - minus - 1,
+                    current = body.offsetHeight;
+
+            if (current > available) body.style["max-height"] = available + "px";
+            if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || $this.dialog.classList.contains('gm-fullscreen')) {
+                body.style.height = available + "px";
+            }
+
+        }
+
+
+        function animateElement(elem, classes, duration, eventEnd = null){
             if (elem instanceof Element === false) throw new Error('animate invalid argument elem');
             if (typeof classes !== s) throw new Error('animate invalid argument classes');
             if (typeof duration !== n) throw new Error('animate invalid argument duration');
-            if (typeof eventEnd !== s ? true : eventEnd !== null) throw new Error('animate invalid argument eventEnd');
+            if (typeof eventEnd !== s ? eventEnd !== null : false) throw new Error('animate invalid argument eventEnd');
 
             classes = classes.split(/\s+/);
             elem.classList.remove(...classes);
@@ -570,30 +592,46 @@
                             body: $this.overlay.querySelector('section'),
                             buttons: {}
                         }},
-                    root: {configurable: true, writable: false, enumerable: false, value: $this.overlay.querySelector('dialog')}
+                    root: {configurable: true, writable: false, enumerable: false, value: $this.overlay.querySelector('dialog')},
+                    ready: {configurable: true, writable: true, enumerable: false, value: false}
                 });
 
 
                 //eventPrefix
-                if (typeof conf.eventPrefix === s ? conf.eventPrefix.length > 0 : false) {
-                    if (/\.$/.test(conf.eventPrefix) === false) conf.eventPrefix += '.';
-                } else conf.eventPrefix = "";
+                if (typeof this.config.eventPrefix === s ? this.config.eventPrefix.length > 0 : false) {
+                    if (/\.$/.test(this.config.eventPrefix) === false) this.config.eventPrefix += '.';
+                } else this.config.eventPrefix = "";
 
                 const
                         dialog = this.dialog,
                         conf = this.config,
                         buttons = this.elements.buttons,
+                        //settings
                         eventPrefix = conf.eventPrefix,
                         overlayClickClose = conf.overlayClickClose === true,
                         removeOnClose = conf.removeOnClose === true,
                         fullscreen = conf.fullscreen === true,
+                        //animations
                         animate = conf.animate === true,
                         animateStart = conf.animateStart === true,
                         animateEnd = conf.animateEnd === true,
                         animateStartClasses = conf.animateStartClasses,
                         animateEndClasses = conf.animateEndClasses,
                         animateStartDuration = conf.animateStartDuration,
-                        animateEndDuration = conf.animateEndDuration;
+                        animateEndDuration = conf.animateEndDuration,
+                        //event types
+                        open = eventPrefix + 'open',
+                        close = eventPrefix + 'close',
+                        show = eventPrefix + 'show',
+                        hide = eventPrefix + 'hide',
+                        init = eventPrefix + 'init',
+                        ready = eventPrefix + 'ready',
+                        confirm = eventPrefix + 'confirm',
+                        dismiss = eventPrefix + 'dismiss',
+                        //listeners
+                        resize = function(){
+                            setSize($this);
+                        };
 
                 //fix dialog firefox 53+ dom.dialog_element.enabled=false
                 if (dialog.open === undef) {
@@ -651,10 +689,49 @@
                 new Events(this.dialog, this);
                 const
                         events = {
+                            click(e){
 
+                            },
+                            keydown(e){
+                                if (e.keyCode === 27) this.trigger(close + ' ' + dismiss);
+
+                            }
                         },
                         dialogEvents = {
+                            init(e){
+                                console.debug(e);
+                                if ($this.ready === true) return;
 
+
+
+                                $this.ready = true;
+                                $this.trigger(ready);
+                            },
+                            open(e){
+                                console.debug(e);
+                                if ($this.ready === false) $this.trigger(init);
+                                if (dialog.open === true) return;
+                                $this.container.classList.add('gm-noscroll');
+                                if (!$this.container.contains($this.overlay)) $this.container.appendChild($this.overlay);
+
+                                if (animate === true && animateStart === true) {
+                                    animateElement($this.dialog, animateStartClasses, animateStartDuration, show);
+                                } else $this.trigger(show);
+                                dialog.open = true;
+
+
+
+                            },
+                            close(e){
+                                console.debug(e);
+
+                            },
+                            show(e){
+                                console.debug(e);
+                            },
+                            hide(e){
+                                console.debug(e);
+                            }
                         },
                         actions = {
                             buttons: {}
@@ -665,7 +742,7 @@
                 });
                 //custom events
                 Object.keys(dialogEvents).forEach(type => {
-                    if (typeof events[type] === f) $this.on(eventPrefix + type, events[type]);
+                    if (typeof dialogEvents[type] === f) $this.on(eventPrefix + type, dialogEvents[type]);
                 });
                 //injected events
                 if (isPlainObject(conf.events)) {
@@ -676,10 +753,72 @@
 
                 //set body and title
                 ["body", "title"].forEach(key => $this[key] = conf[key]);
+                //register dialog
+                dialogs.push(this);
+
+
 
             }
 
+            /** Methods **/
+
+            /**
+             * Open the dialog box
+             * @returns {Promise} 
+             */
+            open(){
+                const $this = this;
+                let retval = new Promise((resolve, reject) => {
+                    $this.one(this.config.eventPrefix + "confirm", e => {
+                        resolve($this);
+                    }).one(this.config.eventPrefix + "dismiss", e => {
+                        reject($this);
+                    });
+                });
+
+                if (this.isClosed) this.trigger(this.config.eventPrefix + "open");
+                console.debug(this.config.eventPrefix + "open");
+                return retval;
+            }
+
+            /**
+             * Close the dialog box
+             * @returns {Promise}
+             */
+            close(){
+                const $this = this;
+                let retval = new Promise((resolve, reject) => {
+                    $this.one(this.config.eventPrefix + "hide", e => {
+                        resolve($this);
+                    });
+                });
+
+                if (this.isClosed === false) this.trigger(this.config.eventPrefix + "close");
+                return retval;
+
+            }
+            /**
+             * To run when dialog is Ready
+             * @returns {gmDialog}
+             */
+            onReady(callback){
+                if (typeof callback === f) {
+                    if (this.ready === true) callback.call(this, this);
+                    else {
+                        const $this = this;
+                        this.on(this.config.eventPrefix + "ready", e => {
+                            callback.call(this, this);
+                        });
+                    }
+                }
+                return this;
+            }
+
             /** Getters **/
+
+            get isClosed(){
+                return this.dialog.open === false;
+            }
 
             get dialog(){
                 return this.elements.dialog;
@@ -698,6 +837,10 @@
             }
 
             /** Setters **/
+            
+            set isClosed(flag){
+                if (typeof flag === b) this[flag === true ? "open" : "close"]();
+            }
 
             set title(title){
                 if ((typeof title === s)) this.elements.title.innerHTML = title;
@@ -718,8 +861,6 @@
                 if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
             }
 
-
-
         }
 
 
@@ -730,7 +871,9 @@
     })();
 
 
-    let gm = new gmDialog();
+    let gm = new gmDialogNG();
+
+    console.debug(gm.open(), gm);
 
     console.debug(gm);
 
