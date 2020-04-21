@@ -160,7 +160,7 @@
             let
                     max = $this.overlay.offsetHeight,
                     dialogHeight = $this.dialog.offsetHeight,
-                    minus = $this.header.offsetHeight + $this.footer.offsetHeight,
+                    minus = $this.header.offsetHeight + $this.footer.offsetHeight + 16,
                     available = max - minus - 1,
                     current = body.offsetHeight;
 
@@ -267,6 +267,7 @@
                         }},
                     root: {configurable: true, writable: false, enumerable: false, value: $this.overlay.querySelector('dialog')},
                     ready: {configurable: true, writable: true, enumerable: false, value: false},
+                    status: {configurable: true, writable: true, enumerable: false, value: 0},
                     sensor: {configurable: true, writable: true, enumerable: false, value: null}
                 });
 
@@ -282,9 +283,8 @@
                         buttons = this.elements.buttons,
                         //settings
                         eventPrefix = conf.eventPrefix,
-                        overlayClickClose = conf.overlayClickClose === true,
-                        removeOnClose = conf.removeOnClose === true,
-                        fullscreen = conf.fullscreen === true,
+
+
                         //animations
                         animate = conf.animate === true,
                         animateStart = conf.animateStart === true,
@@ -307,7 +307,10 @@
                             setSize($this);
                         },
                         keydown = function(e){
-                            if (e.keyCode === 27) $this.trigger(dismiss);
+                            if (e.keyCode === 27) $this.confirm = false;
+                        },
+                        overlay = function(e){
+                            if (e.target === $this.overlay) $this.confirm = false;
                         };
 
                 //fix dialog firefox 53+ dom.dialog_element.enabled=false
@@ -327,47 +330,15 @@
                 }
 
 
-                //position
-                if (isPlainObject(conf.position)) {
-                    let flag = false;
-                    ["top", "right", "bottom", "left"].forEach(key => {
-                        let val = conf.position[key];
-                        if (typeof val === n) val += "px";
-                        if (typeof val === s) {
-                            dialog.style[key] = val;
-                            flag = true;
-                        }
-                    });
-                    if (conf.position.center === true ? flag === false : false) dialog.classList.add('gm-screencenter');
-                }
-
-                if (conf.fullscreen === true) dialog.classList.add('gm-fullscreen');
-
-                //dimensions
-                ["width", "height"].forEach(key => {
-                    let val = conf[key];
-                    if (typeof val === n) val += "px";
-                    if (typeof val === s) dialog.style[key] = val;
-                });
-
                 //buttons mapping
                 this.dialog.querySelectorAll('[data-name].gm-button').forEach(el => $this.elements.buttons[el.data('name')] = el);
 
-                //close btn
-                if (conf.closeButton !== true) buttons.close.hidden = buttons.close.disabled = true;
-                //confirm and dismiss buttons
-                if (typeof conf.confirmButton === s ? conf.confirmButton.length > 0 : false) {
-                    buttons.confirm.innerHTML = conf.confirmButton;
-                } else buttons.confirm.remove();
-                if (typeof conf.dismissButton === s ? conf.dismissButton.length > 0 : false) {
-                    buttons.dismiss.innerHTML = conf.dismissButton;
-                } else buttons.dismiss.remove();
+
                 //events
                 new Events(this.dialog, this);
                 const
                         events = {
                             click(e){
-                                console.debug(e);
                                 let btn = e.target.closest('.gm-button');
                                 if (btn !== null) {
                                     if (btn.name.length > 0 ? typeof actions[btn.name] === f : false) actions[btn.name].call($this, e);
@@ -377,26 +348,62 @@
                         },
                         dialogEvents = {
                             init(e){
+
+                                if (conf.overlayClickClose === true) {
+                                    $this.overlay.addEventListener('click', overlay);
+                                }
+
+                                dialog.classList.remove('gm-fullscreen');
+                                if (conf.fullscreen === true) dialog.classList.add('gm-fullscreen');
+
+                                //position
+                                if (isPlainObject(conf.position)) {
+                                    let flag = false;
+                                    ["top", "right", "bottom", "left"].forEach(key => {
+                                        let val = conf.position[key];
+                                        if (typeof val === n) val += "px";
+                                        if (typeof val === s) {
+                                            dialog.style[key] = val;
+                                            flag = true;
+                                        }
+                                    });
+                                    dialog.classList.remove('gm-screencenter');
+                                    if (conf.position.center === true ? flag === false : false) dialog.classList.add('gm-screencenter');
+                                }
+
+                                //dimensions
+                                ["width", "height"].forEach(key => {
+                                    let val = conf[key];
+                                    if (typeof val === n) val += "px";
+                                    if (typeof val === s) dialog.style[key] = val;
+                                });
+
+                                buttons.close.hidden = buttons.dismiss.hidden = buttons.confirm.hidden = null;
+                                //close btn
+                                if (conf.closeButton !== true) buttons.close.hidden = true;
+                                //confirm and dismiss buttons
+                                if (typeof conf.confirmButton === s ? conf.confirmButton.length > 0 : false) {
+                                    buttons.confirm.innerHTML = conf.confirmButton;
+                                } else buttons.confirm.hidden = true;
+                                if (typeof conf.dismissButton === s ? conf.dismissButton.length > 0 : false) {
+                                    buttons.dismiss.innerHTML = conf.dismissButton;
+                                } else buttons.dismiss.hidden = true;
+
+
                                 if ($this.ready === true) return;
                                 new gmButtons(dialog);
-
                                 let scroll = getScrollbarWidth();
                                 if (scroll > 0) {
                                     $this.body.style["padding-right"] = "50px";
                                     $this.body.style["margin-right"] = -(50 + scroll) + "px";
                                 }
-                                if (overlayClickClose === true) {
-                                    $this.overlay.addEventListener('click', e => {
-                                        if (e.target === $this.overlay) $this.trigger(dismiss);
-                                    });
-                                }
                                 $this.ready = true;
                                 $this.trigger(ready);
                             },
                             open(){
-                                if ($this.ready === false) $this.trigger(init);
+                                $this.trigger(init);
                                 if (dialog.open === true) return;
-
+                                $this.status = 0;
                                 $this.container.classList.add('gm-noscroll');
                                 $this.overlay.hidden = null;
                                 if (!$this.container.contains($this.overlay)) $this.container.appendChild($this.overlay);
@@ -409,7 +416,7 @@
                             },
                             show(){
                                 // ESC dismiss
-                                if (overlayClickClose === true) addEventListener('keydown', keydown);
+                                if (conf.overlayClickClose === true) addEventListener('keydown', keydown);
                                 //autoresize
                                 addEventListener('resize', resize);
                                 if ($this.sensor === null) $this.sensor = ResizeSensor($this.body, resize);
@@ -417,7 +424,7 @@
                                 resize();
 
                             },
-                            close(){
+                            close(e){
                                 if (dialog.open === false) return;
                                 if (animate === true && animateEnd === true) {
                                     animateElement($this.dialog, animateEndClasses, animateEndDuration, hide);
@@ -427,9 +434,10 @@
                             hide(){
                                 removeEventListener('resize', resize);
                                 removeEventListener('keydown', keydown);
+                                $this.overlay.removeEventListener('click', overlay);
                                 $this.sensor.stop();
                                 dialog.open = false;
-                                if (removeOnClose === true) $this.container.removeChild($this.overlay);
+                                if (conf.removeOnClose === true) $this.container.removeChild($this.overlay);
                                 else $this.overlay.hidden = true;
 
                                 //restore scroll
@@ -439,24 +447,28 @@
                                     if (dialog.container === $this.container ? dialog.isClosed === false : false) allclosed = false;
                                 });
                                 if (allclosed === true) $this.container.classList.remove('gm-noscroll');
+                                if ($this.status === 1) $this.trigger(confirm);
+                                else $this.trigger(dismiss);
+
+
                             },
                             confirm(e){
-                                $this.trigger(close);
+                                //$this.trigger(hide);
                             },
                             dismiss(e){
-                                $this.trigger(close);
+                                // $this.trigger(hide);
                             }
 
                         },
                         actions = {
                             close(){
-                                $this.trigger(dismiss);
+                                $this.confirm = false;
                             },
                             dismiss(){
-                                $this.trigger(dismiss);
+                                $this.confirm = false;
                             },
                             confirm(){
-                                $this.trigger(confirm);
+                                $this.confirm = true;
                             }
 
                         };
@@ -514,7 +526,7 @@
                     });
                 });
 
-                if (this.isClosed === false) this.trigger(this.config.eventPrefix + "close");
+                if (this.isClosed === false) this.trigger(this.config.eventPrefix + "close", this.config.eventPrefix + "dismiss");
                 return retval;
 
             }
@@ -539,6 +551,17 @@
 
             get isClosed(){
                 return this.dialog.open === false;
+            }
+
+            get confirm(){
+                return this.status === 1;
+            }
+
+            set confirm(val){
+                if (typeof val === b ? this.status === 0 : false) {
+                    this.status = val === true ? 1 : 2;
+                    this.trigger(this.config.eventPrefix + "close");
+                }
             }
 
             get dialog(){
@@ -592,8 +615,8 @@
 
     let gm = new gmDialogNG(doc.body, {
 
-        removeOnClose: true,
-        overlayClickClose: false,
+        removeOnClose: false,
+        overlayClickClose: true,
         fullscreen: false,
         confirmButton: 'OK',
         dismissButton: 'Cancel',
@@ -601,7 +624,22 @@
         body: "This is the body"
     });
 
-    console.debug(gm.open(), gm);
+    console.debug(gm.open().catch(d => {
+        d.body = "Why did you cancel?";
+        d.elements.buttons.dismiss.remove();
+        d.on('gmdialog.dismiss', e => {
+            d.elements.buttons.close.remove();
+            d.body = "You cannot cancel now !";
+            d.config.overlayClickClose = false;
+
+            d.open().then(d => {
+                d.body = "You cannot confirm eigther !";
+                d.elements.buttons.confirm.disabled = true;
+                d.open();
+            });
+        });
+        d.open();
+    }), gm);
 
     console.debug(gm);
 
