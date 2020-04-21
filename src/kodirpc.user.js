@@ -382,6 +382,7 @@
                                 //close btn
                                 if (conf.closeButton !== true) buttons.close.hidden = true;
                                 //confirm and dismiss buttons
+                                console.debug(buttons.confirm.hidden, conf.confirmButton);
                                 if (typeof conf.confirmButton === s ? conf.confirmButton.length > 0 : false) {
                                     buttons.confirm.innerHTML = conf.confirmButton;
                                 } else buttons.confirm.hidden = true;
@@ -628,17 +629,12 @@
     console.debug(gm.open().catch(d => {
         d.body = "Why did you cancel?";
         d.config.dismissButton = null;
-        d.on('gmdialog.dismiss', e => {
-            d.config.closeButton = false;
-            d.body = "You cannot cancel now !";
-            d.config.overlayClickClose = false;
+        d.config.overlayClickClose = false;
 
-            d.open();
-        });
-
-        d.open().catch(d => {
+        d.open().then(d => {
             d.body = "You cannot even confirm now !";
             d.config.confirmButton = null;
+            console.debug(d.config.confirmButton);
             d.open();
             let s = 10;
             new Timer(e => {
@@ -646,13 +642,14 @@
                 console.debug(s);
                 d.title = "This dialog will close in " + s + "s";
                 s--;
+                if (s < 0) {
+                    d.confirm = true;
+                    e.stop();
+                }
 
 
-            }, 1000, s * 1000);
+            }, 1000);
 
-            setTimeout(e => {
-                d.close();
-            }, (s * 1000) + 500);
         });
 
 
