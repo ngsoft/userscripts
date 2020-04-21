@@ -197,11 +197,12 @@
 
             if (video instanceof Element) {
                 let width = video.offsetWidth, player = video.closest('.iqp-player');
-                player.classList.remove('video-m', 'video-l', 'video-xl', 'video-s');
-                if (width > 1900) player.classList.add('video-xl');
+                player.classList.remove('video-m', 'video-l', 'video-xl', 'video-s', 'video-xs');
+                if (width > 1800) player.classList.add('video-xl');
                 else if (width > 1100) player.classList.add('video-l');
-                else if (width > 615) player.classList.add('video-m');
-                else player.classList.add('video-s');
+                else if (width > 900) player.classList.add('video-m');
+                else if (width > 750) player.classList.add('video-s');
+                else player.classList.add('video-xs');
                 console.debug(width, video);
             }
         }
@@ -216,12 +217,13 @@
                         bottom: 10% !important; text-shadow: 5px 5px 5px #000 !important;
                         min-width: 60% !important; background: rgba(0,0,0,.55) !important;
                         padding: 2% 0 !important;text-align: center !important;
-                        font-size: 16px !important;
+                        line-height: 1.5 !important;font-size: 16px !important;
                     }
+                    .video-xs .iqp-subtitle:not([data-player-hook="previewSubtitle"]){display: block !important;}
                     .video-s .iqp-subtitle{font-size: 20px !important;}
                     .video-m .iqp-subtitle{font-size: 24px !important;}
                     .video-l .iqp-subtitle{font-size: 28px !important;}
-                    .video-xl .iqp-subtitle{font-size: 40px !important;}
+                    .video-xl .iqp-subtitle{font-size: 44px !important;}
                 `);
 
             }
@@ -320,21 +322,17 @@
     }
     
 
-    NodeFinder.find('video[src]', video => {
+    NodeFinder.findOne('video[src]', video => {
         new QiyiCustomPlayer(video);
+        NodeFinder(video.parentElement).findOne(`.iqp-btn-subtitle`, el => {
+            new SubtitleDownloader(el);
+        });
 
-        let player = video.parentElement;
-        /*NodeFinder(player).find('iqp-contrls-right', el => {
-            console.debug(el);
-        });*/
 
     });
 
 
-    NodeFinder.find(`iqpdiv.iqp-btn-subtitle`, el => {
-        console.debug(el);
-        new SubtitleDownloader(el);
-    });
+
     /*find({
         selector: `.iqp-btn-subtitle`,
         timeout: 0,
@@ -345,7 +343,7 @@
 
     });*/
 
-    NodeFinder.find(`h1.intl-play-title`, el => {
+    NodeFinder.findOne(`h1.intl-play-title`, el => {
         new MDLSearch(el);
     });
     /*find({

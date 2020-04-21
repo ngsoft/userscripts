@@ -623,7 +623,6 @@ class NodeFinderResults extends Array {
         if (this.started === true) {
             this.started = false;
             this.observer.disconnect();
-            console.debug(this.selector, 'stopped');
         }
         return this;
     }
