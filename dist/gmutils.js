@@ -429,7 +429,7 @@ class Timer {
                 __timeout: null
             });
             if (typeof interval === n) self.params.interval = interval;
-            if (typeof timeout === n) self.params.timeout = interval;
+            if (typeof timeout === n) self.params.timeout = timeout;
             self.start();
         }
     }

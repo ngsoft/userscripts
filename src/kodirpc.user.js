@@ -633,27 +633,30 @@
             d.body = "You cannot cancel now !";
             d.config.overlayClickClose = false;
 
-            d.open().then(d => {
-                d.body = "You cannot even confirm now !";
-                d.config.confirmButton = null;
-                d.open();
-            });
+            d.open();
         });
-        d.open();
 
-        let s = 10;
-        new Timer(e => {
+        d.open().catch(d => {
+            d.body = "You cannot even confirm now !";
+            d.config.confirmButton = null;
+            d.open();
+            let s = 10;
+            new Timer(e => {
 
-            d.title = "This dialog will close in " + s + "s";
-            s--;
+                console.debug(s);
+                d.title = "This dialog will close in " + s + "s";
+                s--;
 
-        }, 1000, s * 1000);
 
-        setTimeout(e => {
-            d.close();
-        }, (s * 1000) + 500)
+            }, 1000, s * 1000);
 
-    }), gm);
+            setTimeout(e => {
+                d.close();
+            }, (s * 1000) + 500);
+        });
+
+
+    }));
 
     console.debug(gm);
 
