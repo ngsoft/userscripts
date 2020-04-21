@@ -321,6 +321,73 @@
     // alert('test');
 
 
+    /**
+     * Manages .gm-button
+     */
+    class gmButtons {
+
+        get buttons(){
+            let result = {};
+            this.list.forEach(item => {
+                if (item.name.length > 0) {
+                    if (typeof result[item.name] === u) result[item.name] = [];
+                    result[item.name].push(item.element);
+                }
+            });
+            return result;
+        }
+
+        constructor(root){
+            if (root instanceof Element === false) throw new Error('gmButtons Invalid argument root');
+            Object.defineProperties(this, {
+                root: {configurable: true, enumerable: false, writable: false, value: root},
+                list: {configurable: true, enumerable: false, writable: false, value: []}
+            });
+            const $this = this;
+
+            NodeFinder(root).find('.gm-button', button => {
+                let name = button.data('name') || "";
+                if (button.data('uid') === undef) button.data('uid', uniqid());
+                if (button.disabled === undef) {
+                    Object.defineProperty('disabled', {
+                        configurable: true, enumerable: false,
+                        get(){
+
+                            return this.getAttribute('disabled') !== null;
+                        },
+                        set(flag){
+                            this.setAttribute('disabled', '');
+                            if (flag === null) this.removeAttribute('disabled');
+                        }
+                    });
+
+                }
+                if (button.name === undef) {
+                    Object.defineProperty('name', {
+                        configurable: true, enumerable: false,
+                        get(){
+                            return this.getAttribute('name') || "";
+                        },
+                        set(name){
+                            this.setAttribute('name', name);
+                            if (name === null) this.removeAttribute('name');
+                        }
+                    });
+
+                }
+                if (button.name.length === 0 ? name.length > 0 : false) button.name = name;
+                $this.list.push({
+                    name: name,
+                    element: button,
+                    uid: button.data('uid')
+                });
+            });
+
+
+        }
+    }
+
+
 
     const gmDialog = (function(){
 
@@ -353,29 +420,52 @@
             }
             return scrollbarSize;
         }
+
+
+        function animate(elem, classes, duration, eventEnd = null){
+
+            if (elem instanceof Element === false) throw new Error('animate invalid argument elem');
+            if (typeof classes !== s) throw new Error('animate invalid argument classes');
+            if (typeof duration !== n) throw new Error('animate invalid argument duration');
+            if (typeof eventEnd !== s ? true : eventEnd !== null) throw new Error('animate invalid argument eventEnd');
+
+            classes = classes.split(/\s+/);
+            elem.classList.remove(...classes);
+            elem.style["animation-duration"] = duration + "ms";
+            elem.classList.add(...classes);
+            setTimeout(() => {
+                elem.classList.remove(...classes);
+                elem.style["animation-duration"] = null;
+                if (eventEnd !== null) trigger(elem, eventEnd);
+            }, duration + 10);
+
+        }
+
         const styles = `
             /** Reset styles **/
-            [class^="gm-"]{}
+            [class*="gm-"]{}
+
+            
             /** Buttons **/
             .gm-button{}
 
 
 
             /** Colors **/
-            [class^="gm-"] .gm-button {}
-            [class^="gm-"] .info{}
-            [class^="gm-"] .success{}
+            [class*="gm-"] .gm-button {}
+            [class*="gm-"] .info{}
+            [class*="gm-"] .success{}
             [class^="gm-"] .error{}
-            [class^="gm-"] .warning{}
-            [class^="gm-"] .reverse{}
-            [class^="gm-"] .info.reverse{}
-            [class^="gm-"] .success.reverse{}
-            [class^="gm-"] .error.reverse{}
-            [class^="gm-"] .warning.reverse{}
-            [class^="gm-"] .text-info{}
-            [class^="gm-"] .text-success{}
-            [class^="gm-"] .text-error{}
-            [class^="gm-"] .text-warning{}
+            [class*="gm-"] .warning{}
+            [class*="gm-"] .reverse{}
+            [class*="gm-"] .info.reverse{}
+            [class*="gm-"] .success.reverse{}
+            [class*="gm-"] .error.reverse{}
+            [class*="gm-"] .warning.reverse{}
+            [class*="gm-"] .text-info{}
+            [class*="gm-"] .text-success{}
+            [class*="gm-"] .text-error{}
+            [class*="gm-"] .text-warning{}
 
 
             /** Overlay **/
@@ -389,6 +479,11 @@
             .gm-dialog > header > h1{}
             .gm-dialog > header > [data-name="close"].gm-button{}
             .gm-dialog > section{}
+
+            /** utilities **/
+            [class*="gm-"][hidden], [class*="gm-"].hidden, [class*="gm-"] dialog:not([open]),
+            [class*="gm-"] [hidden], [class*="gm-"] .hidden
+            {display: none !important;}
         `;
 
         addstyle(styles);
@@ -419,11 +514,14 @@
                 const
                         $this = this,
                         defaults = {
-                            title: doc.title,
-                            body: "",
-                            overlayClickClose: true,
 
+                            title: doc.title,
+                            body: null,
+
+                            overlayClickClose: true,
+                            removeOnClose: true,
                             fullscreen: false,
+
                             width: null,
                             height: null,
                             position: {
@@ -433,19 +531,146 @@
                                 left: null,
                                 center: true
                             },
-                            confirmButton: "OK",
-                            cancelButton: "cancel",
+                            confirmButton: 'OK',
+                            cancelButton: 'Cancel',
                             closeButton: true,
                             events: {},
-                            eventPrefix: 'gmdialog'
+                            eventPrefix: 'gmdialog',
+
+                            animate: true,
+
+                            animateStart: true,
+                            animateStartClasses: "fadeIn",
+                            animateStartDuration: 750,
+
+                            animateEnd: true,
+                            animateEndClasses: "fadeOut",
+                            animateEndDuration: 750
+
                         };
 
+                Object.assign(this, {
+                    container: root,
+                    overlay: html2element(template),
+                    config: Object.assign({}, defaults, options)
+                });
 
+                Object.defineProperties(this, {
+                    elements: {configurable: true, writable: false, enumerable: false, value: {
+                            dialog: $this.overlay.querySelector('dialog'),
+                            header: $this.overlay.querySelector('header'),
+                            title: $this.overlay.querySelector('h1'),
+                            footer: $this.overlay.querySelector('footer'),
+                            body: $this.overlay.querySelector('section'),
+                            buttons: {}
+                        }},
+                    root: {configurable: true, writable: false, enumerable: false, value: $this.overlay.querySelector('dialog')}
+                });
+                //element mapping
+                this.dialog.querySelectorAll('[data-name].gm-button').forEach(el => $this.elements.buttons[el.data('name')] = el);
 
+                const
+                        dialog = this.dialog,
+                        conf = this.config,
+                        buttons = this.elements.buttons,
+                        eventPrefix = conf.eventPrefix,
+                        overlayClickClose = conf.overlayClickClose === true,
+                        removeOnClose = conf.removeOnClose === true,
+                        fullscreen = conf.fullscreen === true,
+                        animate = conf.animate === true,
+                        animateStart = conf.animateStart === true,
+                        animateEnd = conf.animateEnd === true,
+                        animateStartClasses = conf.animateStartClasses,
+                        animateEndClasses = conf.animateEndClasses,
+                        animateStartDuration = conf.animateStartDuration,
+                        animateEndDuration = conf.animateEndDuration;
 
+                //set body and title
+                ["body", "title"].forEach(key => $this[key] = conf[key]);
+                //position
+                if (isPlainObject(conf.position)) {
+                    let flag = false;
+                    ["top", "right", "bottom", "left"].forEach(key => {
+                        let val = conf.position[key];
+                        if (typeof val === n) val += "px";
+                        if (typeof val === s) {
+                            dialog.style[key] = val;
+                            flag = true;
+                        }
+                    });
+                    if (conf.position.center === true ? flag === false : false) dialog.classList.add('gm-screencenter');
+                }
+
+                if (conf.fullscreen === true) dialog.classList.add('gm-fullscreen');
+
+                //dimensions
+                ["width", "height"].forEach(key => {
+                    let val = conf[key];
+                    if (typeof val === n) val += "px";
+                    if (typeof val === s) dialog.style[key] = val;
+                });
+                //close btn
+                if (conf.closeButton !== true) buttons.close.hidden = buttons.close.disabled = true;
+                //events
+                new Events(this.dialog, this);
+                const
+                        events = {
+
+                        },
+                        actions = {
+                            buttons: {}
+                        };
+
+                Object.keys(events).forEach(type => {
+                    if (typeof events[type] === f) $this.on(eventPrefix + type, events[type]);
+                });
+                if (isPlainObject(conf.events)) {
+                    Object.keys(conf.events).forEach(type => {
+                        if (typeof conf.events[type] === f) $this.on(eventPrefix + type, conf.events[type]);
+                    });
+
+                }
 
             }
 
+            /** Getters **/
+
+            get dialog(){
+                return this.elements.dialog;
+            }
+            get header(){
+                return this.elements.header;
+            }
+            get footer(){
+                return this.elements.footer;
+            }
+            get body(){
+                return this.elements.body;
+            }
+            get title(){
+                return this.elements.title;
+            }
+
+            /** Setters **/
+
+            set title(title){
+                if ((typeof title === s)) this.elements.title.innerHTML = title;
+                else if (title instanceof Element) {
+                    this.elements.title.innerHTML = null;
+                    this.elements.title.appendChild(title);
+                }
+            }
+
+            set body(body){
+                if (typeof body === s) this.elements.body.innerHTML = body;
+                else if (body instanceof Element) {
+                    this.elements.body.innerHTML = null;
+                    this.elements.body.appendChild(body);
+                }
+                //only text?
+                this.elements.body.classList.remove('gm-flex-center');
+                if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
+            }
 
 
 
@@ -462,6 +687,7 @@
     let gm = new gmDialog();
 
     console.debug(gm);
+
 
 
     /*  NodeFinder.find('video, video source, video track', video => {
