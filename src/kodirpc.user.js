@@ -357,7 +357,7 @@
                         },
                         set(flag){
                             this.setAttribute('disabled', '');
-                            if (flag === null) this.removeAttribute('disabled');
+                            if (flag === null ? true : flag === false) this.removeAttribute('disabled');
                         }
                     });
 
@@ -391,9 +391,14 @@
 
     const gmDialog = (function(){
 
+        /**
+         * Keeps trace of the current gmDialog instances
+         */
+        const dialogs = [];
+
 
         /**
-         * Older firefox scroll hack
+         * Older firefox scroll hack 63-
          */
         function getScrollbarWidth(){
             let scrollbarSize = 0;
@@ -481,6 +486,7 @@
             .gm-dialog > section{}
 
             /** utilities **/
+            .gm-noscroll{overflow: hidden !important;}
             [class*="gm-"][hidden], [class*="gm-"].hidden, [class*="gm-"] dialog:not([open]),
             [class*="gm-"] [hidden], [class*="gm-"] .hidden
             {display: none !important;}
@@ -495,7 +501,7 @@
                         <header><h1></h1><span class="gm-btn gm-rounded" data-name="close">&times;</span></header>
                         <section></section>
                         <footer>
-                            <span class="gm-button gm-rounded" data-name="cancel">Cancel</span>
+                            <span class="gm-button gm-rounded" data-name="dismiss">Cancel</span>
                             <span class="gm-button gm-rounded" data-name="confirm">OK</span>
                         </footer>
                     </dialog>
@@ -532,7 +538,7 @@
                                 center: true
                             },
                             confirmButton: 'OK',
-                            cancelButton: 'Cancel',
+                            dismissButton: 'Cancel',
                             closeButton: true,
                             events: {},
                             eventPrefix: 'gmdialog',
@@ -566,8 +572,12 @@
                         }},
                     root: {configurable: true, writable: false, enumerable: false, value: $this.overlay.querySelector('dialog')}
                 });
-                //element mapping
-                this.dialog.querySelectorAll('[data-name].gm-button').forEach(el => $this.elements.buttons[el.data('name')] = el);
+
+
+                //eventPrefix
+                if (typeof conf.eventPrefix === s ? conf.eventPrefix.length > 0 : false) {
+                    if (/\.$/.test(conf.eventPrefix) === false) conf.eventPrefix += '.';
+                } else conf.eventPrefix = "";
 
                 const
                         dialog = this.dialog,
@@ -585,8 +595,23 @@
                         animateStartDuration = conf.animateStartDuration,
                         animateEndDuration = conf.animateEndDuration;
 
-                //set body and title
-                ["body", "title"].forEach(key => $this[key] = conf[key]);
+                //fix dialog firefox 53+ dom.dialog_element.enabled=false
+                if (dialog.open === undef) {
+                    Object.defineProperties(dialog, {
+                        open: {
+                            configurable: true, enumerable: false,
+                            get(){
+                                return this.getAttribute('open') !== null;
+                            },
+                            set(flag){
+                                this.setAttribute('open', true);
+                                if (flag === null ? true : flag === false) this.removeAttribute('open');
+                            }
+                        }
+                    });
+                }
+
+
                 //position
                 if (isPlainObject(conf.position)) {
                     let flag = false;
@@ -609,27 +634,48 @@
                     if (typeof val === n) val += "px";
                     if (typeof val === s) dialog.style[key] = val;
                 });
+
+                //buttons mapping
+                this.dialog.querySelectorAll('[data-name].gm-button').forEach(el => $this.elements.buttons[el.data('name')] = el);
+
                 //close btn
                 if (conf.closeButton !== true) buttons.close.hidden = buttons.close.disabled = true;
+                //confirm and dismiss buttons
+                if (typeof conf.confirmButton === s ? conf.confirmButton.length > 0 : false) {
+                    buttons.confirm.innerHTML = conf.confirmButton;
+                } else buttons.confirm.remove();
+                if (typeof conf.dismissButton === s ? conf.dismissButton.length > 0 : false) {
+                    buttons.dismiss.innerHTML = conf.dismissButton;
+                } else buttons.dismiss.remove();
                 //events
                 new Events(this.dialog, this);
                 const
                         events = {
 
                         },
+                        dialogEvents = {
+
+                        },
                         actions = {
                             buttons: {}
                         };
-
+                //dom events
                 Object.keys(events).forEach(type => {
+                    if (typeof events[type] === f) $this.on(type, events[type]);
+                });
+                //custom events
+                Object.keys(dialogEvents).forEach(type => {
                     if (typeof events[type] === f) $this.on(eventPrefix + type, events[type]);
                 });
+                //injected events
                 if (isPlainObject(conf.events)) {
                     Object.keys(conf.events).forEach(type => {
                         if (typeof conf.events[type] === f) $this.on(eventPrefix + type, conf.events[type]);
                     });
-
                 }
+
+                //set body and title
+                ["body", "title"].forEach(key => $this[key] = conf[key]);
 
             }
 
