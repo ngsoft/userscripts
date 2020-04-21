@@ -28,60 +28,93 @@ function isArray(v) {
 
 /**
  * Run a callback
- * @param {function} callback
+ * @param {function} ...callbacks Run callback in order
  * @returns {undefined}
  */
-function on(callback) {
-    if (typeof callback === f) callback();
+function on(callback){
+    const callbacks = [];
+    for (let i = 0; i < arguments.length; i++) {
+        let arg = arguments[i];
+        if (typeof arg === f) callbacks.push(arg);
+    }
+    callbacks.forEach(c => c.call());
 }
 /**
  * Run a Callback when body is created
  * @param {function} callback
- * @returns {undefined}
+ * @returns {Promise}
  */
-on.body = function(callback) {
-    if (typeof callback === f) {
-        let i = setInterval(() => {
-            if (doc.body !== null) {
-                clearInterval(i);
-                on(callback);
-            }
-        }, 1);
-    }
+on.body = function(){
+    return new Promise(resolve => {
 
+        let resolver = body => {
+            if (arguments.length > 0) on(...arguments);
+            resolve(doc.body);
+        };
+
+        if (doc.body === null) {
+            const observer = new MutationObserver((mutations, obs) => {
+                let ready = false;
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (typeof node.matches === f ? node.matches('body') : false) {
+                            obs.disconnect();
+                            ready = true;
+                        }
+                    });
+                });
+                if (ready === true) resolver();
+
+            });
+            observer.observe(doc.documentElement, {childList: true});
+        } else resolver();
+
+    });
 };
 
 /**
  * Run a callback when page is loading DOMContentLoaded
  * @param {function} callback
- * @returns {undefined}
+ * @returns {Promise}
  */
-on.load = function(callback) {
-    if (typeof callback === f) {
+on.load = function(){
+    return new Promise(resolve => {
+
+        let resolver = body => {
+            if (arguments.length > 0) on(...arguments);
+            resolve(doc.body);
+        };
         if (doc.readyState === "loading") {
-            doc.addEventListener("DOMContentLoaded", function load() {
-                doc.removeEventListener("DOMContentLoaded", load);
-                on(callback);
+            doc.addEventListener("DOMContentLoaded", function(){
+                resolver();
             });
-        } else on(callback);
-    }
+        } else resolve();
+
+
+    });
 };
 
 /**
  * Run a callback when page is completely loaded
  * @param {function} callback
- * @returns {undefined}
+ * @returns {Promise}
  */
-on.loaded = function(callback) {
-    if (typeof callback === f) {
+on.loaded = function(){
+    return new Promise(resolve => {
+
+        let resolver = body => {
+            if (arguments.length > 0) on(...arguments);
+            resolve(doc.body);
+        };
+
         if (doc.readyState !== "complete") {
-            addEventListener("load", function load() {
-                removeEventListener("load", load);
-                on(callback);
+            addEventListener("load", function(){
+                resolver();
             });
 
-        } else on(callback);
-    }
+        } else resolver();
+
+    });
 };
 
 
@@ -2422,7 +2455,7 @@ class gmTabs {
             if (path[0] === '/') path = path.substr(1);
             const self = this;
             path.split('/').forEach(name => {
-                self.autopath.filter(x => x.name === name).forEach(item => trigger(item.tab, self.config.prefix + 'select'));
+                self.autopath.filter(x => x.name === name).forEach(item => trigger(item.tab, self.config.prefix + 'select', self));
             });
         }
 
@@ -2471,7 +2504,7 @@ class gmTabs {
                             tab.classList.add(disabledClass);
                         });
 
-                        trigger(container, eventPrefix + "ready");
+                        trigger(container, eventPrefix + "ready", self);
 
                     },
 
@@ -2479,12 +2512,12 @@ class gmTabs {
                         let t = e.target;
                         t.hidden = null;
                         transition.start(t, () => {
-                            Events(t).trigger(eventPrefix + "show");
+                            trigger(t, eventPrefix + "show", self);
                         });
                     },
                     close(e){
                         e.target.hidden = true;
-                        Events(e.target).trigger(eventPrefix + "hide");
+                        trigger(e.target, eventPrefix + "hide", self);
                     },
 
                     select(e){
@@ -2493,10 +2526,10 @@ class gmTabs {
                             if (t.classList.contains(selectedClass)) return;
                             if (t.classList.contains(disabledClass)) return;
                             let siblings = t.closest(gmTabsSelector).querySelectorAll(`${gmTabSelector}:not(${disabledSelector})`);
-                            self.root.querySelectorAll(t.data(dataset)).forEach(x => trigger(x, eventPrefix + "open"));
+                            self.root.querySelectorAll(t.data(dataset)).forEach(x => trigger(x, eventPrefix + "open", self));
                             t.classList.add(selectedClass);
                             siblings.forEach(x => {
-                                if (x !== t) trigger(x, eventPrefix + "dismiss");
+                                if (x !== t) trigger(x, eventPrefix + "dismiss", self);
                             });
                         }
                     },
@@ -2506,7 +2539,7 @@ class gmTabs {
                         if (t !== null) {
 
                             t.classList.remove(selectedClass);
-                            self.root.querySelectorAll(t.data(dataset)).forEach(x => trigger(x, eventPrefix + "close"));
+                            self.root.querySelectorAll(t.data(dataset)).forEach(x => trigger(x, eventPrefix + "close"), self);
 
                         }
                     }
@@ -2604,12 +2637,12 @@ class gmTabs {
             let  target = e.target.closest(`${gmTabsSelector} ${gmTabSelector}`);
             if (target !== null) {
                 e.preventDefault();
-                if (target.matches(`:not(${selectedSelector})`)) Events(target).trigger(eventPrefix + 'select');
+                if (target.matches(`:not(${selectedSelector})`)) Events(target).trigger(eventPrefix + 'select', self);
             }
         });
 
         //using new NodeFinder to match tabs whenever there are added to the dom (ajax load ...)
-        NodeFinder(self.root).find(gmTabsSelector, container => trigger(container, eventPrefix + 'init'));
+        NodeFinder(self.root).find(gmTabsSelector, container => trigger(container, eventPrefix + 'init', self));
 
         new gmStyles();
     }
