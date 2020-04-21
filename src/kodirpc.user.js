@@ -426,6 +426,7 @@
                             },
                             close(e){
                                 if (dialog.open === false) return;
+                                if (this.status === 0) this.status = 2;
                                 if (animate === true && animateEnd === true) {
                                     animateElement($this.dialog, animateEndClasses, animateEndDuration, hide);
                                 } else $this.trigger(show);
@@ -526,7 +527,7 @@
                     });
                 });
 
-                if (this.isClosed === false) this.trigger(this.config.eventPrefix + "close", this.config.eventPrefix + "dismiss");
+                if (this.isClosed === false) this.confirm = false;
                 return retval;
 
             }
@@ -557,13 +558,6 @@
                 return this.status === 1;
             }
 
-            set confirm(val){
-                if (typeof val === b ? this.status === 0 : false) {
-                    this.status = val === true ? 1 : 2;
-                    this.trigger(this.config.eventPrefix + "close");
-                }
-            }
-
             get dialog(){
                 return this.elements.dialog;
             }
@@ -581,6 +575,13 @@
             }
 
             /** Setters **/
+
+            set confirm(val){
+                if (typeof val === b ? this.status === 0 : false) {
+                    this.status = val === true ? 1 : 2;
+                    this.trigger(this.config.eventPrefix + "close");
+                }
+            }
 
             set isClosed(flag){
                 if (typeof flag === b) this[flag === true ? "open" : "close"]();
@@ -626,19 +627,32 @@
 
     console.debug(gm.open().catch(d => {
         d.body = "Why did you cancel?";
-        d.elements.buttons.dismiss.remove();
+        d.config.dismissButton = null;
         d.on('gmdialog.dismiss', e => {
-            d.elements.buttons.close.remove();
+            d.config.closeButton = false;
             d.body = "You cannot cancel now !";
             d.config.overlayClickClose = false;
 
             d.open().then(d => {
-                d.body = "You cannot confirm eigther !";
-                d.elements.buttons.confirm.disabled = true;
+                d.body = "You cannot even confirm now !";
+                d.config.confirmButton = null;
                 d.open();
             });
         });
         d.open();
+
+        let s = 10;
+        new Timer(e => {
+
+            d.title = "This dialog will close in " + s + "s";
+            s--;
+
+        }, 1000, s * 1000);
+
+        setTimeout(e => {
+            d.close();
+        }, (s * 1000) + 500)
+
     }), gm);
 
     console.debug(gm);
