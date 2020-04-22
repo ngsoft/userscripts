@@ -31,7 +31,16 @@
     /* jshint -W083 */
 
 
-    console.debug(gmtools.require("gmdata"));
+    gmtools.require("gmdata").then(gmdata => {
+
+        console.debug(gmdata);
+        gmtools.require("gmfinders").then(f => {
+            console.debug(f);
+        });
+
+
+
+    }).catch(console.error);
 
 
 

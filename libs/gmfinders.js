@@ -372,6 +372,9 @@
 
 
     return{
+        isValidSelector: isValidSelector,
+        NodeFinder: NodeFinder,
+        ResizeSensor: ResizeSensor
 
     };
 }));

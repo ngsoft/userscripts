@@ -740,16 +740,138 @@ const
 
     const require = gmtools.require = function(scriptname){
 
-        if (typeof scriptname === s ? /^gm/.test(scriptname) : false) {
+        return new Promise((resolve, reject) => {
+
+            const 
+                    prefix = UUID + ":gmtools:",
+                    now = +new Date(),
+                    expire = now + day;
+
+            try {
+                if (typeof scriptname === s ? /^gm/.test(scriptname) : false) {
+                    scriptname = scriptname.replace(/\.js$/i, '');
+                    if (scriptname !== "gmtools") {
+                        if (isPlainObject(window[scriptname])) return resolve(window[scriptname]);
+                        let
+                                localdata = (() => {
+                                    let until = parseInt(localStorage.getItem(prefix + "expire"));
+                                    if (typeof until === n ? until > now : false) {
+                                        let tag = localStorage.getItem(prefix + "tag") || "";
+                                        if (typeof tag === s) {
+                                            return {
+                                                expire: until,
+                                                tag: tag,
+                                                script: localStorage.getItem(prefix + scriptname) || ""
+                                            };
+                                        }
+                                    }
+                                    localStorage.removeItem(prefix + "expire");
+                                    localStorage.removeItem(prefix + "tag");
+                                    localStorage.removeItem(prefix + scriptname);
+                                    return {
+                                        expire: 0,
+                                        tag: "",
+                                        script: ""
+                                    };
+                                })(),
+                                tag = localdata.tag,
+                                script = localdata.script;
+                        const  manageData = script => {
+                            Function(script).call(window);
+                            if (isPlainObject(window[scriptname])) {
+                                resolve(window[scriptname]);
+                            } else throw new Error("Cannot load " + scriptname + " library: module cannot be loaded.");
+
+                        }, getData = (urls, index = 0) => {
+                            let url = urls[index];
+                            fetch(url)
+                                    .then(r => {
+                                        if (r.status !== 200) throw new Error("Invalid status code " + r.status);
+                                        return r.text();
+                                    })
+                                    .then(text => {
+                                        if (text.length > 0) {
+                                            localStorage.setItem(prefix + scriptname, script);
+                                            manageData(text);
+                                        }
+                                        else throw new Error('Invalid script.');
+
+                                    })
+                                    .catch(e => {
+                                        if (index < (urls.length - 1)) {
+                                            index++;
+                                            getData(urls, index);
+                                        } else reject(new Error("Cannot load " + scriptname + " library: " + e.message + " " + url));
+                                    });
+                        }, getScripts = (tag) => {
+
+                            let list = sources.map(url => {
+
+                                return url.replace(/\:(\w+)/g, (match, name) => {
+                                    let value = "";
+                                    switch (name) {
+                                        case "repo":
+                                            value = ghrepo;
+                                            break;
+                                        case "tag":
+                                            value = tag;
+                                            break;
+                                        case "script":
+                                            value = scriptname;
+                                            break;
+                                    }
+                                    return value;
+                                });
+
+                            });
+
+                            getData(list);
+
+                        };
+
+
+                        if (script.length === 0) {
+                            
+
+
+                            if (tag.length === 0) {
+                                fetch(ghapi)
+                                        .then(r => {
+                                            if (r.status === 200) return r.json();
+                                            throw new Error("Cannot get last tag: invalid status code " + r.status);
+                                        })
+                                        .then(json => {
+                                            if (Array.isArray(json) ? json.length > 0 : false) {
+                                                return json[0].name;
+                                            }
+                                            throw new Error("cannot get last tag.");
+                                        })
+                                        .then(tag => {
+                                            localStorage.setItem(prefix + "expire", expire);
+                                            localStorage.setItem(prefix + "tag", tag);
+                                            getScripts(tag);
+                                        })
+                                        .catch(e => {
+                                            reject(new Error("Cannot load " + scriptname + " library: " + e.message));
+
+                                        });
+
+                            } else return getScripts(tag);
+
+                        } else return manageData(script);
 
 
 
+                    }
 
+                }
+                else throw new Error("Cannot load library: invalid argument.");
 
-        }
-
-
-
+            } catch (e) {
+                reject(e);
+            }
+            
+        });
 
     };
 
