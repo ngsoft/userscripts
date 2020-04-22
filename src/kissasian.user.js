@@ -147,6 +147,7 @@
             });
 
             if (self.container === null) {
+                return;
                 throw new Error("Cannot insert submenu.");
             }
             if (self.container.querySelectorAll('a').length > 0) {
