@@ -6,7 +6,7 @@
     const deps = ["gmtools"]; //your dependencies there
     if (typeof define === 'function' && define.amd) define(deps, factory);
     else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmfinders = factory(...deps.map(dep => root[dep]));
+    else root.gmfind = factory(...deps.map(dep => root[dep]));
 }(this, function(gmtools){
 
 
