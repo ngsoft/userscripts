@@ -32,7 +32,7 @@
 
 
 
-
+    console.debug(gmtools);
 
 
 

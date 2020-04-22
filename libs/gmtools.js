@@ -32,7 +32,7 @@ const
     if (typeof define === 'function' && define.amd) define(deps, factory);
     else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
     else root["gmtools"] = factory(...deps.map(dep => root[dep]));
-}('gmtools', () => {
+}(this, () => {
 
     const gmtools = {};
 
