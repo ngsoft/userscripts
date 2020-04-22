@@ -18,37 +18,33 @@ const
         day = hour * 24,
         week = day * 7,
         year = 365 * day,
-        month = Math.round(year / 12);
+        month = Math.round(year / 12),
+        GMinfo = (GM_info ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
+        scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`,
+        UUID = GMinfo.script.uuid;
 
-((i, f, w, u) => {
-    'use strict';
-    if (module !== u ? module.exports !== u : exports !== u) { // NodeJS and CommonJS
-        module.id = i;
-        module.exports ? module.exports = f() : exports = f();
-    } else if (typeof define === 'function') define(name, factory); // AMD
-    else if (w !== u) {// if nothing else
-        w.require = w.require || (m => w[m]);
-        w[i] = f();
-    }
-})('gmtools', () => {
 
+/**
+ * gmtools Module
+ */
+(function(root, factory){
+    const deps = []; //your dependencies there
+    if (typeof define === 'function' && define.amd) define(deps, factory);
+    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
+    else root["gmtools"] = factory(...deps.map(dep => root[dep]));
+}('gmtools', () => {
 
     const gmtools = {};
 
     let undef;
-    const
-            GMinfo = (GM_info ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
-            scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`,
-            UUID = GMinfo.script.uuid;
-
 
     const doc = document;
 
-    Object.assign(gmtools, {
-        GMinfo: GMinfo, scriptname: scriptname, UUID: UUID
-    });
-    
-
+    /**
+     * Test if given argument is a plain object
+     * @param {any} v
+     * @returns {Boolean}
+     */
     gmtools.isPlainObject = function isPlainObject(v){
         return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
     };
@@ -372,6 +368,18 @@ const
         }
     };
 
+    /**
+     * Gets list of events types
+     * @param {string|Array} type
+     * @returns {Array}
+     */
+    function getEventTypes(type){
+        let types = [];
+        if (typeof type === s) types = type.split(/\s+/);
+        else if (Array.isArray(type)) type.forEach(item => types = types.concat(getEventTypes(item)));
+        return types;
+    }
+
 
     /**
      * Dispatches an Event
@@ -382,15 +390,13 @@ const
      */
     gmtools.trigger = function trigger(el, type, data){
         if (el instanceof EventTarget) {
-            if (typeof type === s) {
-                let event;
-                type.split(/\s+/).forEach((t) => {
-                    if (el.parentElement === null) event = new Event(type);
-                    else event = new Event(t, {bubbles: true, cancelable: true});
-                    event.data = data;
-                    el.dispatchEvent(event);
-                });
-            }
+            let event;
+            getEventTypes(type).forEach(t => {
+                if (el.parentElement === null) event = new Event(t);
+                else event = new Event(t, {bubbles: true, cancelable: true});
+                event.data = data;
+                el.dispatchEvent(event);
+            });
         }
     };
 
@@ -413,10 +419,15 @@ const
             if (!(target instanceof EventTarget)) target = doc.createElement('div');
             if (!(binding instanceof EventTarget)) {
                 ["on", "off", "one", "trigger"].forEach(method => {
-                    binding[method] = function(...args){
-                        self[method].apply(self, args);
-                        return this;
-                    };
+                    if (typeof binding[method] === u) {
+                        Object.defineProperty(binding, method, {
+                            configurable: true, enumerable: false,
+                            value: function(...args){
+                                self[method].apply(self, args);
+                                return this;
+                            }
+                        });
+                    }
                 });
             }
             Object.assign(this, {
@@ -437,18 +448,16 @@ const
          * @returns {Events}
          */
         on(type, listener, options){
-            if (typeof type === s && typeof listener === f) {
-                const self = this,
-                        params = {
-                            once: false,
-                            capture: false
-                        },
+            if (typeof listener === f) {
+                const
+                        self = this,
+                        params = {once: false, capture: false},
                         handler = listener.bind(self.binding);
                 if (typeof options === b) params.capture = options;
                 else if (isPlainObject(options)) Object.keys(params).forEach(key => {
                         params[key] = options[key] === true;
                     });
-                type.split(/\s+/).forEach(type => {
+                getEventTypes(type).forEach(type => {
                     self.events.push({
                         type: type,
                         listener: listener,
@@ -482,40 +491,39 @@ const
          * @returns {Events}
          */
         off(type, listener, capture){
-            if (typeof type === s) {
-                const self = this,
-                        params = {
-                            capture: false
-                        };
-                let callback;
-                for (let i = 1; i < arguments.length; i++) {
-                    let arg = arguments[i];
-                    switch (typeof arg) {
-                        case b:
-                            params.capture = arg;
-                            break;
-                        case f:
-                            callback = arg;
-                            break;
-                        default:
-                            break;
-                    }
+
+            const
+                    self = this,
+                    params = {capture: false};
+            let callback;
+            for (let i = 1; i < arguments.length; i++) {
+                let arg = arguments[i];
+                switch (typeof arg) {
+                    case b:
+                        params.capture = arg;
+                        break;
+                    case f:
+                        callback = arg;
+                        break;
+                    default:
+                        break;
                 }
-                type.split(/\s+/).forEach(type => {
-                    self.events = self.events.filter(evt => {
-                        if (typeof callback === f) {
-                            if (type === evt.type && params.capture === evt.params.capture && callback === evt.listener) {
-                                self.target.removeEventListener(type, evt.handler, params.capture);
-                                return false;
-                            }
-                        } else if (type === evt.type) {
-                            self.target.removeEventListener(type, evt.handler, evt.params.capture);
+            }
+            getEventTypes(type).forEach(type => {
+                self.events = self.events.filter(evt => {
+                    if (typeof callback === f) {
+                        if (type === evt.type && params.capture === evt.params.capture && callback === evt.listener) {
+                            self.target.removeEventListener(type, evt.handler, params.capture);
                             return false;
                         }
-                        return true;
-                    });
+                    } else if (type === evt.type) {
+                        self.target.removeEventListener(type, evt.handler, evt.params.capture);
+                        return false;
+                    }
+                    return true;
                 });
-            }
+            });
+
             return this;
         },
         /**
@@ -525,20 +533,15 @@ const
          * @returns {Events}
          */
         trigger(type, data){
-            if (typeof type === s) {
-                const self = this;
-                data = data !== undef ? data : {};
-                type.split(/\s+/).forEach(type => {
-                    let event;
-                    if (self.target.parentElement === null) event = new Event(type);
-                    else event = new Event(type, {
-                            bubbles: true,
-                            cancelable: true
-                        });
-                    event.data = data;
-                    self.target.dispatchEvent(event);
-                });
-            }
+            const self = this;
+            data = data !== undef ? data : {};
+            getEventTypes(type).forEach(type => {
+                let event;
+                if (self.target.parentElement === null) event = new Event(type);
+                else event = new Event(type, {bubbles: true, cancelable: true});
+                event.data = data;
+                self.target.dispatchEvent(event);
+            });
             return this;
         }
 
@@ -744,10 +747,7 @@ const
         return getLangInfos;
     })();
 
-    console.debug(gmtools);
-
-
 
     return gmtools;
-}, window);
+}, window));
 
