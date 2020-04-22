@@ -42,14 +42,6 @@
 
 
 
-    let t = new gmDialogNG(null, {
-        fullscreen: true
-    });
-    t.open();
-
-    console.debug(GMinfo);
-
-
 
     /*  NodeFinder.find('video, video source, video track', video => {
      console.debug(video);
