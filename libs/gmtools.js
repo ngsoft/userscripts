@@ -34,7 +34,14 @@ const
     else root.gmtools = factory(...deps.map(dep => root[dep]));
 }(this, () => {
 
-    const gmtools = {};
+    const
+            gmtools = {},
+            ghrepo = "ngsoft/userscripts",
+            ghapi = 'https://api.github.com/repos/' + ghrepo + '/tags',
+            sources = [
+                "https://cdn.jsdelivr.net/gh/:repo@:tag/libs/:script.min.js",
+                "https://raw.githubusercontent.com/:repo/:tag/libs/:script.js"
+            ];
 
     let undef;
 
@@ -200,23 +207,6 @@ const
         }
     };
 
-    /**
-     * Tests whenever the given selector is valid
-     * @param {string} selector
-     * @returns {Boolean}
-     */
-    const isValidSelector = gmtools.isValidSelector = function(selector){
-
-        if (typeof selector !== s) return false;
-        let valid = true;
-        try {
-            //throws syntax error on invalid selector
-            valid = doc.createElement('template').querySelector(selector) === null;
-        } catch (e) {
-            valid = false;
-        }
-        return valid;
-    };
 
     /**
      * Checks if url is valid
@@ -748,7 +738,20 @@ const
         return getLangInfos;
     })();
 
+    const require = gmtools.require = function(scriptname){
 
+        if (typeof scriptname === s ? /^gm/.test(scriptname) : false) {
+
+
+
+
+
+        }
+
+
+
+
+    };
 
     return gmtools;
 }, window));

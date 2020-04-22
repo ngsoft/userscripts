@@ -31,7 +31,7 @@
     /* jshint -W083 */
 
 
-
+    console.debug(gmtools.require("gmdata"));
 
 
 
