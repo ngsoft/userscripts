@@ -741,3 +741,1095 @@ const
     return gmtools;
 }, window));
 
+/**
+ * gmdata Module
+ */
+
+(function(root, factory){
+    const deps = ["gmtools"]; //your dependencies there
+    if (typeof define === 'function' && define.amd) define(deps, factory);
+    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
+    else root.gmdata = factory(...deps.map(dep => root[dep]));
+}(this, function(gmtools, undef){
+
+
+    const {isPlainObject, isValidUrl, getURL, addstyle, addscript} = gmtools;
+
+
+    /**
+     * DataStore Interface
+     * @type {Class}
+     */
+    class DataStore {
+        constructor(){
+            if (!(["get", "set", "has", "remove", "clear"].every(x => typeof this[x] === f))) {
+                throw new Error("DataStore Interface Error : Missing Methods.");
+            }
+            Object.defineProperty(this, '_isDataStore', {
+                value: true,
+                configurable: true
+            });
+        }
+    }
+
+    /**
+     * Store data into localStorage or sessionStorage
+     * @type {Class}
+     * @extends {Datastore}
+     * @param {Storage} storage
+     */
+    class xStore extends DataStore {
+
+        constructor(storage){
+            super();
+            if (!(storage instanceof Storage)) {
+                throw new Error('xStore : argument not instance of Storage');
+            }
+            Object.defineProperty(this, '_storage', {
+                value: storage,
+                configurable: true
+            });
+        }
+
+        get(key){
+            let retval, sval;
+            //get one
+            if (typeof key === s) {
+                if ((sval = this._storage.getItem(key)) !== null) {
+                    try {
+                        retval = JSON.parse(sval);
+                    } catch (e) {
+                        retval = sval;
+                    }
+                }
+            } else if (typeof key === u) {
+                //get all
+                retval = {};
+                for (let i = 0; i < this._storage.length; i++) {
+                    key = this._storage.key(i);
+                    retval[key] = this.get(key);
+                }
+            }
+            return retval;
+
+        }
+        set(key, val){
+            if (typeof key === s && typeof val !== u) {
+                if (typeof val !== s) {
+                    let sval = val;
+                    try {
+                        val = JSON.stringify(sval);
+                    } catch (e) {
+                        val = sval;
+                    }
+                }
+                this._storage.setItem(key, val);
+
+            } else if (isPlainObject(key)) {
+                Object.keys(key).forEach((k) => {
+                    this.set(k, key[k]);
+                });
+            }
+            return this;
+
+        }
+        has(key){
+            return typeof this.get(key) !== u;
+
+        }
+        remove(key){
+            if (typeof key === s) {
+                key = key.split(' ');
+            }
+            if (Array.isArray(key)) {
+                key.forEach((k) => {
+                    this._storage.removeItem(k);
+                });
+            }
+            return this;
+        }
+        clear(){
+            this._storage.clear();
+            return this;
+        }
+
+    }
+
+
+    /* jshint -W117 */
+    /**
+     * Store data into GreaseMonkey 3 or Tampermonkey
+     * @type {Class}
+     * @extends {DataStore}
+     */
+    class gmStore extends DataStore {
+        static get available(){
+            return ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].every((fn) => {
+                /*jshint evil:true */
+                try {
+                    if (typeof (eval(fn)) === f) return true;
+                } catch (e) {
+                    return false;
+                }
+                /*jshint evil:false */
+            });
+        }
+
+        constructor(){
+            super();
+
+            let disabled = [];
+            ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].forEach((fn) => {
+                /*jshint evil:true */
+                try {
+                    if (typeof (eval(fn)) !== f) disabled.push(fn);
+                } catch (e) {
+                    disabled.push(fn);
+                }
+                /*jshint evil:false */
+            });
+            if (disabled.length > 0) {
+                if (disabled.length === 4) {
+                    console.warn("gmStore disabled.");
+                    return;
+                }
+                disabled.forEach((fn) => {
+                    console.warn('gmStore cannot use', fn);
+                });
+            }
+        }
+
+
+
+        get(key){
+            let retval = undef;
+            //get one
+            if (typeof key === s) {
+                if (typeof GM_getValue === f) {
+                    retval = GM_getValue(key); // eslint-disable-line
+                }
+            } else if (typeof key === u) {
+                //get all
+                retval = {};
+                if (typeof GM_listValues === f) {
+                    GM_listValues().forEach((key) => { // eslint-disable-line
+                        retval[key] = this.get(key);
+                    });
+                }
+            }
+            return retval;
+
+        }
+        set(key, val){
+
+            if (typeof key === s && typeof val !== u) {
+                if (typeof GM_setValue === f) {
+                    GM_setValue(key, val); // eslint-disable-line
+                }
+            } else if (isPlainObject(key)) {
+                Object.keys(key).forEach((k) => {
+                    this.set(k, key[k]);
+                });
+            }
+            return this;
+        }
+        has(key){
+            return typeof this.get(key) !== u;
+        }
+        remove(key){
+            if (typeof key === s) {
+                key = key.split(' ');
+            }
+            if (Array.isArray(key)) {
+                if (typeof GM_deleteValue === f) {
+                    key.forEach((k) => {
+                        GM_deleteValue(k); // eslint-disable-line
+                    });
+                }
+            }
+            return this;
+        }
+
+        clear(){
+            Object.keys(this.get()).forEach((key) => {
+                this.remove(key);
+            });
+            return this;
+        }
+
+    }
+
+    /* jshint +W117 */
+
+    /**
+     * Injects defaults settings into gmStore
+     */
+    class UserSettings extends gmStore {
+        /**
+         * @param {Object} defaults a plain object containing defaults settings
+         * @returns {UserSettings}
+         */
+        constructor(defaults){
+            super();
+            if (isPlainObject(defaults)) {
+                Object.keys(defaults).forEach((x) => {
+                    if (typeof this.get(x) !== typeof defaults[x]) {
+                        this.set(x, defaults[x]);
+                    }
+                }, this);
+            }
+
+        }
+
+    }
+
+    /**
+     * Cache Item
+     * @link https://www.php-fig.org/psr/psr-6/
+     */
+    class LSCacheItem {
+
+        constructor(key, hit, value){
+            this.key = key;
+            this.hit = hit === true;
+            this.value = value;
+        }
+        /**
+         * Returns the key for the current cache item.
+         *
+         * The key is loaded by the Implementing Library, but should be available to
+         * the higher level callers when needed.
+         *
+         * @returns {string} The key string for this cache item.
+         */
+        getKey(){
+            return this.key;
+        }
+
+        /**
+         * Retrieves the value of the item from the cache associated with this object's key.
+         *
+         * The value returned must be identical to the value originally stored by set().
+         *
+         * If isHit() returns false, this method MUST return null. Note that null
+         * is a legitimate cached value, so the isHit() method SHOULD be used to
+         * differentiate between "null value was found" and "no value was found."
+         *
+         * @return {any} The value corresponding to this cache item's key, or undefined if not found.
+         */
+        get(){
+            return this.value;
+        }
+
+        /**
+         * Confirms if the cache item lookup resulted in a cache hit.
+         *
+         * Note: This method MUST NOT have a race condition between calling isHit()
+         * and calling get().
+         *
+         * @return {boolean} True if the request resulted in a cache hit. False otherwise.
+         */
+        isHit(){
+            return this.hit === true;
+        }
+
+        /**
+         * Sets the value represented by this cache item.
+         *
+         * The $value argument may be any item that can be serialized by PHP,
+         * although the method of serialization is left up to the Implementing
+         * Library.
+         *
+         * @param {any} value
+         *
+         * @return {LSCacheItem}   The invoked object.
+         */
+        set(value){
+            this.value = value;
+            return this;
+        }
+
+        /**
+         * Sets the expiration time for this cache item.
+         *
+         * @param {Date|number} expiration
+         *
+         * @return {LSCacheItem} The called object.
+         */
+        expiresAt(expiration){
+            if (typeof expiration === n) expiration = new Date(expiration);
+            if (expiration instanceof Date) this.expire = expiration;
+            return this;
+        }
+
+
+        /**
+         * Sets the expiration time for this cache item.
+         *
+         * @param {number} time
+         *
+         * @return {LSCacheItem} The called object.
+         */
+        expiresAfter(time){
+            if (typeof time === n) {
+                let tt = +new Date();
+                tt += time;
+                this.expiration = new Date(tt);
+            }
+        }
+
+
+    }
+
+
+
+
+    /**
+     * Cache data into localStorage
+     * Item Cache Pool
+     * @link https://www.php-fig.org/psr/psr-6/
+     */
+    class LSCache {
+        /**
+         * @returns {xStore}
+         */
+        get storage(){
+            return this.__store__;
+        }
+        set storage(val){
+            if (val instanceof DataStore) this.__store__ = val;
+        }
+        get ttl(){
+            return this.__ttl__;
+        }
+        set ttl(ttl){
+            if (typeof ttl === n) this.__ttl__ = ttl;
+        }
+
+        get deferred(){
+            if (typeof this.__deferred__ === u) this.__deferred__ = [];
+            return this.__deferred__;
+        }
+
+        get expire(){
+            if (typeof this.__expire__ === u) {
+                let key = this.prefix + "LSCache";
+                this.__expire__ = this.storage.get(key) || {};
+            }
+
+            return this.__expire__;
+        }
+
+        set expire(obj){
+            if (isPlainObject(obj)) {
+                this.__expire__ = obj;
+                let key = this.prefix + "LSCache";
+                this.storage.set(key, obj);
+            }
+        }
+
+        get prefix(){
+            return this.__prefix__ + ":";
+        }
+
+        /**
+         * Creates a new cache pool
+         * @param {string} prefix
+         * @param {number} [ttl]
+         * @param {DataStore} storage
+         */
+        constructor(prefix = "", ttl = 60000, storage = null){
+            if (!(storage instanceof DataStore)) storage = new xStore(localStorage);
+            this.storage = storage;
+            this.__prefix__ = "";
+            if (typeof prefix === s) this.__prefix__ = prefix;
+            this.ttl = typeof ttl === n ? ttl : 60000;
+            this.__removeExpired();
+
+        }
+
+        __removeExpired(){
+
+            let expired = this.expire, now = +new Date(), keys = Object.keys(expired);
+            for (let i = 0; i < keys.length; i++) {
+                if (now > expired[keys[i]]) {
+                    this.deleteItem(keys[i]);
+                }
+            }
+
+        }
+
+        /**
+         * Returns a Cache Item representing the specified key.
+         *
+         * This method must always return a CacheItemInterface object, even in case of
+         * a cache miss. It MUST NOT return null.
+         *
+         * @param {string} key The key for which to return the corresponding Cache Item.
+         *
+         *
+         * @return {LSCacheItem} The corresponding Cache Item.
+         */
+        getItem(key){
+            if (typeof key !== s) throw new Error("Invalid Argument");
+            let value, pkey = this.prefix + key;
+            if (this.hasItem(key)) value = this.storage.get(pkey);
+            return new LSCacheItem(key, value !== undef, value);
+        }
+
+        /**
+         * Returns a traversable set of cache items.
+         *
+         * @param {Array} keys An indexed array of keys of items to retrieve.
+         *
+         *
+         * @return {Array}.
+         */
+        getItems(keys = []){
+            let ret = [];
+            if (Array.isArray(keys)) {
+                for (let i = 0; i < keys.length; i++) {
+                    ret.push(this.getItem(keys[i]));
+                }
+            }
+            return ret;
+        }
+        /**
+         * Confirms if the cache contains specified cache item.
+         *
+         * Note: This method MAY avoid retrieving the cached value for performance reasons.
+         * This could result in a race condition with CacheItemInterface::get(). To avoid
+         * such situation use CacheItemInterface::isHit() instead.
+         *
+         * @param {string} key The key for which to check existence.
+         *
+         *
+         * @return {boolean}   True if item exists in the cache, false otherwise.
+         */
+        hasItem(key){
+            if (typeof key !== s) throw new Error("Invalid Argument");
+            this.__removeExpired();
+            return this.storage.has(this.prefix + key);
+        }
+
+        /**
+         * Deletes all items in the pool.
+         *
+         * @return {boolean}  True if the pool was successfully cleared. False if there was an error.
+         */
+        clear(){
+
+            let storage = this.storage._storage, key;
+            for (let i = 0; i < storage.length; i++) {
+                key = storage.key(i);
+                if (key.indexOf(this.prefix) === 0) {
+                    storage.removeItem(key);
+                }
+            }
+            this.expire = {};
+            return true;
+        }
+
+        /**
+         * Removes the item from the pool.
+         *
+         * @param {string} key The key to delete.
+         *
+         *
+         * @return {boolean} True if the item was successfully removed. False if there was an error.
+         */
+        deleteItem(key){
+            if (typeof key !== s) throw new Error("Invalid Argument");
+            let exp = this.expire;
+            delete(exp[key]);
+            this.expire = exp;
+            this.storage.remove(this.prefix + key);
+            return true;
+        }
+
+        /**
+         * Removes multiple items from the pool.
+         *
+         * @param {Array} keys
+         *   An array of keys that should be removed from the pool.
+
+         *
+         * @return {boolean}
+         *   True if the items were successfully removed. False if there was an error.
+         */
+        deleteItems(keys){
+            if (Array.isArray(keys)) {
+                for (let i = 0; i < keys.length; i++) {
+                    this.deleteItem(keys[i]);
+                }
+            }
+            return true;
+        }
+        /**
+         * Persists a cache item immediately.
+         *
+         * @param {LSCacheItem} item
+         *   The cache item to save.
+         *
+         * @return {boolean} True if the item was successfully persisted. False if there was an error.
+         */
+        save(item){
+            if (item instanceof LSCacheItem) {
+
+                let expire = item.expiration || new Date((+new Date()) + this.ttl),
+                        data = this.expire;
+                data[item.getKey()] = +expire;
+                this.expire = data;
+                let key = this.prefix + item.getKey();
+                this.storage.set(key, item.value !== undef ? item.value : null);
+                return true;
+
+            }
+            return false;
+
+        }
+
+        /**
+         * Sets a cache item to be persisted later.
+         *
+         * @param {LSCacheItem} item
+         *   The cache item to save.
+         *
+         * @return {boolean}  False if the item could not be queued or if a commit was attempted and failed. True otherwise.
+         */
+        saveDeferred(item){
+            if (item instanceof LSCacheItem) {
+
+                this.deferred.push(item);
+                return true;
+
+            }
+        }
+
+        /**
+         * Persists any deferred cache items.
+         *
+         * @return {boolean}  True if all not-yet-saved items were successfully saved or there were none. False otherwise.
+         */
+        commit(){
+            let item;
+            while ((item = this.deferred.shift())) {
+                this.save(item);
+            }
+
+            return true;
+        }
+    }
+
+
+    /**
+     * Resource Loader
+     * @param {string} prefix
+     * @param {number} ttl
+     * @returns {rloader}
+     */
+    function rloader(prefix, ttl){
+        if (!(this instanceof rloader)) return new rloader(prefix, ttl);
+        prefix = typeof prefix === s ? prefix : "";
+        ttl = typeof ttl === n ? ttl : 5000;
+        this.__cache__ = new LSCache(prefix, ttl);
+    }
+
+    rloader.prototype = {
+        /**
+         * Checks if key exists
+         * @param {string} key
+         * @returns {boolean}
+         */
+        has(key){
+            return this.__cache__.hasItem(key);
+        },
+        /**
+         * Get a resource by key
+         * @param {string} key
+         * @returns {string|undefined}
+         */
+        get(key){
+            let item = this.__cache__.getItem(key);
+            return item.get();
+        },
+        /**
+         * Loads a Ressource
+         * @param {string} [url] Must be set first if key is defined
+         * @param {function} [callback] a callback to load after
+         * @param {string} [key]
+         * @param {number} [expire]
+         * @param {Object} [options] overrides {url: 'https://...', onload(){}, key: "mykey", expire: 5000}
+         * @returns {rloader.prototype}
+         */
+        require(){
+            const params = {
+                expire: this.__cache__.ttl,
+                onload: null,
+                url: null,
+                key: null
+            }, self = this;
+            //parse arguments
+            for (let i = 0; i < arguments.length; i++) {
+                let arg = arguments[i];
+                switch (typeof arg) {
+                    case n:
+                        params.expire = arg;
+                        break;
+                    case s:
+                        if (typeof params.url === s) params.key = arg;
+                        else params.url = arg;
+                        break;
+                    case f:
+                        params.onload = arg;
+                        break;
+                    case o:
+                        if (isPlainObject(arg)) Object.assign(params, arg);
+                        break;
+                    default :
+                        break;
+                }
+            }
+
+            if (!isValidUrl(params.url)) throw new Error("Invalid Url.");
+            let url = new URL(getURL(params.url)), ext;
+            if (params.key === null) params.key = url.pathname.split("/").pop();
+            if (/\.js$/i.test(params.key)) ext = "js";
+            else if (/\.css$/i.test(params.key)) ext = "css";
+
+
+            let item = this.__cache__.getItem(params.key), load = () => {
+                switch (ext) {
+                    case "css":
+                        addstyle(item.get());
+                        break;
+                    case "js":
+                        addscript(item.get());
+                        break;
+                    default :
+                        break;
+                }
+                if (typeof params.onload === f) params.onload(item.get());
+            };
+            if (!item.isHit()) {
+                fetch(url.href, {
+                    method: "GET",
+                    redirect: "follow",
+                    cache: "no-store"
+                }).then(r => {
+                    if (r.status === 200) return r.text();
+                    else {
+                        console.warn(r);
+                        throw new Error("Cannot get the resource " + url.href);
+                    }
+                }).then((text) => {
+                    if (text.length > 0) {
+                        item.set(text);
+                        item.expiresAfter(params.ttl);
+                        self.__cache__.save(item);
+                        load();
+                    }
+                }).catch(console.warn);
+            } else load();
+            return this;
+        },
+        /**
+         * Clears the cache
+         * @returns {boolean}
+         */
+        clear(){
+            return this.__cache__.clear();
+        }
+
+    };
+
+
+
+    return {
+        xStore: xStore,
+        gmStore: gmStore,
+        UserSettings: UserSettings,
+        LSCache: LSCache,
+        rloader: rloader
+    };
+}));/**
+ * gmfinders Module
+ */
+
+(function(root, factory){
+    const deps = ["gmtools"]; //your dependencies there
+    if (typeof define === 'function' && define.amd) define(deps, factory);
+    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
+    else root.gmfinders = factory(...deps.map(dep => root[dep]));
+}(this, function(gmtools){
+
+
+    const doc = document;
+
+    /**
+     * Tests whenever the given selector is valid
+     * @param {string} selector
+     * @returns {Boolean}
+     */
+    const isValidSelector = gmtools.isValidSelector = function(selector){
+
+        if (typeof selector !== s) return false;
+        let valid = true;
+        try {
+            //throws syntax error on invalid selector
+            valid = doc.createElement('template').querySelector(selector) === null;
+        } catch (e) {
+            valid = false;
+        }
+        return valid;
+    };
+
+
+    class NodeFinderResults extends Array {
+
+        get current(){
+            return this[this.length - 1];
+        }
+
+
+        /**
+         * Use current result as root to find children matching selector
+         * @param {string} selector
+         * @param {function} callback
+         * @returns {NodeFinder}
+         */
+        find(selector, callback, limit = 0){
+            return NodeFinder(this.current).find(selector, callback, limit);
+        }
+
+        /**
+         * Use current result as root to find one children matching selector
+         * @param {string} selector
+         * @param {function} callback
+         * @returns {NodeFinder}
+         */
+        findOne(selector, callback){
+            return NodeFinder(this.current).find(selector, callback, 1);
+        }
+
+
+        /**
+         * Starts thee dom observer
+         * @returns {NodeFinderResults}
+         */
+        start(){
+            if (this.started === false) {
+                const $this = this;
+                if (doc.readyState === "loading") {
+                    doc.addEventListener("DOMContentLoaded", function(){
+                        $this.start();
+                    });
+                    return this;
+                }
+                this.started = true;
+                //initial search (nodes already in dom)
+                this.root.querySelectorAll(this.selector).forEach(node => {
+                    if (!$this.includes(node)) {
+                        $this.push(node);
+                        $this.callback.call(node, node, $this);
+                    }
+                });
+
+                this.observer.observe(this.root, {attributes: true, childList: true, subtree: true});
+                return this;
+            }
+        }
+        /**
+         * Stops the dom observer
+         * @returns {NodeFinderResults}
+         */
+        stop(){
+            if (this.started === true) {
+                this.started = false;
+                this.observer.disconnect();
+            }
+            return this;
+        }
+
+
+        constructor(root, selector, callback, limit, finder){
+
+            if (!isValidSelector(selector)) throw new Error('NodeFinder invalid selector.');
+            if (typeof callback !== f) throw new Error('NodeFinder invalid callback.');
+            if (typeof limit !== n) throw new Error('NodeFinder invalid limit.');
+
+            super();
+
+            Object.defineProperties(this, {
+                root: {value: root, enmerable: false, configurable: true, writable: false},
+                selector: {value: selector, enmerable: false, configurable: true, writable: false},
+                callback: {value: callback, enmerable: false, configurable: true, writable: false},
+                observer: {value: callback, enmerable: false, configurable: true, writable: true},
+                limit: {value: limit, enmerable: false, configurable: true, writable: false},
+                started: {value: false, enmerable: false, configurable: true, writable: true},
+                NodeFinder: {value: finder, enmerable: false, configurable: true, writable: false}
+            });
+
+
+            const
+                    $this = this,
+                    $callback = function(mutations){
+                        let nodes = [];
+                        mutations.forEach(m => {
+                            let node = m.target;
+                            if (nodes.includes(node)) return;
+                            if (node instanceof Element) {
+                                if (nodes.includes(node) === false ? $this.includes(node) === false : false) {
+                                    if (node.matches(selector)) nodes.push(node);
+                                }
+                            }
+                            if (m.type === 'childList') {
+                                [m.addedNodes, m.removedNodes].forEach(list => {
+                                    list.forEach(node => {
+                                        if (nodes.includes(node) || $this.includes(node)) return;
+                                        if (node instanceof Element ? node.matches(selector) : false) nodes.push(node);
+
+                                    });
+                                });
+                            }
+                        });
+                        root.querySelectorAll(selector).forEach(node => {
+                            if (nodes.includes(node) || $this.includes(node)) return;
+                            nodes.push(node);
+                        });
+
+                        if (nodes.length > 0) {
+                            nodes.forEach(node => {
+                                if (limit > 0 ? $this.length === limit : false) return;
+                                if ($this.includes(node)) return;
+                                if (root.contains(node)) {
+                                    $this.push(node);
+                                    callback.call(node, node, $this);
+                                }
+                            });
+                        }
+                        if (limit > 0 ? $this.length === limit : false) $this.stop();
+                    };
+            this.observer = new MutationObserver($callback);
+            this.start();
+        }
+    }
+
+
+    /**
+     * Node Finder v2
+     * @param {DocumentElement|HTMLElement|string} root single node, selector to use as root for the search
+     * @returns {NodeFinder}
+     */
+    function NodeFinder(root){
+        if (this instanceof NodeFinder == false) return new NodeFinder(root);
+        //throw new Error('NodeFinder cannot be instanciated using |new|.');
+        if (typeof root === s) root = doc.querySelector(root);
+        if (root instanceof EventTarget ? typeof root.querySelectorAll === f : false) {
+            Object.defineProperties(this, {
+                root: {value: root, enmerable: false, configurable: true, writable: false},
+                observers: {value: [], enmerable: false, configurable: true, writable: false}
+            });
+            NodeFinder.instances.push(this);
+            return this;
+        }
+        throw new Error('NodeFinder invalid root argument');
+    }
+
+
+    NodeFinder.instances = [];
+
+
+    NodeFinder.fn = NodeFinder.prototype = {
+        /**
+         * Find Nodes if existing or when created
+         * @param {string} selector
+         * @param {function} callback
+         * @param {number} [limit]
+         * @returns {NodeFinderRoot}
+         */
+        find(selector, callback, limit = 0){
+            this.observers.push(new NodeFinderResults(this.root, selector, callback, limit, this));
+            return this;
+        },
+
+        /**
+         * Find One Node if existing or when created
+         * @param {string} selector
+         * @param {function} callback
+         * @param {number} [limit]
+         * @returns {NodeFinderRoot}
+         */
+        findOne(selector, callback){
+            this.observers.push(new NodeFinderResults(this.root, selector, callback, 1, this));
+            return this;
+        },
+
+        /**
+         * Stops all observers for the current root
+         * @return {NodeFinder}
+         */
+        stop(){
+            this.observers.forEach(obs => obs.stop());
+            return this;
+        }
+    };
+
+    /**
+     * Find Nodes if existing or when created using the full document
+     * @param {string} selector
+     * @param {function} callback
+     * @param {number} [limit]
+     * @returns {NodeFinder}
+     */
+    NodeFinder.find = function(selector, callback, limit = 0){
+        return NodeFinder(doc).find(selector, callback, limit);
+    };
+    /**
+     * Find Nodes if existing or when created using the full document
+     * @param {string} selector
+     * @param {function} callback
+     * @param {number} [limit]
+     * @returns {NodeFinder}
+     */
+    NodeFinder.findOne = function(selector, callback){
+        return NodeFinder(doc).find(selector, callback, 1);
+    };
+
+    /**
+     * Stops all observers
+     * @return {undefined}
+     */
+    NodeFinder.stop = function(){
+        this.instances.forEach(finder => {
+            finder.stop();
+        });
+    };
+
+
+
+    /**
+     * Resize Sensor
+     * @param {HTMLElement|string} element Element or selector
+     * @param {function} callback Callback to use ob resize
+     */
+    const ResizeSensor = (function(){
+
+        const
+                sensors = [],
+                domObserver = new MutationObserver((mutations, obs) => {
+                    mutations.forEach(mutation => {
+                        if (mutation.type === "childList" && mutation.removedNodes.length > 0) {
+                            sensors.filter(x => x.started === true).forEach(sensor => {
+                                if (!doc.body.contains(sensor.element)) sensor.stop();
+                            });
+                            if (sensors.every(x => x.started === false)) obs.stop();
+                        }
+                    });
+                });
+        Object.assign(domObserver, {
+            started: false,
+            start(){
+                if (this.started === false) {
+                    this.started = true;
+                    this.observe(doc.body, {childList: true, subtree: true});
+                }
+            },
+            stop(){
+                if (this.started === true) {
+                    this.started = false;
+                    this.disconnect();
+                }
+            }
+        });
+
+
+        class ResizeSensor {
+
+            get element(){
+                return this._params.element;
+            }
+            get started(){
+                return this._params.started;
+            }
+            get currentWidth(){
+                return this.element.offsetWidth;
+            }
+            get currentHeight(){
+                return this.element.offsetHeight;
+            }
+            get previousWidth(){
+                return this._params.width;
+            }
+            get previousHeight(){
+                return this._params.height;
+            }
+
+            start(){
+                if (this._params.started === false) {
+                    this._params.width = this.currentWidth;
+                    this._params.height = this.currentHeight;
+                    this._params.started = true;
+                    this._params.observer.observe(this.element, {attributes: true, childList: true, subtree: true});
+                    domObserver.start();
+                }
+            }
+            stop(){
+                if (this._params.started === true) {
+                    this._params.started = false;
+                    this._params.observer.disconnect();
+                }
+            }
+
+            constructor(element, callback){
+                const
+                        self = this,
+                        params = this._params = {
+                            element: element,
+                            width: null,
+                            height: null,
+                            started: false
+                        };
+                let
+                        width = self.currentWidth,
+                        height = self.currentHeight;
+                params.observer = new MutationObserver(m => {
+                    if (self.currentWidth !== width || self.currentHeight !== height) {
+                        params.width = width;
+                        params.height = height;
+                        width = self.currentWidth;
+                        height = self.currentHeight;
+                        callback.call(element, self);
+                    }
+                });
+                sensors.push(this);
+                this.start();
+            }
+        }
+
+        function sensor(element, callback){
+            if (typeof callback !== f) throw new Error('ResizeSensor invalid callback.');
+            if (typeof element === s) element = doc.querySelectorAll(element);
+            if (element instanceof NodeList) return Array.from(element).map(el => sensor(el, callback));
+            if (!(element instanceof Element)) throw new Error('ResizeSensor invalid element.');
+            return new ResizeSensor(element, callback);
+        }
+        return sensor;
+    })();
+
+
+
+
+
+
+
+
+
+    return{
+        isValidSelector: isValidSelector,
+        NodeFinder: NodeFinder,
+        ResizeSensor: ResizeSensor
+
+    };
+}));
+

@@ -4,8 +4,6 @@ if (php_sapi_name() !== "cli") {
     throw new ErrorException("Can only be run in console.");
 }
 
-//$stdout = fopen('php://stdout', 'w');
-//fwrite($stdout, "test");
 
 chdir(__DIR__);
 
