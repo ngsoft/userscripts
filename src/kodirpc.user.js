@@ -32,7 +32,6 @@
 
 
 
-    console.debug(gmtools);
 
 
 

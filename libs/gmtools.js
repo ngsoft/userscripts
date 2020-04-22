@@ -31,7 +31,7 @@ const
     const deps = []; //your dependencies there
     if (typeof define === 'function' && define.amd) define(deps, factory);
     else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root["gmtools"] = factory(...deps.map(dep => root[dep]));
+    else root.gmtools = factory(...deps.map(dep => root[dep]));
 }(this, () => {
 
     const gmtools = {};
@@ -45,7 +45,7 @@ const
      * @param {any} v
      * @returns {Boolean}
      */
-    gmtools.isPlainObject = function isPlainObject(v){
+    const isPlainObject = gmtools.isPlainObject = function(v){
         return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
     };
 
@@ -55,7 +55,7 @@ const
      * @param {function} ...callbacks Run callback in order
      * @returns {undefined}
      */
-    gmtools.on = function on(callback){
+    const on = gmtools.on = function(callback){
         const callbacks = [];
         for (let i = 0; i < arguments.length; i++) {
             let arg = arguments[i];
@@ -148,7 +148,7 @@ const
      * @param {string} html
      * @returns {HTMLElement}
      */
-    gmtools.html2element = function html2element(html){
+    const html2element = gmtools.html2element = function(html){
         if (typeof html === "string") {
             let template = doc.createElement('template');
             html = html.trim();
@@ -162,7 +162,7 @@ const
      * @param {string} html
      * @returns {documentElement}
      */
-    gmtools.html2doc = function html2doc(html){
+    const html2doc = gmtools.html2doc = function(html){
         let node = doc.implementation.createHTMLDocument().documentElement;
         if (typeof html === s && html.length > 0) {
             node.innerHTML = html;
@@ -175,7 +175,7 @@ const
      * @param {string} css
      * @returns {undefined}
      */
-    gmtools.addcss = function addcss(css){
+    const addcss = gmtools.addcss = function(css){
         if (typeof css === "string" && css.length > 0) {
             let s = doc.createElement('style');
             s.setAttribute('type', "text/css");
@@ -191,7 +191,7 @@ const
      * @param {string} css
      * @returns {undefined}
      */
-    gmtools.addstyle = function addstyle(css){
+    const addstyle = gmtools.addstyle = function(css){
         if (typeof css === "string" && css.length > 0) {
             let s = doc.createElement('style');
             s.setAttribute('type', "text/css");
@@ -205,7 +205,7 @@ const
      * @param {string} selector
      * @returns {Boolean}
      */
-    gmtools.isValidSelector = function isValidSelector(selector){
+    const isValidSelector = gmtools.isValidSelector = function(selector){
 
         if (typeof selector !== s) return false;
         let valid = true;
@@ -223,7 +223,7 @@ const
      * @param {string} url
      * @returns {boolean}
      */
-    gmtools.isValidUrl = function isValidUrl(url){
+    const isValidUrl = gmtools.isValidUrl = function(url){
         const weburl = new RegExp("^(?:(?:(?:https?|ftp):)?\\/\\/)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z0-9\\u00a1-\\uffff][a-z0-9\\u00a1-\\uffff_-]{0,62})?[a-z0-9\\u00a1-\\uffff]\\.)+(?:[a-z\\u00a1-\\uffff]{2,}\\.?))(?::\\d{2,5})?(?:[/?#]\\S*)?$", "i");
         if (typeof url === s && url.length > 0) {
             return weburl.test(url);
@@ -238,7 +238,7 @@ const
      * @param {string} uri
      * @returns {string|undefined}
      */
-    gmtools.getURL = function getURL(uri){
+    const getURL = gmtools.getURL = function(uri){
         let retval;
         if (typeof uri === s && uri.length > 0) {
             try {
@@ -257,13 +257,14 @@ const
 
     };
 
+
     /**
      * Sanitize a given filename
      * @param {string} input
      * @param {string} replacement
      * @returns {string}
      */
-    gmtools.sanitizeFileName = function sanitizeFileName(input, replacement){
+    const sanitizeFileName = gmtools.sanitizeFileName = function(input, replacement){
         replacement = typeof replacement === s ? replacement : "";
         if (typeof input === s) return input
                     .replace(/[\/\?<>\\:\*\|":\'\`\’]/g, replacement)
@@ -279,7 +280,7 @@ const
      * Generate a unique ID
      * @returns {String}
      */
-    gmtools.uniqid = function uniqid(){
+    const uniqid = gmtools.uniqid = function(){
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     };
 
@@ -291,7 +292,7 @@ const
      * @param {boolean} defer
      * @returns {undefined}
      */
-    gmtools.loadjs = function loadjs(src, callback, defer){
+    const loadjs = gmtools.loadjs = function(src, callback, defer){
         if (isValidUrl(src)) {
             let script = doc.createElement('script');
             script.type = 'text/javascript';
@@ -309,7 +310,7 @@ const
      * @param {string} src
      * @returns {undefined}
      */
-    gmtools.addscript = function addscript(src){
+    const addscript = gmtools.addscript = function(src){
         if (typeof src === s && src.length > 0) {
             let s = doc.createElement("script");
             s.setAttribute("type", "text/javascript");
@@ -323,7 +324,7 @@ const
      * @param {string} src
      * @returns {undefined}
      */
-    gmtools.loadcss = function loadcss(src){
+    const loadcss = gmtools.loadcss = function(src){
         if (isValidUrl(src)) {
             let style = doc.createElement('link');
             style.rel = "stylesheet";
@@ -338,7 +339,7 @@ const
      * @param {string} text
      * @returns {boolean}
      */
-    gmtools.copyToClipboard = function copyToClipboard(text){
+    const copyToClipboard = gmtools.copyToClipboard = function(text){
         let r = false;
         if (typeof text === "string" && text.length > 0) {
             let el = doc.createElement('textarea');
@@ -359,7 +360,7 @@ const
      * @returns {undefined}
      * @link https://stackoverflow.com/questions/32225904/programmatical-click-on-a-tag-not-working-in-firefox
      */
-    gmtools.Text2File = function Text2File(text, filename){
+    const Text2File = gmtools.Text2File = function(text, filename){
         if (typeof text === s && typeof filename === s) {
             let link = doc.createElement("a"), blob = new Blob([text], {type: "application/octet-stream"});
             link.href = URL.createObjectURL(blob);
@@ -388,7 +389,7 @@ const
      * @param {any} data
      * @returns {undefined}
      */
-    gmtools.trigger = function trigger(el, type, data){
+    const trigger = gmtools.trigger = function(el, type, data){
         if (el instanceof EventTarget) {
             let event;
             getEventTypes(type).forEach(t => {
@@ -409,7 +410,7 @@ const
      * @param {Object} binding
      * @returns {Events}
      */
-    gmtools.Events = function Events(target, binding){
+    const Events = gmtools.Events = function(target, binding){
 
         if (typeof target === s) target = doc.querySelector(target);
 
@@ -556,7 +557,7 @@ const
      * @param {number|undefined} timeout
      * @returns {Timer}
      */
-    gmtools.Timer = class Timer {
+    const Timer = gmtools.Timer = class {
         /**
          * Starts the timer
          * @returns {undefined}
@@ -746,6 +747,7 @@ const
 
         return getLangInfos;
     })();
+
 
 
     return gmtools;
