@@ -262,39 +262,45 @@
 
     }
 
-
-
-    find({
-        selector: `.txp_right_controls .txp_btn[data-role*="txp-ui-control-subtitle-btn"]`,
-        timeout: 0,
-        interval: 100,
-        onload(el){
-            new SubtitleDownloader(el);
+    history.replaceState = (function(){
+        const old = history.replaceState;
+        return function(state, title, url){
+            trigger(doc.body, UUID + '.replacestate', {
+                state: state,
+                title: title,
+                url: url
+            });
+            return old.call(history, state, title, url);
         }
+    })();
+
+    NodeFinder.findOne(`.txp_right_controls .txp_btn[data-role*="txp-ui-control-subtitle-btn"]`, el => {
+        new SubtitleDownloader(el);
+    });
+
+    NodeFinder.findOne(`.txp_player video[id]`, el => {
+        let player = el.closest('.txp_player');
+        if (player !== null) new WETVCustomPlayer(player);
+    });
+
+
+    let mdl = null;
+    Events(doc.body).on(UUID + '.replacestate', e => {
+        if (mdl === null) return;
+        if (!doc.body.contains(mdl.btn)) {
+            mdl = null;
+            NodeFinder.findOne(`h2.cover_title`, el => {
+                mdl = new MDLSearch(el);
+            });
+        }
+    });
+    NodeFinder.findOne(`h2.cover_title`, (el, obs) => {
+        mdl = new MDLSearch(el);
+        obs.stop();
 
     });
 
-    find({
-        selector: `.txp_player video[id]`,
-        timeout: 0,
-        interval: 100,
-        onload(el){
-            let player = el.closest('.txp_player');
-            if (player !== null) new WETVCustomPlayer(player);
-        }
 
-    });
-
-
-    find({
-        selector: `h2.cover_title`,
-        timeout: 0,
-        interval: 100,
-        onload(el){
-            new MDLSearch(el);
-        }
-
-    });
 
 
 })(document);
