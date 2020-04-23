@@ -1,13 +1,12 @@
 /**
- * gmfinders Module
+ * gmfind Module
  */
 
 (function(root, factory){
-    const deps = ["gmtools"]; //your dependencies there
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmfind = factory(...deps.map(dep => root[dep]));
-}(this, function(gmtools){
+    if (typeof define === 'function' && define.amd) define([], factory);
+    else if (typeof exports === 'object') module.exports = factory();
+    else root.gmfind = factory();
+}(this, function(s = "string", f = "function", n = "number", undef){
 
 
     const doc = document;
@@ -17,7 +16,7 @@
      * @param {string} selector
      * @returns {Boolean}
      */
-    const isValidSelector = gmtools.isValidSelector = function(selector){
+    const isValidSelector = function(selector){
 
         if (typeof selector !== s) return false;
         let valid = true;

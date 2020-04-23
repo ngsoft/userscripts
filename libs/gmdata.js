@@ -41,7 +41,7 @@
             super();
             Object.defineProperty(this, '_storage', {
                 value: {}, enumerable: false,
-                configurable: true, writable = true
+                configurable: true, writable: true
             });
         }
 
@@ -447,7 +447,7 @@
          * @param {DataStore} storage
          */
         constructor(prefix = "", ttl = 60000, storage = null){
-            if (!(storage instanceof DataStore)) storage = new xStore(localStorage);
+            if (storage instanceof DataStore === false) storage = new xStore(localStorage);
             this.storage = storage;
             this.__prefix__ = "";
             if (typeof prefix === s) this.__prefix__ = prefix;
@@ -633,21 +633,37 @@
         }
     }
 
+    class gmLoader {
 
+        constructor(usecache = true, ttl = (5 * minute), prefix = UUID){
+            let storage;
+            if (usecache === true) storage = new xStore(localStorage);
+            else storage = new nullStore(); //cache is disabled that way, on next page load Object will be cleared
+            Object.defineProperties(this, {
+                cache: {configurable: true, enumerable: false, writable: false, value: new LSCache(prefix, ttl, storage)},
+            });
+        }
 
+        get ttl(){
+            return this.cache.ttl;
+        }
 
+        set ttl(v){
+            this.cache.ttl = v;
+        }
 
-    function gmLoader(usecache = true, ttl = (5 * minute), prefix = UUID){
-        if (this instanceof gmLoader === false) return new gmLoader(...arguments);
-        let storage;
-        if (usecache) storage = new xStore(localStorage);
-        else storage = new nullStore();
-        Object.defineProperties(this, {
-            cache: new LSCache()
-        });
+    }
 
-
-
+    /**
+     * Loads and caches resources (js and css)
+     * @param {boolean} [usecache]
+     * @param {number} [ttl]
+     * @param {string} [prefix]
+     * @returns {gmLoader}
+     */
+    function gmLoaderLauncher(usecache = true, ttl = (5 * minute), prefix = UUID){
+        if (this instanceof gmLoaderLauncher === false) return new gmLoader(...arguments);
+        return new gmLoader(...arguments);
     }
 
 
@@ -784,6 +800,7 @@
         nullStore: nullStore,
         UserSettings: UserSettings,
         LSCache: LSCache,
-        rloader: rloader
+        rloader: rloader,
+        gmLoader: gmLoaderLauncher
     };
 }));

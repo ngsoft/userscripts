@@ -31,37 +31,12 @@
     /* jshint -W083 */
 
 
-    const {gmTimer} = gmtools;
+    const {gmLoader} = gmdata;
+
+    
 
 
-    let timer = new gmTimer(e => {
-        console.debug("callback", e);
-    }, 5000);
-
-
-
-    timer.start().then(e => {
-        console.debug("promise", e);
-    });
-
-    let c = 0;
-    timer.interval = 999;
-    timer.onInterval = e => {
-        c++;
-        console.debug(c);
-    };
-
-    timer.timeout = 20000;
-
-    timer.interval = 100;
-    //timer.start();
-
-    // timer.stop();
-
-    console.debug(timer.canstart);
-
-
-
+    console.debug(new gmLoader(), gmLoader());
 
 
 
