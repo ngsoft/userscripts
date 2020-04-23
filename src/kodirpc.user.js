@@ -31,7 +31,31 @@
     /* jshint -W083 */
 
 
-    console.debug(gmutils);
+    const {gmTimer} = gmtools;
+
+
+    let timer = new gmTimer(e => {
+        console.debug("callback", e);
+    }, 5000);
+
+    console.debug(timer);
+
+    timer.start().then(e => {
+        console.debug("promise", e);
+    });
+
+    let c = 0;
+timer.interval = 1000;
+    timer.onInterval = e => {
+        console.debug(c++);
+    };
+
+    timer.timeout = 20000;
+    //timer.start();
+
+    // timer.stop();
+
+    console.debug(timer.canstart);
 
 
 
