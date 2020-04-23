@@ -39,7 +39,7 @@ const
      * @param {any} v
      * @returns {Boolean}
      */
-    const isPlainObject = gmtools.isPlainObject = function(v){
+    function isPlainObject(v){
         return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
     };
 
@@ -49,7 +49,7 @@ const
      * @param {function} ...callbacks Run callback in order
      * @returns {undefined}
      */
-    const on = gmtools.on = function(callback){
+    function on(callback){
         const callbacks = [];
         for (let i = 0; i < arguments.length; i++) {
             let arg = arguments[i];
@@ -142,7 +142,7 @@ const
      * @param {string} html
      * @returns {HTMLElement}
      */
-    const html2element = gmtools.html2element = function(html){
+    function html2element(html){
         if (typeof html === "string") {
             let template = doc.createElement('template');
             html = html.trim();
@@ -156,7 +156,7 @@ const
      * @param {string} html
      * @returns {documentElement}
      */
-    const html2doc = gmtools.html2doc = function(html){
+    function html2doc(html){
         let node = doc.implementation.createHTMLDocument().documentElement;
         if (typeof html === s && html.length > 0) {
             node.innerHTML = html;
@@ -169,7 +169,7 @@ const
      * @param {string} css
      * @returns {undefined}
      */
-    const addcss = gmtools.addcss = function(css){
+    function addcss(css){
         if (typeof css === "string" && css.length > 0) {
             let s = doc.createElement('style');
             s.setAttribute('type', "text/css");
@@ -185,7 +185,7 @@ const
      * @param {string} css
      * @returns {undefined}
      */
-    const addstyle = gmtools.addstyle = function(css){
+    function addstyle(css){
         if (typeof css === "string" && css.length > 0) {
             let s = doc.createElement('style');
             s.setAttribute('type', "text/css");
@@ -200,7 +200,7 @@ const
      * @param {string} url
      * @returns {boolean}
      */
-    const isValidUrl = gmtools.isValidUrl = function(url){
+    function isValidUrl(url){
         const weburl = new RegExp("^(?:(?:(?:https?|ftp):)?\\/\\/)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z0-9\\u00a1-\\uffff][a-z0-9\\u00a1-\\uffff_-]{0,62})?[a-z0-9\\u00a1-\\uffff]\\.)+(?:[a-z\\u00a1-\\uffff]{2,}\\.?))(?::\\d{2,5})?(?:[/?#]\\S*)?$", "i");
         if (typeof url === s && url.length > 0) {
             return weburl.test(url);
@@ -215,7 +215,7 @@ const
      * @param {string} uri
      * @returns {string|undefined}
      */
-    const getURL = gmtools.getURL = function(uri){
+    function getURL(uri){
         let retval;
         if (typeof uri === s && uri.length > 0) {
             try {
@@ -241,7 +241,7 @@ const
      * @param {string} replacement
      * @returns {string}
      */
-    const sanitizeFileName = gmtools.sanitizeFileName = function(input, replacement){
+    function sanitizeFileName(input, replacement){
         replacement = typeof replacement === s ? replacement : "";
         if (typeof input === s) return input
                     .replace(/[\/\?<>\\:\*\|":\'\`\’]/g, replacement)
@@ -257,7 +257,7 @@ const
      * Generate a unique ID
      * @returns {String}
      */
-    const uniqid = gmtools.uniqid = function(){
+    function uniqid(){
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     };
 
@@ -268,7 +268,7 @@ const
      * @param {boolean} defer
      * @returns {Promise}
      */
-    const loadjs = gmtools.loadjs = function(src, defer){
+    function loadjs(src, defer){
         
         return new Promise((resolve,reject) => {
             if (isValidUrl(src)) {
@@ -291,7 +291,7 @@ const
      * @param {string} src
      * @returns {undefined}
      */
-    const addscript = gmtools.addscript = function(src){
+    function addscript(src){
         if (typeof src === s && src.length > 0) {
             let s = doc.createElement("script");
             s.setAttribute("type", "text/javascript");
@@ -305,7 +305,7 @@ const
      * @param {string} src
      * @returns {undefined}
      */
-    const loadcss = gmtools.loadcss = function(src){
+    function loadcss(src){
         if (isValidUrl(src)) {
             let style = doc.createElement('link');
             style.rel = "stylesheet";
@@ -320,7 +320,7 @@ const
      * @param {string} text
      * @returns {boolean}
      */
-    const copyToClipboard = gmtools.copyToClipboard = function(text){
+    function copyToClipboard(text){
         let r = false;
         if (typeof text === "string" && text.length > 0) {
             let el = doc.createElement('textarea');
@@ -341,7 +341,7 @@ const
      * @returns {undefined}
      * @link https://stackoverflow.com/questions/32225904/programmatical-click-on-a-tag-not-working-in-firefox
      */
-    const Text2File = gmtools.Text2File = function(text, filename){
+    function Text2File(text, filename){
         if (typeof text === s && typeof filename === s) {
             let link = doc.createElement("a"), blob = new Blob([text], {type: "application/octet-stream"});
             link.href = URL.createObjectURL(blob);
@@ -370,7 +370,7 @@ const
      * @param {any} data
      * @returns {undefined}
      */
-    const trigger = gmtools.trigger = function(el, type, data){
+    function trigger(el, type, data){
         if (el instanceof EventTarget) {
             let event;
             getEventTypes(type).forEach(t => {
@@ -391,7 +391,7 @@ const
      * @param {Object} binding
      * @returns {Events}
      */
-    const Events = gmtools.Events = function(target, binding){
+    function Events(target, binding){
 
         if (typeof target === s) target = doc.querySelector(target);
 
@@ -733,8 +733,6 @@ const
 
     }
 
-    gmtools.gmTimer = gmTimer;
-
 
     /**
      * Some browser injections
@@ -821,7 +819,7 @@ const
      * @link https://datahub.io/core/language-codes
      * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/gmutils.min.js
      */
-    const isoCode = gmtools.isoCode = (() => {
+    const isoCode = (() => {
 
         /**
          * Get Langage infos using langcode
