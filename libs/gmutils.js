@@ -1661,6 +1661,7 @@ const
                 tt += time;
                 this.expiration = new Date(tt);
             }
+            return this;
         }
 
 
