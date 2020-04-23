@@ -640,7 +640,7 @@
             if (usecache === true) storage = new xStore(localStorage);
             else storage = new nullStore(); //cache is disabled that way, on next page load Object will be cleared
             Object.defineProperties(this, {
-                cache: {configurable: true, enumerable: false, writable: false, value: new LSCache(prefix, ttl, storage)},
+                cache: {configurable: true, enumerable: false, writable: false, value: new LSCache(prefix, ttl, storage)}
             });
         }
 
