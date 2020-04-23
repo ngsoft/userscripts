@@ -29,6 +29,57 @@
         }
     }
 
+
+    /**
+     * Store data into an Object
+     * @type {Class}
+     * @extends {Datastore}
+     */
+    class nullStore extends DataStore {
+
+        constructor(storage){
+            super();
+            Object.defineProperty(this, '_storage', {
+                value: {}, enumerable: false,
+                configurable: true, writable = true
+            });
+        }
+
+        get(key){
+            let retval, sval;
+            if (typeof key === s) retval = this._storage[key];
+            else if (typeof key === u) retval = Object.assign({}, this._storage);//clone
+            return retval;
+
+        }
+        set(key, val){
+            if (typeof key === s && typeof val !== u) this._storage[key] = val;
+            else if (isPlainObject(key)) Object.assign(this._storage, key);
+            return this;
+
+        }
+        has(key){
+            return typeof this._storage[key] !== u;
+
+        }
+        remove(key){
+            delete this._storage[key];
+            return this;
+        }
+        clear(){
+            this._storage = {};
+            return this;
+        }
+
+    }
+
+
+
+
+
+
+
+
     /**
      * Store data into localStorage or sessionStorage
      * @type {Class}
@@ -476,13 +527,15 @@
          */
         clear(){
 
-            let storage = this.storage._storage, key;
-            for (let i = 0; i < storage.length; i++) {
-                key = storage.key(i);
-                if (key.indexOf(this.prefix) === 0) {
-                    storage.removeItem(key);
-                }
-            }
+            const
+                    $this = this,
+                    storage = this.storage,
+                    data = storage.get();
+
+            Object.keys(data).forEach(key => {
+                if (key.indexOf($this.prefix) === 0) storage.remove(key);
+            });
+
             this.expire = {};
             return true;
         }
@@ -570,13 +623,36 @@
          */
         commit(){
             let item;
-            while ((item = this.deferred.shift())) {
+
+
+            while ((item = this.deferred.shift()) !== undef) {
                 this.save(item);
             }
 
             return true;
         }
     }
+
+
+
+
+
+    function gmLoader(usecache = true, ttl = (5 * minute), prefix = UUID){
+        if (this instanceof gmLoader === false) return new gmLoader(...arguments);
+        let storage;
+        if (usecache) storage = new xStore(localStorage);
+        else storage = new nullStore();
+        Object.defineProperties(this, {
+            cache: new LSCache()
+        });
+
+
+
+    }
+
+
+
+
 
 
     /**
@@ -588,7 +664,7 @@
     function rloader(prefix, ttl){
         if (!(this instanceof rloader)) return new rloader(prefix, ttl);
         prefix = typeof prefix === s ? prefix : "";
-        ttl = typeof ttl === n ? ttl : 5000;
+        ttl = typeof ttl === n ? ttl : (5 * minute);
         this.__cache__ = new LSCache(prefix, ttl);
     }
 
@@ -705,6 +781,7 @@
     return {
         xStore: xStore,
         gmStore: gmStore,
+        nullStore: nullStore,
         UserSettings: UserSettings,
         LSCache: LSCache,
         rloader: rloader
