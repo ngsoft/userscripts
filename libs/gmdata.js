@@ -3,11 +3,11 @@
  */
 
 (function(root, factory){
-    const deps = ["gmtools"]; //your dependencies there
+    const deps = ["gmtools", "md5"]; //your dependencies there
     if (typeof define === 'function' && define.amd) define(deps, factory);
     else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
     else root.gmdata = factory(...deps.map(dep => root[dep]));
-}(this, function(gmtools, undef){
+}(this, function(gmtools, md5, undef){
 
 
     const {isPlainObject, isValidUrl, getURL, addstyle, addscript} = gmtools;
