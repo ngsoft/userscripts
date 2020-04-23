@@ -33,8 +33,11 @@
 
     const {gmLoader} = gmdata;
 
-    
 
+
+    console.debug(gmtools);
+
+    /*
     let loader = new gmLoader();
 
 
@@ -58,7 +61,7 @@
  console.debug(loader);
 
 
-
+*/
 
 
     /*  NodeFinder.find('video, video source, video track', video => {
