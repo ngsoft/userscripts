@@ -22,7 +22,7 @@
 /* eslint-disable strict */
 
 ;(function ($) {
-  'use strict'
+    'use strict';
 
   /**
    * Add integers, wrapping at 2^32.
