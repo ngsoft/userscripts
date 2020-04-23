@@ -633,9 +633,17 @@
         }
     }
 
+
+    /**
+     * Loads and caches resources (js and css)
+     * @param {boolean} [usecache] Use Browser localStorage to store the scripts // if set to false, the cache will use a fake storage
+     * @param {number} [ttl] Number of ms to keep items in cache eg: 2 * hour
+     * @param {string} [prefix] prefix to use to store the files in cache
+     * @returns {gmLoader}
+     */
     class gmLoader {
 
-        constructor(usecache = true, ttl = (5 * minute), prefix = UUID){
+        constructor(usecache = true, ttl = 5 * minute, prefix = UUID + ":gmLoader"){
             let storage;
             if (usecache === true) storage = new xStore(localStorage);
             else storage = new nullStore(); //cache is disabled that way, on next page load Object will be cleared
@@ -644,153 +652,157 @@
             });
         }
 
+        /** Getters */
+
+        /** @returns {number} */
         get ttl(){
             return this.cache.ttl;
         }
 
+        /** Setters */
         set ttl(v){
             this.cache.ttl = v;
         }
 
-    }
+        /** Methods */
 
-    /**
-     * Loads and caches resources (js and css)
-     * @param {boolean} [usecache]
-     * @param {number} [ttl]
-     * @param {string} [prefix]
-     * @returns {gmLoader}
-     */
-    function gmLoaderLauncher(usecache = true, ttl = (5 * minute), prefix = UUID){
-        if (this instanceof gmLoaderLauncher === false) return new gmLoader(...arguments);
-        return new gmLoader(...arguments);
-    }
-
-
-
-
-
-
-    /**
-     * Resource Loader
-     * @param {string} prefix
-     * @param {number} ttl
-     * @returns {rloader}
-     */
-    function rloader(prefix, ttl){
-        if (!(this instanceof rloader)) return new rloader(prefix, ttl);
-        prefix = typeof prefix === s ? prefix : "";
-        ttl = typeof ttl === n ? ttl : (5 * minute);
-        this.__cache__ = new LSCache(prefix, ttl);
-    }
-
-    rloader.prototype = {
         /**
-         * Checks if key exists
+         * Get item from the cache (shortcut)
          * @param {string} key
-         * @returns {boolean}
+         * @returns {LSCacheItem}
          */
-        has(key){
-            return this.__cache__.hasItem(key);
-        },
-        /**
-         * Get a resource by key
-         * @param {string} key
-         * @returns {string|undefined}
-         */
-        get(key){
-            let item = this.__cache__.getItem(key);
-            return item.get();
-        },
-        /**
-         * Loads a Ressource
-         * @param {string} [url] Must be set first if key is defined
-         * @param {function} [callback] a callback to load after
-         * @param {string} [key]
-         * @param {number} [expire]
-         * @param {Object} [options] overrides {url: 'https://...', onload(){}, key: "mykey", expire: 5000}
-         * @returns {rloader.prototype}
-         */
-        require(){
-            const params = {
-                expire: this.__cache__.ttl,
-                onload: null,
-                url: null,
-                key: null
-            }, self = this;
-            //parse arguments
-            for (let i = 0; i < arguments.length; i++) {
-                let arg = arguments[i];
-                switch (typeof arg) {
-                    case n:
-                        params.expire = arg;
-                        break;
-                    case s:
-                        if (typeof params.url === s) params.key = arg;
-                        else params.url = arg;
-                        break;
-                    case f:
-                        params.onload = arg;
-                        break;
-                    case o:
-                        if (isPlainObject(arg)) Object.assign(params, arg);
-                        break;
-                    default :
-                        break;
-                }
-            }
-
-            if (!isValidUrl(params.url)) throw new Error("Invalid Url.");
-            let url = new URL(getURL(params.url)), ext;
-            if (params.key === null) params.key = url.pathname.split("/").pop();
-            if (/\.js$/i.test(params.key)) ext = "js";
-            else if (/\.css$/i.test(params.key)) ext = "css";
-
-
-            let item = this.__cache__.getItem(params.key), load = () => {
-                switch (ext) {
-                    case "css":
-                        addstyle(item.get());
-                        break;
-                    case "js":
-                        addscript(item.get());
-                        break;
-                    default :
-                        break;
-                }
-                if (typeof params.onload === f) params.onload(item.get());
-            };
-            if (!item.isHit()) {
-                fetch(url.href, {
-                    method: "GET",
-                    redirect: "follow",
-                    cache: "no-store"
-                }).then(r => {
-                    if (r.status === 200) return r.text();
-                    else {
-                        console.warn(r);
-                        throw new Error("Cannot get the resource " + url.href);
-                    }
-                }).then((text) => {
-                    if (text.length > 0) {
-                        item.set(text);
-                        item.expiresAfter(params.ttl);
-                        self.__cache__.save(item);
-                        load();
-                    }
-                }).catch(console.warn);
-            } else load();
-            return this;
-        },
-        /**
-         * Clears the cache
-         * @returns {boolean}
-         */
-        clear(){
-            return this.__cache__.clear();
+        getItem(key){
+            return this.cache.getItem(key);
         }
 
-    };
+
+        /**
+         * Checks if cache has given key
+         * @param {string} key
+         * @returns {Boolean}
+         */
+        hasItem(key){
+            return this.cache.hasItem(key);
+        }
+
+        /**
+         * Clears the cache
+         * @returns {Boolean}
+         */
+        clear(){
+            return this.cache.clear();
+        }
+
+
+        /**
+         *  Loads Single or multiple resources
+         *  @param {string} from  URL multiples urls can be used to load multiples resources
+         *  @param {string} [name] Alias to be used for the cache
+         *  @param {string} [as]  "js" or "css" are valid values
+         *  @param {number} [ttl] cache ttl for the given resource (overrides constructor value)
+         *  @param {function} [then] callback to be exexuted just after a certain resource has been loaded
+         *  @param {Object} [params] an object that can regroup all the previous keys eg: {name: "mylib", from: "https://...", as: "js", ttl: 3 * day, then(){}}
+         *  @param {Array} [multi]  an Array containing multiples URL or multiples params ["http://..",{ttl: 2 * year, from: "...uery.min.js", then(){$(document)...}]
+         *
+         * @returns {Promise} Resolves if all resources have been loaded and reject if at least one has failed
+         */
+        require(){
+            const
+                    $this = this,
+                    prefix = 'gmloader:',
+                    queue = [],
+                    args = Array.from(arguments),
+                    defaults = {from: "", as: "", name: "", then: null, ttl: this.ttl},
+                    buildQueue = function(args){
+                        let item = Object.assign({}, defaults);
+                        args.forEach(arg => {
+                            if (Array.isArray(arg)) return buildQueue(arg);
+                            if (typeof arg === f) item.then = arg;
+                            else if (typeof arg === n) item.ttl = arg;
+                            else if (typeof arg === s) {
+                                if (isValidUrl(arg)) {
+                                    if (item.from.length > 0) return buildQueue([arg]);
+                                    item.from = arg;
+                                }
+                                else if (/^(js|css)$/.test(arg)) item.as = arg;
+                                else item.name = arg;
+                            } else if (isPlainObject(arg)) {
+                                if (typeof arg.from === s ? isValidUrl(arg.from) : false) item.from = arg.from;
+                                if (typeof arg.as === s ? /^(js|css)$/.test(arg.as) : false) item.as = arg.as;
+                                if (typeof arg.name === s) item.name = arg.name;
+                                if (typeof arg.then === f) item.then = arg.then;
+                                if (typeof arg.ttl === n) item.ttl = arg.ttl;
+                            }
+                        });
+                        if (item.from.length === 0) throw new Error('Cannot load Resource: URL not defined');
+                        item.from = getURL(item.from);
+                        if (item.name.length === 0) item.name = md5(item.from);
+                        if (item.name.as === 0) {
+                            let
+                                    url = new URL(item.from),
+                                    matches = /\.(js|css)$/.exec(url.pathname);
+                            if (matches === null) throw new Error('Cannot load Resource: Load as js/css?');
+                            else item.as = matches[1];
+                        }
+                        queue.push(item);
+                    },
+                    loadResource = function(text, res){
+                        if (res.as === "js") addscript(text);
+                        else addstyle(text);
+                        if (typeof res.then === f) res.then();
+                    };
+
+
+            return new Promise(function(resolve, reject){
+                buildQueue(args);
+                let loaded = 0, length = queue.length, errors = [], success = [], fromcache = [];
+                if (length === 0) reject(new Error('Cannot load resource: did you pass an argument?'));
+
+                const handleErrors = function(){
+                    if (loaded === length) {
+                        let r = {success: success, errors: errors, fromcache: fromcache};
+                        if (errors.length === 0) resolve(r);
+                        else reject(r);
+                    }
+                };
+
+                queue.forEach(res => {
+                    let {from, name, ttl} = res;
+                    let item = $this.getItem(name);
+                    if (item.isHit()) {
+                        loaded++;
+                        loadResource(item.get(), res);
+                        fromcache.push(from);
+                        success.push(from);
+                        return handleErrors();
+                    }
+                    fetch(from, {redirect: "follow", cache: "no-store"})
+                            .then(response => {
+                                if (response.status !== 200) throw new Error(response.url);
+                                return response.text();
+                            })
+                            .then(text => {
+                                item.set(text);
+                                item.expiresAfter(ttl);
+                                $this.cache.save(item);
+                                loaded++;
+                                loadResource(item.get(), res);
+                                success.push(from);
+                                handleErrors();
+
+                            })
+                            .catch(e => {
+                                errors.push(from);
+                                loaded++;
+                                handleErrors();
+                            });
+                });
+            });
+        }
+
+
+
+    }
 
 
 
@@ -800,7 +812,6 @@
         nullStore: nullStore,
         UserSettings: UserSettings,
         LSCache: LSCache,
-        rloader: rloader,
-        gmLoader: gmLoaderLauncher
+        gmLoader: gmLoader
     };
 }));
