@@ -38,19 +38,22 @@
         console.debug("callback", e);
     }, 5000);
 
-    console.debug(timer);
+
 
     timer.start().then(e => {
         console.debug("promise", e);
     });
 
     let c = 0;
-timer.interval = 1000;
+    timer.interval = 999;
     timer.onInterval = e => {
-        console.debug(c++);
+        c++;
+        console.debug(c);
     };
 
     timer.timeout = 20000;
+
+    timer.interval = 100;
     //timer.start();
 
     // timer.stop();

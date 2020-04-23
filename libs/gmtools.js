@@ -535,74 +535,6 @@ const
     };
 
 
-    /**
-     * Creates a new Timer
-     * @param {function} callback
-     * @param {number|undefined} interval
-     * @param {number|undefined} timeout
-     * @returns {Timer}
-     */
-    const Timer = gmtools.Timer = class {
-        /**
-         * Starts the timer
-         * @returns {undefined}
-         */
-        start(){
-            if (this.started !== true && typeof this.params.callback === f) {
-                const self = this;
-                self.__interval = setInterval(() => {
-                    self.params.callback.call(self, self);
-                }, self.params.interval);
-                if (self.params.timeout > 0) {
-                    self.__timeout = setTimeout(() => {
-                        self.stop();
-                    }, self.params.timeout);
-                }
-                self.started = true;
-            }
-
-        }
-        /**
-         * Stops the timer
-         * @returns {undefined}
-         */
-        stop(){
-            if (this.started === true) {
-                const self = this;
-                self.started = false;
-                if (self.__interval !== null) clearInterval(self.__interval);
-                if (self.__timeout !== null) clearTimeout(self.__timeout);
-                self.__timeout = null;
-                self.__interval = null;
-            }
-        }
-
-        /**
-         * Creates a new Timer
-         * @param {function} callback
-         * @param {number|undefined} interval
-         * @param {number|undefined} timeout
-         * @returns {Timer}
-         */
-        constructor(callback, interval, timeout){
-            if (typeof callback === f) {
-                const self = this;
-                Object.assign(self, {
-                    params: {
-                        callback: callback,
-                        interval: 10,
-                        timeout: 0
-                    },
-                    started: false,
-                    __interval: null,
-                    __timeout: null
-                });
-                if (typeof interval === n) self.params.interval = interval;
-                if (typeof timeout === n) self.params.timeout = timeout;
-                self.start();
-            }
-        }
-    };
 
 
     /**
@@ -653,6 +585,7 @@ const
                     if (typeof arg.onInterval === f) oninterval = arg.oninterval;
                     if (typeof arg.onTimeout === f) ontimeout = arg.ontimeout;
                 }
+
             });
 
             this.interval = interval;
@@ -684,6 +617,7 @@ const
 
             }).on(this.prefix + "update:interval", e => {
                 if ($this.started) {
+                    let val = $this.params.interval;
                     if ($this.current.interval !== null) clearInterval($this.current.interval);
                     if (val > 0 ? $this.hasIntervalCallbacks : false) $this.current.interval = setInterval($this.callbacks.onInterval, val);
                     else $this.current.interval = null;
@@ -691,6 +625,8 @@ const
                 }
 
             });
+
+
         }
 
         /** Getters **/
