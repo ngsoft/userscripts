@@ -27,10 +27,6 @@ const
         scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`,
         UUID = GMinfo.script.uuid;
 
-
-/**
- * gmtools Module
- */
 (function(root, factory){
     const deps = []; //your dependencies there
     if (typeof define === 'function' && define.amd) define(deps, factory);
@@ -275,21 +271,25 @@ const
     /**
      * Loads an external script
      * @param {string} src
-     * @param {function} callback
      * @param {boolean} defer
-     * @returns {undefined}
+     * @returns {Promise}
      */
-    const loadjs = gmtools.loadjs = function(src, callback, defer){
-        if (isValidUrl(src)) {
-            let script = doc.createElement('script');
-            script.type = 'text/javascript';
-            if (defer === true) script.defer = true;
-            if (typeof callback === f) {
-                script.onload = callback;
-            }
-            doc.head.appendChild(script);
-            script.src = src;
-        }
+    const loadjs = gmtools.loadjs = function(src, defer){
+        
+        return new Promise((resolve,reject) => {
+            if (isValidUrl(src)) {
+                let script = doc.createElement('script');
+                script.type = 'text/javascript';
+                if (defer === true) script.defer = true;
+                script.onload(e => {
+                    resolve(e);
+                });
+                doc.head.appendChild(script);
+                script.src = src;
+            } else reject(new Error("Invalid argument src."));
+        });
+        
+
     };
 
     /**
@@ -537,74 +537,209 @@ const
     };
 
 
+
+
     /**
-     * Creates a new Timer
-     * @param {function} callback
-     * @param {number|undefined} interval
-     * @param {number|undefined} timeout
-     * @returns {Timer}
+     * Creates a gmTimer instance
+     * @param {function} [onTimeout] to be executed on timeout
+     * @param {number|null} [timeout] timeout if set to 0 or null onTimeout will ve disabled
+     * @param {function} [onInterval] to be executed at each interval
+     * @param {number|null} [interval interval if set to 0 or null onInterval will be disabled
+     * @param {Object} [params] params to override settings: interval, timeout, onInterval, onTimeout
+     * @returns {gmTimer}
      */
-    const Timer = gmtools.Timer = class {
-        /**
-         * Starts the timer
-         * @returns {undefined}
-         */
-        start(){
-            if (this.started !== true && typeof this.params.callback === f) {
-                const self = this;
-                self.__interval = setInterval(() => {
-                    self.params.callback.call(self, self);
-                }, self.params.interval);
-                if (self.params.timeout > 0) {
-                    self.__timeout = setTimeout(() => {
-                        self.stop();
-                    }, self.params.timeout);
+    class gmTimer {
+
+        constructor(...args){
+            const $this = this;
+
+            Object.defineProperties(this, {
+                params: {configurable: true, enumerable: false, writable: false,
+                    value: {interval: 0, timeout: second}
+                },
+                current: {configurable: true, enumerable: false, writable: false, value: {interval: null, timeout: null}},
+                callbacks: {configurable: true, enumerable: false, writable: false, value: {
+                        onInterval(){
+                            $this.trigger($this.prefix + "interval");
+                        },
+                        onTimeout(){
+                            $this.current.timeout = null;
+                            $this.trigger([$this.prefix + "timeout", $this.prefix + "stop"]);
+                        }
+                    }},
+                listeners: {configurable: true, enumerable: false, writable: false, value: new Events(null, $this)}
+            });
+
+
+            let interval, timeout, oninterval, ontimeout;
+
+            args.forEach(arg => {
+                if (typeof arg === n) {
+                    if (timeout === undef) timeout = arg;
+                    else interval = arg;
+
+                } else if (typeof arg === f) {
+                    if (ontimeout === undef) ontimeout = arg;
+                    else oninterval = arg;
+                } else if (isPlainObject(arg)) {
+                    if (typeof arg.interval === n) interval = arg.interval;
+                    if (typeof arg.timeout === n) timeout = arg.timeout;
+                    if (typeof arg.onInterval === f) oninterval = arg.oninterval;
+                    if (typeof arg.onTimeout === f) ontimeout = arg.ontimeout;
                 }
-                self.started = true;
+
+            });
+
+            this.interval = interval;
+            this.timeout = timeout;
+            this.onTimeout = ontimeout;
+            this.onInterval = oninterval;
+
+            this.on(this.prefix + "stop", e => {
+                if (!this.started) return;
+                if ($this.current.timeout !== null) clearTimeout($this.current.timeout);
+                if ($this.current.interval !== null)  clearInterval($this.current.interval);
+                $this.current.interval = $this.current.timeout = null;
+                
+            }).on(this.prefix + "start", e => {
+                if ($this.started )return;
+                if (!$this.canstart) throw new Error('gmTimer cannot be started (no timeout, interval or callbacks set)');
+                if ($this.interval > 0) $this.current.interval = setInterval($this.callbacks.onInterval, $this.interval);
+                if ($this.timeout > 0) $this.current.timeout = setTimeout($this.callbacks.onTimeout, $this.timeout);
+            }).on(this.prefix + "update:timeout", e => {
+
+                if ($this.started) {
+                    let val = $this.params.timeout;
+                    if ($this.current.timeout !== null) clearTimeout($this.current.timeout);
+                    if (val > 0 ? $this.hasTimeoutCallbacks : false) $this.current.timeout = setTimeout($this.callbacks.onTimeout, val);
+                    else $this.current.timeout = null;
+                    if (!$this.started) $this.trigger($this.prefix + "stop");
+                }
+
+
+            }).on(this.prefix + "update:interval", e => {
+                if ($this.started) {
+                    let val = $this.params.interval;
+                    if ($this.current.interval !== null) clearInterval($this.current.interval);
+                    if (val > 0 ? $this.hasIntervalCallbacks : false) $this.current.interval = setInterval($this.callbacks.onInterval, val);
+                    else $this.current.interval = null;
+                    if (!$this.started) $this.trigger($this.prefix + "stop");
+                }
+
+            });
+
+
+        }
+
+        /** Getters **/
+
+
+        /** @returns {String} */
+        get prefix(){
+            return "gmtimer.";
+        }
+        /** @returns {Boolean} */
+        get started(){
+            return this.current.interval !== null ? true : this.current.timeout !== null;
+        }
+        /** @returns {Boolean} */
+        get canstart(){
+            return  ((this.interval > 0 ? this.hasIntervalCallbacks : false) || (this.timeout > 0 ? this.hasTimeoutCallbacks : false));
+        }
+        /** @returns {Boolean} */
+        get hasIntervalCallbacks(){
+            return this.listeners.events.map(item => item.type).some(type => this.prefix + "interval" === type);
+        }
+        get hasTimeoutCallbacks(){
+            return this.listeners.events.map(item => item.type).some(type => this.prefix + "timeout" === type);
+        }
+
+
+        /** @returns {Number|null} */
+        get interval(){
+            return this.params.interval;
+        }
+        /** @returns {Number|null} */
+        get timeout(){
+            return this.params.timeout;
+        }
+
+        get onInterval(){
+            return null;
+        }
+
+        get onTimeout(){
+            return null;
+        }
+
+        /** Setters **/
+        set interval(val){
+            if (typeof val === n ? true : val === null) {
+                this.params.interval = val;
+                this.trigger(this.prefix + "update:interval");
             }
 
         }
+        set timeout(val){
+            if (typeof val === n ? true : val === null) {
+                this.params.timeout = val;
+                this.trigger(this.prefix + "update:timeout");
+            }
+
+        }
+
+        /**
+         * Adds a callback to be executed at each intervals
+         * @param {function} fnc
+         * @returns {undefined}
+         */
+        set onInterval(fnc){
+            if (typeof fnc === f) this
+                        .on(this.prefix + "interval", fnc)
+                        .trigger(this.prefix + "update:interval");
+
+        }
+        /**
+         * Adds a callback to be executed on timeout
+         * @param {function} fnc
+         * @returns {undefined}
+         */
+        set onTimeout(fnc){
+            if (typeof fnc === f) this
+                        .on(this.prefix + "timeout", fnc)
+                        .trigger(this.prefix + "update:timeout");
+        }
+
+        /** Methods **/
+
+        /**
+         * Start the timer
+         * @returns {Promise} Promise will resolve when timer is stopped (on timeout or using stop())
+         */
+        start(){
+            const $this = this;
+            return new Promise((resolve, reject) => {
+                if (!this.canstart) return reject(new Error('gmTimer cannot be started (no timeout, interval or callbacks set)'));
+                $this.one($this.prefix + "stop", e => {
+                    resolve(e); //cannot be resolved if no timeout set or if timer never stopped
+                });
+                $this.trigger($this.prefix + "start");
+            });
+        }
+
         /**
          * Stops the timer
          * @returns {undefined}
          */
         stop(){
-            if (this.started === true) {
-                const self = this;
-                self.started = false;
-                if (self.__interval !== null) clearInterval(self.__interval);
-                if (self.__timeout !== null) clearTimeout(self.__timeout);
-                self.__timeout = null;
-                self.__interval = null;
-            }
+            if (!this.started) return;
+            this.trigger(this.prefix + "stop");
         }
 
-        /**
-         * Creates a new Timer
-         * @param {function} callback
-         * @param {number|undefined} interval
-         * @param {number|undefined} timeout
-         * @returns {Timer}
-         */
-        constructor(callback, interval, timeout){
-            if (typeof callback === f) {
-                const self = this;
-                Object.assign(self, {
-                    params: {
-                        callback: callback,
-                        interval: 10,
-                        timeout: 0
-                    },
-                    started: false,
-                    __interval: null,
-                    __timeout: null
-                });
-                if (typeof interval === n) self.params.interval = interval;
-                if (typeof timeout === n) self.params.timeout = timeout;
-                self.start();
-            }
-        }
-    };
+
+    }
+
+    gmtools.gmTimer = gmTimer;
 
 
     /**

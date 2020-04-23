@@ -21,10 +21,6 @@ const
         scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`,
         UUID = GMinfo.script.uuid;
 
-
-/**
- * gmtools Module
- */
 (function(root, factory){
     const deps = []; //your dependencies there
     if (typeof define === 'function' && define.amd) define(deps, factory);
