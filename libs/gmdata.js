@@ -747,7 +747,6 @@
                         queue.push(item);
                     },
                     loadResource = function(text, res){
-                        console.debug(res);
                         if (res.as === "js") addscript(text);
                         else addstyle(text);
                         if (typeof res.then === f) res.then();
