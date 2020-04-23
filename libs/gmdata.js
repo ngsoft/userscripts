@@ -737,7 +737,7 @@
                         if (item.from.length === 0) throw new Error('Cannot load Resource: URL not defined');
                         item.from = getURL(item.from);
                         if (item.name.length === 0) item.name = md5(item.from);
-                        if (item.name.as === 0) {
+                        if (item.as.length === 0) {
                             let
                                     url = new URL(item.from),
                                     matches = /\.(js|css)$/.exec(url.pathname);
@@ -747,6 +747,7 @@
                         queue.push(item);
                     },
                     loadResource = function(text, res){
+                        console.debug(res);
                         if (res.as === "js") addscript(text);
                         else addstyle(text);
                         if (typeof res.then === f) res.then();
