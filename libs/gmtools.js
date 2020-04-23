@@ -1,8 +1,6 @@
 /**
- * Utilities for gm scripts base
- * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts/libs/gmtools.min.js
+ * gmtools Module
  */
-
 const
         // Scallar types
         s = "string",
@@ -34,14 +32,7 @@ const
     else root.gmtools = factory(...deps.map(dep => root[dep]));
 }(this, () => {
 
-    const
-            gmtools = {},
-            ghrepo = "ngsoft/userscripts",
-            ghapi = 'https://api.github.com/repos/' + ghrepo + '/tags',
-            sources = [
-                "https://cdn.jsdelivr.net/gh/:repo@:tag/libs/:script.min.js",
-                "https://raw.githubusercontent.com/:repo/:tag/libs/:script.js"
-            ];
+    const gmtools = {};
 
     let undef;
 

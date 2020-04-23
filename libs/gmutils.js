@@ -1,8 +1,12 @@
 /**
- * Utilities for gm scripts base
- * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts/libs/gmtools.min.js
+ * Utilities for tampermonkey userscripts
+ * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.6/libs/gmutils.min.js
+ * @link https://github.com/ngsoft/userscripts/blob/1.2.6/libs/gmutils.js
  */
 
+/**
+ * gmtools Module
+ */
 const
         // Scallar types
         s = "string",
@@ -34,14 +38,7 @@ const
     else root.gmtools = factory(...deps.map(dep => root[dep]));
 }(this, () => {
 
-    const
-            gmtools = {},
-            ghrepo = "ngsoft/userscripts",
-            ghapi = 'https://api.github.com/repos/' + ghrepo + '/tags',
-            sources = [
-                "https://cdn.jsdelivr.net/gh/:repo@:tag/libs/:script.min.js",
-                "https://raw.githubusercontent.com/:repo/:tag/libs/:script.js"
-            ];
+    const gmtools = {};
 
     let undef;
 
@@ -2934,5 +2931,18 @@ const
         gmFlash: gmFlash,
         gmTabs: gmTabs
     };
+}));
+
+
+/**
+ * All in one Module
+ */
+(function(root, factory){
+    const deps = ['gmtools', 'gmdata', 'gmfind', 'gmui'];
+    if (typeof define === 'function' && define.amd) define(deps, factory);
+    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
+    else root.gmutils = factory(...deps.map(dep => root[dep]));
+}(this, function(...args){
+    return Object.assign({version: "1.2.6"}, ...args);
 }));
 
