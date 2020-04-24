@@ -40,18 +40,13 @@
 
 
 
-    console.debug(isoCode('french'));
 
-
-    /*
     let d = new gmDialog();
     d.body = "test";
     d.open().then(e => {
         console.debug(e);
     });
 
-
-*/
 
 
 

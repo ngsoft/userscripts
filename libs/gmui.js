@@ -19,12 +19,11 @@
         };
         root["gmUI"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, gmdata, undef){
+}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, gmdata, undef, doc = document){
 
-    const doc = document;
     const {NodeFinder, ResizeSensor, isValidSelector} = gmfind;
-    const {trigger, isPlainObject, html2element, Events, uniqid, GMinfo, u, s, b, f, n} = gmtools;
-    const {gmLoader} = gmdata;
+    const {trigger, isPlainObject, html2element, loadcss, Events, uniqid, GMinfo, u, s, b, f, n} = gmtools;
+    const {addstyle} = gmdata;
 
     /**
      * Manages .gm-button
@@ -371,6 +370,7 @@
 
 
                                 if ($this.ready === true) return;
+                                gmStyles();
                                 new gmButtons(dialog);
                                 let scroll = getScrollbarWidth();
                                 if (scroll > 0) {
@@ -1098,6 +1098,27 @@
 
         }
     }
+
+
+
+    function gmStyles(){
+
+        if (gmStyles.loaded === true) return;
+        gmStyles.loaded = true;
+        let styles = ``;
+
+        loadcss().then(e => {
+            console.debug(e);
+
+            addstyle(styles);
+
+
+        });
+
+
+
+    }
+
 
 
     return {

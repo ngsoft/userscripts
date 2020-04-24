@@ -19,9 +19,7 @@
         };
         root["gmFind"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(undef, s = "string", f = "function", n = "number"){
-
-    const doc = document;
+}(typeof self !== 'undefined' ? self : this, function(undef, s = "string", f = "function", n = "number",doc = document ){
 
     /**
      * Tests whenever the given selector is valid
