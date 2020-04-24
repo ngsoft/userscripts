@@ -139,7 +139,7 @@
             } else if (typeof key === u) {
                 //get all
                 retval = {};
-                for (let i = 0; i < this._storage.length; i++) {
+                for (let i = 0; i < this.storage.length; i++) {
                     key = this.storage.key(i);
                     retval[key] = this.get(key);
                 }
