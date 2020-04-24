@@ -53,6 +53,24 @@
     }
 
 
+    /**
+     * Get the type of the current value
+     * @param {any} value
+     * @returns {string}
+     */
+    function gettype(value){
+        let type = typeof value;
+        if (type === o) {
+            if (value === null) type = "null";
+            else if (Array.isArray(value)) type = "array";
+        } else if (type === n) {
+            type = "float";
+            if (Number.isInteger(value)) type = "int";
+        }
+        return type;
+    }
+
+
 
     /**
      * Run a callback
@@ -558,6 +576,58 @@
 
 
 
+    /**
+     * Defines an Interface
+     */
+    class Interface {
+
+        get __ABSTRACT(){
+            return [];
+        }
+
+        constructor(){
+
+            let
+                    name = this.constructor.name,
+                    proto = Object.getPrototypeOf(this),
+                    parents = [];
+
+            while (proto instanceof Interface) {
+                parents.push(proto);
+                proto = Object.getPrototypeOf(proto);
+            }
+            if (parents.length > 1) {
+                const
+                        iface = parents.pop(),
+                        abstract = Array.isArray(this.__ABSTRACT) ? this.__ABSTRACT : [],
+                        declared = [];
+                abstract.push('constructor');
+
+                const methods = Object.keys(Object.getOwnPropertyDescriptors(iface)).filter(key => typeof iface[key] === f && !abstract.includes(key));
+
+                if (methods.length === 0) {
+                    throw new Error('Interface class ' + iface.constructor.name + ' does not declare methods that are not abstract (do you need to make it an interface?).');
+                }
+
+                parents.forEach(proto => {
+                    Object.keys(Object.getOwnPropertyDescriptors(proto)).forEach(method => {
+                        if (typeof proto[method] === f && methods.includes(method)) {
+
+                            if (iface[method].length !== proto[method].length) {
+                                throw new Error(`Interface ${iface.constructor.name}.${method}() expects ${iface[method].length} parameters, ${proto[method].length} given in ${proto.constructor.name}.${method}()`);
+                            }
+                            declared.push(method);
+                        }
+                    });
+                });
+                if (methods.length !== declared.length) {
+                    throw new Error('class ' + name + ' does not declare ' + methods.filter(m => declared.includes(m) === false).join('(), ') + '().');
+                }
+            } else throw new Error('Interface ' + name + ' cannot be instanciated.');
+        }
+    }
+
+
 
     /**
      * Creates a gmTimer instance
@@ -896,7 +966,7 @@
         html2element, html2doc, copyToClipboard, Text2File,
         addcss, addstyle, loadjs, addscript, loadcss,
         isValidUrl, getURL, sanitizeFileName,
-        s, b, f, o, u, n,
+        s, b, f, o, u, n, gettype, Interface,
         second, minute, hour, day, week, year, month,
         GMinfo, scriptname, UUID
     };
