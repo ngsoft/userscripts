@@ -3,7 +3,7 @@
  */
 (function(root, factory){
     /* globals define, require, module, self, innerWidth */
-    const dependencies = ["gmtools", "gmfind"];
+    const dependencies = ["gmtools", "gmfind", "gmdata"];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -19,12 +19,12 @@
         };
         root["gmUI"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, undef){
+}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, gmdata, undef){
 
     const doc = document;
     const {NodeFinder, ResizeSensor, isValidSelector} = gmfind;
     const {trigger, isPlainObject, html2element, Events, uniqid, GMinfo, u, s, b, f, n} = gmtools;
-
+    const {gmLoader} = gmdata;
 
     /**
      * Manages .gm-button
@@ -175,7 +175,7 @@
         }
 
         const template =
-                `<div class="gm-reset gm-overlay">
+                `<div class="gm-overlay pure">
                     <dialog class="gm-dialog">
                         <header><h1></h1><span class="gm-button gm-rounded" data-name="close">&times;</span></header>
                         <section></section>

@@ -32,50 +32,23 @@
 
 
 
-    const{gmStore, UserSettings} = gmData;
+    const{UserSettings, gmLoader} = gmData;
     const {uniqid} = gmTools;
 
+    const {gmDialog} = gmUI;
 
-    const settings = new UserSettings({
 
-            legacy_mode: true,
-            use_blacklist: true,
-            display_servers: true,
-        update_servers_online: true,
-
-        servers: [
-            {name: 'localhost', host: "127.0.0.1", uniqid: uniqid()}
-        ],
-        blacklist: []
+    let d = new gmDialog();
+    d.body = "test";
+    d.open().then(e => {
+        console.debug(e);
     });
-    settings.legacy_mode = false;
-
-    console.debug(settings.legacy_mode);
-    /*
-    let loader = new gmLoader();
 
 
 
 
-    loader.require(
-            "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
-            "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-            "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.2/dist/altvideo.css",
-            "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js",
-            "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
-            )
-            .then(e => {
-                console.debug(e);
-            })
-            .catch(e => {
-                console.error(e);
-            });
 
 
- console.debug(loader);
-
-
-*/
 
 
     /*  NodeFinder.find('video, video source, video track', video => {

@@ -3,7 +3,7 @@
  */
 (function(root, factory){
     /* globals define, require, module, self */
-    const dependencies = ["gmtools", "md5"];
+    const dependencies = ["gmtools"];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -19,7 +19,7 @@
         };
         root["gmData"] = factory(...dependencies.map(dep => require(dep))); /*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(gmtools, md5, undef){
+}(typeof self !== 'undefined' ? self : this, function(gmtools, undef){
 
 
 
@@ -700,11 +700,10 @@
                         });
                         if (item.from.length === 0) throw new Error('Cannot load Resource: URL not defined');
                         item.from = getURL(item.from);
-                        if (item.name.length === 0) item.name = md5(item.from);
+                        let url = new URL(item.from);
+                        if (item.name.length === 0) item.name = url.pathname.split('/').pop();
                         if (item.as.length === 0) {
-                            let
-                                    url = new URL(item.from),
-                                    matches = /\.(js|css)$/.exec(url.pathname);
+                            let matches = /\.(js|css)$/.exec(url.pathname);
                             if (matches === null) throw new Error('Cannot load Resource: Load as js/css?');
                             else item.as = matches[1];
                         }
