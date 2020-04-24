@@ -232,16 +232,11 @@
         constructor(defaults){
             super();
             defaults = isPlainObject(defaults) ? defaults : {};
-
-
             Object.keys(defaults).forEach(key => {
-
                 if (gettype(this.get(key)) !== gettype(defaults[key])) {
                     this.set(key, defaults[key]);
                 }
-
                 if (typeof this[key] === u) {
-
                     Object.defineProperty(this, key, {
                         configurable: true, enumerable: false,
                         get(){
@@ -251,9 +246,7 @@
                             if (gettype(defaults[key]) === gettype(val)) this.set(key, val);
                         }
                     });
-
                 }
-
             });
 
 

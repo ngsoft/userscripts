@@ -34,22 +34,23 @@
 
     const{gmStore, UserSettings} = gmData;
     const {uniqid} = gmTools;
-    let st = new gmStore();
-    console.debug(st);
+
 
     const settings = new UserSettings({
-        config: {
+
             legacy_mode: true,
             use_blacklist: true,
             display_servers: true,
-            update_servers_online: true
-        },
+        update_servers_online: true,
+
         servers: [
             {name: 'localhost', host: "127.0.0.1", uniqid: uniqid()}
         ],
         blacklist: []
     });
+    settings.legacy_mode = false;
 
+    console.debug(settings.legacy_mode);
     /*
     let loader = new gmLoader();
 
