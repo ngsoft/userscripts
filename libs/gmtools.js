@@ -1,34 +1,47 @@
 /**
- * gmtools Module
+ * Module gmTools
  */
-const
-        // Scallar types
-        s = "string",
-        b = "boolean",
-        f = "function",
-        o = "object",
-        u = "undefined",
-        n = "number",
-        //time
-        second = 1000,
-        minute = 60 * second,
-        hour = minute * 60,
-        day = hour * 24,
-        week = day * 7,
-        year = 365 * day,
-        month = Math.round(year / 12),
-        GMinfo = (GM_info ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
-        scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`,
-        UUID = GMinfo.script.uuid;
 
 (function(root, factory){
-    const deps = []; //your dependencies there
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmtools = factory(...deps.map(dep => root[dep]));
-}(this, (undef) => {
+    const dependencies = [];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmTools"] = factory(...dependencies.map(dep => require(dep)));
+    }
+}(typeof self !== 'undefined' ? self : this, function(undef){
 
-    const doc = document;
+
+    const
+            // Scallar types
+            s = "string",
+            b = "boolean",
+            f = "function",
+            o = "object",
+            u = "undefined",
+            n = "number",
+            //time
+            second = 1000,
+            minute = 60 * second,
+            hour = minute * 60,
+            day = hour * 24,
+            week = day * 7,
+            year = 365 * day,
+            month = Math.round(year / 12),
+            GMinfo = (typeof GM_info !== u ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
+            scriptname = `${GMinfo.script.name} @${GMinfo.script.version}`,
+            UUID = GMinfo.script.uuid,
+            doc = document;
 
     /**
      * Test if given argument is a plain object
@@ -37,7 +50,8 @@ const
      */
     function isPlainObject(v){
         return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
-    };
+    }
+
 
 
     /**
@@ -52,7 +66,8 @@ const
             if (typeof arg === f) callbacks.push(arg);
         }
         callbacks.forEach(c => c.call());
-    };
+    }
+
     /**
      * Run a Callback when body is created
      * @param {function} callback
@@ -145,7 +160,8 @@ const
             template.innerHTML = html;
             return template.content.firstChild;
         }
-    };
+    }
+
 
     /**
      * Creates a Document from html code
@@ -158,7 +174,8 @@ const
             node.innerHTML = html;
         }
         return node;
-    };
+    }
+
 
     /**
      * Adds CSS to the bottom of the body
@@ -174,7 +191,8 @@ const
                 doc.body.appendChild(s);
             });
         }
-    };
+    }
+
 
     /**
      * Adds CSS to the bottom of the head
@@ -188,7 +206,8 @@ const
             s.appendChild(doc.createTextNode('<!-- ' + css + ' -->'));
             doc.head.appendChild(s);
         }
-    };
+    }
+
 
 
     /**
@@ -202,7 +221,8 @@ const
             return weburl.test(url);
         }
         return false;
-    };
+    }
+
 
 
 
@@ -228,7 +248,8 @@ const
         }
         return retval;
 
-    };
+    }
+
 
 
     /**
@@ -246,7 +267,8 @@ const
                     .replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, replacement)
                     .replace(/[\. ]+$/, replacement)
                     .substring(0, 255);
-    };
+    }
+
 
 
     /**
@@ -255,7 +277,8 @@ const
      */
     function uniqid(){
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    };
+    }
+
 
 
     /**
@@ -265,8 +288,8 @@ const
      * @returns {Promise}
      */
     function loadjs(src, defer){
-        
-        return new Promise((resolve,reject) => {
+
+        return new Promise((resolve, reject) => {
             if (isValidUrl(src)) {
                 let script = doc.createElement('script');
                 script.type = 'text/javascript';
@@ -278,9 +301,10 @@ const
                 script.src = src;
             } else reject(new Error("Invalid argument src."));
         });
-        
 
-    };
+
+    }
+
 
     /**
      * Adds script to the bottom of the head
@@ -294,7 +318,8 @@ const
             s.appendChild(doc.createTextNode(src));
             doc.head.appendChild(s);
         }
-    };
+    }
+
 
     /**
      * Loads an external CSS
@@ -309,7 +334,8 @@ const
             doc.head.appendChild(style);
             style.href = src;
         }
-    };
+    }
+
 
     /**
      * Copy given text to clipboard
@@ -328,7 +354,8 @@ const
             doc.body.removeChild(el);
         }
         return r;
-    };
+    }
+
 
     /**
      * Download given text as a file
@@ -344,7 +371,8 @@ const
             link.download = filename;
             link.dispatchEvent(new MouseEvent(`click`));
         }
-    };
+    }
+
 
     /**
      * Gets list of events types
@@ -376,7 +404,8 @@ const
                 el.dispatchEvent(event);
             });
         }
-    };
+    }
+
 
 
 
@@ -416,7 +445,8 @@ const
             return this;
         } else if ((target instanceof EventTarget)) return new Events(...arguments);
 
-    };
+    }
+
     Events.prototype = {
         /**
          * Add an event listener
@@ -588,11 +618,11 @@ const
             this.on(this.prefix + "stop", e => {
                 if (!this.started) return;
                 if ($this.current.timeout !== null) clearTimeout($this.current.timeout);
-                if ($this.current.interval !== null)  clearInterval($this.current.interval);
+                if ($this.current.interval !== null) clearInterval($this.current.interval);
                 $this.current.interval = $this.current.timeout = null;
-                
+
             }).on(this.prefix + "start", e => {
-                if ($this.started )return;
+                if ($this.started) return;
                 if (!$this.canstart) throw new Error('gmTimer cannot be started (no timeout, interval or callbacks set)');
                 if ($this.interval > 0) $this.current.interval = setInterval($this.callbacks.onInterval, $this.interval);
                 if ($this.timeout > 0) $this.current.timeout = setTimeout($this.callbacks.onTimeout, $this.timeout);
@@ -865,7 +895,9 @@ const
         isPlainObject, on, uniqid, trigger, Events, gmTimer,
         html2element, html2doc, copyToClipboard, Text2File,
         addcss, addstyle, loadjs, addscript, loadcss,
-        isValidUrl, getURL, sanitizeFileName
+        isValidUrl, getURL, sanitizeFileName,
+        s, b, f, o, u, n,
+        second, minute, hour, day, week, year, month,
+        GMinfo, scriptname, UUID
     };
-}, window));
-
+}));

@@ -1,32 +1,121 @@
 /**
- * gmdata Module
+ * Module gmData
  */
-
 (function(root, factory){
-    const deps = ["gmtools", "md5"]; //your dependencies there
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmdata = factory(...deps.map(dep => root[dep]));
-}(this, function(gmtools, md5, undef){
+    /* globals define, require, module, self */
+    const dependencies = ["gmtools", "md5"];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmData"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(gmtools, md5, undef){
 
 
-    const {isPlainObject, isValidUrl, getURL, addstyle, addscript} = gmtools;
+
+    const {
+        isPlainObject, isValidUrl, getURL, addstyle, addscript,
+        f, s, u, n, minute, UUID
+    } = gmtools;
+
+
+
+    class Interface {
+
+        get __ABSTRACT(){
+            return [];
+        }
+
+        constructor(){
+
+            let
+                    name = this.constructor.name,
+                    proto = Object.getPrototypeOf(this),
+                    parents = [];
+
+            while (proto instanceof Interface) {
+                parents.push(proto);
+                proto = Object.getPrototypeOf(proto);
+            }
+            if (parents.length > 1) {
+                const
+                        iface = parents.pop(),
+                        abstract = Array.isArray(this.__ABSTRACT) ? this.__ABSTRACT : [],
+                        declared = [];
+                abstract.push('constructor');
+
+                const methods = Object.keys(Object.getOwnPropertyDescriptors(iface)).filter(key => typeof iface[key] === f && !abstract.includes(key));
+
+                if (methods.length === 0) {
+                    throw new Error('Interface class ' + iface.constructor.name + ' does not declare methods that are not abstract (do you need to make it an interface?).');
+                }
+
+                parents.forEach(proto => {
+                    Object.keys(Object.getOwnPropertyDescriptors(proto)).forEach(method => {
+                        if (typeof proto[method] === f && methods.includes(method)) {
+
+                            if (iface[method].length !== proto[method].length) {
+                                throw new Error(`Interface ${iface.constructor.name}.${method}() expects ${iface[method].length} parameters, ${proto[method].length} given in ${proto.constructor.name}.${method}()`);
+                            }
+                            declared.push(method);
+                        }
+                    });
+                });
+                if (methods.length !== declared.length){
+                    throw new Error('class ' + name + ' does not declare ' + methods.filter(m => declared.includes(m) === false).join('(), ') + '().');
+                }
+            } else throw new Error('Interface ' + name + ' cannot be instanciated.');
+        }
+    }
+
+
 
 
     /**
      * DataStore Interface
      * @type {Class}
      */
-    class DataStore {
-        constructor(){
-            if (!(["get", "set", "has", "remove", "clear"].every(x => typeof this[x] === f))) {
-                throw new Error("DataStore Interface Error : Missing Methods.");
-            }
-            Object.defineProperty(this, '_isDataStore', {
-                value: true,
-                configurable: true
-            });
-        }
+    class DataStore extends Interface {
+        /**
+         * Gets a value from the storage
+         * @param {string|undefined} key if not using key all the storage will be returned
+         * @returns {any}
+         */
+        get(key){}
+        /**
+         * Adds a value to the storage
+         * @param {string|Object} key storage key or key/value pair
+         * @param {any} [val]
+         * @returns {DataStore}
+         */
+        set(key, val){}
+        /**
+         * Checks if storage has a value for the given key
+         * @param {string} key
+         * @returns {Boolean}
+         */
+        has(key){}
+        /**
+         * Remove a value from the storage
+         * @param {string} key
+         * @returns {DataStore}
+         */
+        remove(key){}
+        /**
+         * Empty the storage
+         * @returns {DataStore}
+         */
+        clear(){}
     }
 
 
@@ -39,44 +128,35 @@
 
         constructor(storage){
             super();
-            Object.defineProperty(this, '_storage', {
+            Object.defineProperty(this, 'storage', {
                 value: {}, enumerable: false,
                 configurable: true, writable: true
             });
         }
-
         get(key){
-            let retval, sval;
-            if (typeof key === s) retval = this._storage[key];
-            else if (typeof key === u) retval = Object.assign({}, this._storage);//clone
+            let retval;
+            if (typeof key === s) retval = this.storage[key];
+            else if (typeof key === u) retval = Object.assign({}, this.storage);
             return retval;
-
         }
         set(key, val){
-            if (typeof key === s && typeof val !== u) this._storage[key] = val;
-            else if (isPlainObject(key)) Object.assign(this._storage, key);
+            if (typeof key === s && typeof val !== u) this.storage[key] = val;
+            else if (isPlainObject(key)) Object.assign(this.storage, key);
             return this;
-
         }
         has(key){
-            return typeof this._storage[key] !== u;
-
+            return typeof this.storage.hasOwnProperty(key);
         }
         remove(key){
-            delete this._storage[key];
+            delete this.storage[key];
             return this;
         }
         clear(){
-            this._storage = {};
+            this.storage = {};
             return this;
         }
 
     }
-
-
-
-
-
 
 
 
@@ -93,17 +173,16 @@
             if (!(storage instanceof Storage)) {
                 throw new Error('xStore : argument not instance of Storage');
             }
-            Object.defineProperty(this, '_storage', {
-                value: storage,
-                configurable: true
+            Object.defineProperty(this, 'storage', {
+                value: storage, configurable: true,
+                enumerable: false, writable: false
             });
         }
 
         get(key){
             let retval, sval;
-            //get one
             if (typeof key === s) {
-                if ((sval = this._storage.getItem(key)) !== null) {
+                if ((sval = this.storage.getItem(key)) !== null) {
                     try {
                         retval = JSON.parse(sval);
                     } catch (e) {
@@ -114,7 +193,7 @@
                 //get all
                 retval = {};
                 for (let i = 0; i < this._storage.length; i++) {
-                    key = this._storage.key(i);
+                    key = this.storage.key(i);
                     retval[key] = this.get(key);
                 }
             }
@@ -131,143 +210,69 @@
                         val = sval;
                     }
                 }
-                this._storage.setItem(key, val);
+                this.storage.setItem(key, val);
 
-            } else if (isPlainObject(key)) {
-                Object.keys(key).forEach((k) => {
-                    this.set(k, key[k]);
-                });
-            }
+            } else if (isPlainObject(key)) Object.keys(key).forEach(k => this.set(k, key[k]));
+
             return this;
 
         }
         has(key){
-            return typeof this.get(key) !== u;
-
+            return this.storage.hasOwnProperty(key);
         }
         remove(key){
-            if (typeof key === s) {
-                key = key.split(' ');
-            }
-            if (Array.isArray(key)) {
-                key.forEach((k) => {
-                    this._storage.removeItem(k);
-                });
-            }
+            if (typeof key === s) this.storage.removeItem(key);
             return this;
         }
         clear(){
-            this._storage.clear();
+            this.storage.clear();
             return this;
         }
 
     }
 
 
-    /* jshint -W117 */
     /**
      * Store data into GreaseMonkey 3 or Tampermonkey
      * @type {Class}
      * @extends {DataStore}
      */
     class gmStore extends DataStore {
-        static get available(){
-            return ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].every((fn) => {
-                /*jshint evil:true */
-                try {
-                    if (typeof (eval(fn)) === f) return true;
-                } catch (e) {
-                    return false;
-                }
-                /*jshint evil:false */
-            });
-        }
-
+        /* globals GM_getValue, GM_setValue, GM_deleteValue, GM_listValues */
         constructor(){
             super();
-
-            let disabled = [];
-            ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].forEach((fn) => {
-                /*jshint evil:true */
-                try {
-                    if (typeof (eval(fn)) !== f) disabled.push(fn);
-                } catch (e) {
-                    disabled.push(fn);
-                }
-                /*jshint evil:false */
-            });
-            if (disabled.length > 0) {
-                if (disabled.length === 4) {
-                    console.warn("gmStore disabled.");
-                    return;
-                }
-                disabled.forEach((fn) => {
-                    console.warn('gmStore cannot use', fn);
-                });
-            }
+            const errors = ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].filter(x => typeof self[x] !== f);
+            if (errors.length > 0) throw new Error('gmStore:  %s are not available.'.replace('%s', errors.join(', ')));
         }
-
-
-
         get(key){
-            let retval = undef;
-            //get one
-            if (typeof key === s) {
-                if (typeof GM_getValue === f) {
-                    retval = GM_getValue(key); // eslint-disable-line
-                }
-            } else if (typeof key === u) {
-                //get all
+            let retval;
+            if (typeof key === s) retval = GM_getValue(key);
+            else if (typeof key === u) {
                 retval = {};
-                if (typeof GM_listValues === f) {
-                    GM_listValues().forEach((key) => { // eslint-disable-line
-                        retval[key] = this.get(key);
-                    });
-                }
+                GM_listValues().forEach(key => retval[key] = this.get(key));
             }
             return retval;
 
         }
         set(key, val){
-
-            if (typeof key === s && typeof val !== u) {
-                if (typeof GM_setValue === f) {
-                    GM_setValue(key, val); // eslint-disable-line
-                }
-            } else if (isPlainObject(key)) {
-                Object.keys(key).forEach((k) => {
-                    this.set(k, key[k]);
-                });
-            }
+            if (typeof key === s && typeof val !== u) GM_setValue(key, val);
+            else if (isPlainObject(key)) Object.keys(key).forEach(k => this.set(k, key[k]));
             return this;
         }
         has(key){
-            return typeof this.get(key) !== u;
+            return GM_listValues().includes(key);
         }
         remove(key){
-            if (typeof key === s) {
-                key = key.split(' ');
-            }
-            if (Array.isArray(key)) {
-                if (typeof GM_deleteValue === f) {
-                    key.forEach((k) => {
-                        GM_deleteValue(k); // eslint-disable-line
-                    });
-                }
-            }
+            if (typeof key === s) GM_deleteValue(key);
             return this;
         }
-
         clear(){
-            Object.keys(this.get()).forEach((key) => {
-                this.remove(key);
-            });
+            Object.keys(this.get()).forEach(key => this.remove(key));
             return this;
         }
 
     }
 
-    /* jshint +W117 */
 
     /**
      * Injects defaults settings into gmStore
@@ -710,10 +715,11 @@
         require(){
             const
                     $this = this,
-                    prefix = 'gmloader:',
                     queue = [],
                     args = Array.from(arguments),
-                    defaults = {from: "", as: "", name: "", then: null, ttl: this.ttl},
+                    defaults = {
+                        from: "", as: "", name: "", then: null, ttl: this.ttl
+                    },
                     buildQueue = function(args){
                         let item = Object.assign({}, defaults);
                         args.forEach(arg => {
@@ -724,8 +730,7 @@
                                 if (isValidUrl(arg)) {
                                     if (item.from.length > 0) return buildQueue([arg]);
                                     item.from = arg;
-                                }
-                                else if (/^(js|css)$/.test(arg)) item.as = arg;
+                                } else if (/^(js|css)$/.test(arg)) item.as = arg;
                                 else item.name = arg;
                             } else if (isPlainObject(arg)) {
                                 if (typeof arg.from === s ? isValidUrl(arg.from) : false) item.from = arg.from;
@@ -805,14 +810,8 @@
 
     }
 
-
-
     return {
-        xStore: xStore,
-        gmStore: gmStore,
-        nullStore: nullStore,
-        UserSettings: UserSettings,
-        LSCache: LSCache,
-        gmLoader: gmLoader
+        xStore, gmStore, nullStore,
+        UserSettings, LSCache, gmLoader
     };
 }));

@@ -31,11 +31,10 @@
     /* jshint -W083 */
 
 
-    const {gmLoader} = gmdata;
 
-
-
-    console.debug(gmtools);
+    const{gmStore} = gmData;
+    let st = new gmStore();
+    console.debug(st);
 
     /*
     let loader = new gmLoader();
