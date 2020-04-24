@@ -82,30 +82,40 @@
     /**
      * Run a callback
      * @param {function} ...callbacks Run callback in order
-     * @returns {undefined}
+     * @param {any} ...args Arguments to pass to callbacks
+     * @returns {Promise}
      */
-    function on(callback){
-        const callbacks = [];
-        for (let i = 0; i < arguments.length; i++) {
-            let arg = arguments[i];
-            if (typeof arg === f) callbacks.push(arg);
-        }
-        callbacks.forEach(c => c.call());
+    function on(...callbacks){
+        return new Promise((resolve, reject) => {
+            let
+                    queue = callbacks.filter(x => typeof x === f),
+                    args = callbacks.filter(x => typeof x !== f);
+
+            let current, retval, error;
+            while ((current = queue.shift()) !== undef) {
+                try {
+                    retval = current(...args);
+                    args = [retval];
+                } catch (e) {
+                    error = e;
+                    break;
+                }
+
+            }
+            if (typeof error !== u) reject(error);
+            else resolve(retval);
+        });
     }
 
     /**
      * Run a Callback when body is created
-     * @param {function} callback
+     * @param {function} ...callbacks
      * @returns {Promise}
      */
-    on.body = function(){
+    on.body = function(...callbacks){
+
+
         return new Promise(resolve => {
-
-            let resolver = body => {
-                if (arguments.length > 0) on(...arguments);
-                resolve(doc.body);
-            };
-
             if (doc.body === null) {
                 const observer = new MutationObserver((mutations, obs) => {
                     let ready = false;
@@ -117,56 +127,42 @@
                             }
                         });
                     });
-                    if (ready === true) resolver();
-
+                    if (ready === true) on(doc.body, ...callbacks).then(r => resolve(doc.body));
                 });
                 observer.observe(doc.documentElement, {childList: true});
-            } else resolver();
-
+            }
+            else on(doc.body, ...callbacks).then(r => resolve(doc.body));
         });
     };
 
     /**
      * Run a callback when page is loading DOMContentLoaded
-     * @param {function} callback
+     * @param {function} ...callbacks
      * @returns {Promise}
      */
-    on.load = function(){
+    on.load = function(...callbacks){
         return new Promise(resolve => {
-
-            let resolver = body => {
-                if (arguments.length > 0) on(...arguments);
-                resolve(doc.body);
-            };
             if (doc.readyState === "loading") {
                 doc.addEventListener("DOMContentLoaded", function(){
-                    resolver();
+                    on(doc.body, ...callbacks).then(r => resolve(doc.body));
                 });
-            } else resolve();
-
-
+            } else on(doc.body, ...callbacks).then(r => resolve(doc.body));
         });
     };
 
     /**
      * Run a callback when page is completely loaded
-     * @param {function} callback
+     * @param {function} ...callbacks
      * @returns {Promise}
      */
-    on.loaded = function(){
+    on.loaded = function(...callbacks){
         return new Promise(resolve => {
-
-            let resolver = body => {
-                if (arguments.length > 0) on(...arguments);
-                resolve(doc.body);
-            };
-
             if (doc.readyState !== "complete") {
                 addEventListener("load", function(){
-                    resolver();
+                    on(doc.body, ...callbacks).then(r => resolve(doc.body));
                 });
 
-            } else resolver();
+            } else on(doc.body, ...callbacks).then(r => resolve(doc.body));
 
         });
     };
@@ -201,24 +197,6 @@
         return node;
     }
 
-
-    /**
-     * Adds CSS to the bottom of the body
-     * @param {string} css
-     * @returns {undefined}
-     */
-    function addcss(css){
-        if (typeof css === "string" && css.length > 0) {
-            let s = doc.createElement('style');
-            s.setAttribute('type', "text/css");
-            s.appendChild(doc.createTextNode('<!-- ' + css + ' -->'));
-            on.body(() => {
-                doc.body.appendChild(s);
-            });
-        }
-    }
-
-
     /**
      * Adds CSS to the bottom of the head
      * @param {string} css
@@ -229,6 +207,21 @@
             let s = doc.createElement('style');
             s.setAttribute('type', "text/css");
             s.appendChild(doc.createTextNode('<!-- ' + css + ' -->'));
+            doc.head.appendChild(s);
+        }
+    }
+
+
+    /**
+     * Adds script to the bottom of the head
+     * @param {string} src
+     * @returns {undefined}
+     */
+    function addscript(src){
+        if (typeof src === s && src.length > 0) {
+            let s = doc.createElement("script");
+            s.setAttribute("type", "text/javascript");
+            s.appendChild(doc.createTextNode(src));
             doc.head.appendChild(s);
         }
     }
@@ -313,52 +306,37 @@
      * @returns {Promise}
      */
     function loadjs(src, defer){
-
         return new Promise((resolve, reject) => {
-            if (isValidUrl(src)) {
-                let script = doc.createElement('script');
-                script.type = 'text/javascript';
-                if (defer === true) script.defer = true;
-                script.onload(e => {
-                    resolve(e);
-                });
-                doc.head.appendChild(script);
-                script.src = src;
-            } else reject(new Error("Invalid argument src."));
+            if (!isValidUrl(src)) reject(new Error("Invalid argument src."));
+            let script = doc.createElement('script');
+            Object.assign(script, {
+                type: 'text/javascript',
+                onload: e => resolve(e),
+                src: src
+            });
+            if (defer === true) script.defer = true;
+            doc.head.appendChild(script);
         });
-
-
     }
-
-
-    /**
-     * Adds script to the bottom of the head
-     * @param {string} src
-     * @returns {undefined}
-     */
-    function addscript(src){
-        if (typeof src === s && src.length > 0) {
-            let s = doc.createElement("script");
-            s.setAttribute("type", "text/javascript");
-            s.appendChild(doc.createTextNode(src));
-            doc.head.appendChild(s);
-        }
-    }
-
 
     /**
      * Loads an external CSS
      * @param {string} src
-     * @returns {undefined}
+     * @returns {Promise}
      */
     function loadcss(src){
-        if (isValidUrl(src)) {
+
+        return new Promise((resolve, reject) => {
+            if (!isValidUrl(src)) return reject(new Error('Invalid argument src'));
             let style = doc.createElement('link');
-            style.rel = "stylesheet";
-            style.type = 'text/css';
+            Object.assign(style, {
+                rel: "stylesheet",
+                type: "text/css",
+                href: src,
+                onload: e => resolve(e)
+            });
             doc.head.appendChild(style);
-            style.href = src;
-        }
+        });
     }
 
 
@@ -971,11 +949,11 @@
     return {
         isPlainObject, on, uniqid, trigger, Events, gmTimer,
         html2element, html2doc, copyToClipboard, Text2File,
-        addcss, addstyle, loadjs, addscript, loadcss,
+        addstyle, loadjs, addscript, loadcss,
         isValidUrl, getURL, sanitizeFileName,
         s, b, f, o, u, n, gettype, Interface,
         second, minute, hour, day, week, year, month,
-        GMinfo, scriptname, UUID
+        GMinfo, scriptname, UUID, isoCode
     };
 }));/**
  * Module gmData
@@ -2136,7 +2114,7 @@
  */
 (function(root, factory){
     /* globals define, require, module, self, innerWidth */
-    const dependencies = ["gmtools", "gmfind"];
+    const dependencies = ["gmtools", "gmfind", "gmdata"];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -2152,12 +2130,12 @@
         };
         root["gmUI"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, undef){
+}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, gmdata, undef){
 
     const doc = document;
     const {NodeFinder, ResizeSensor, isValidSelector} = gmfind;
     const {trigger, isPlainObject, html2element, Events, uniqid, GMinfo, u, s, b, f, n} = gmtools;
-
+    const {gmLoader} = gmdata;
 
     /**
      * Manages .gm-button
@@ -2308,7 +2286,7 @@
         }
 
         const template =
-                `<div class="gm-reset gm-overlay">
+                `<div class="gm-overlay pure">
                     <dialog class="gm-dialog">
                         <header><h1></h1><span class="gm-button gm-rounded" data-name="close">&times;</span></header>
                         <section></section>
