@@ -33,11 +33,17 @@
 
 
     const{UserSettings, gmLoader} = gmData;
-    const {uniqid} = gmTools;
+    const {uniqid, on, loadcss, loadjs, isoCode} = gmTools;
 
     const {gmDialog} = gmUI;
 
 
+
+
+    console.debug(isoCode('french'));
+
+
+    /*
     let d = new gmDialog();
     d.body = "test";
     d.open().then(e => {
@@ -45,7 +51,7 @@
     });
 
 
-
+*/
 
 
 
