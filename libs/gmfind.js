@@ -1,13 +1,25 @@
 /**
- * gmfind Module
+ * Module gmFind
  */
-
 (function(root, factory){
-    if (typeof define === 'function' && define.amd) define([], factory);
-    else if (typeof exports === 'object') module.exports = factory();
-    else root.gmfind = factory();
-}(this, function(s = "string", f = "function", n = "number", undef){
-
+    /* globals define, require, module, self, EventTarget */
+    const dependencies = [];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmFind"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(undef, s = "string", f = "function", n = "number"){
 
     const doc = document;
 
@@ -364,17 +376,7 @@
 
 
 
-
-
-
-
-
-
     return{
-        isValidSelector: isValidSelector,
-        NodeFinder: NodeFinder,
-        ResizeSensor: ResizeSensor
-
+        isValidSelector, NodeFinder, ResizeSensor
     };
 }));
-

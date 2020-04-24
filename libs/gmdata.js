@@ -17,7 +17,7 @@
             });
             return result;
         };
-        root["gmData"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+        root["gmData"] = factory(...dependencies.map(dep => require(dep))); /*jshint ignore:line */
     }
 }(typeof self !== 'undefined' ? self : this, function(gmtools, md5, undef){
 

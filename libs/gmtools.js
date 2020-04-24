@@ -3,6 +3,7 @@
  */
 
 (function(root, factory){
+    /* globals define, require, module, self, GM, GM_info, EventTarget */
     const dependencies = [];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
@@ -17,7 +18,7 @@
             });
             return result;
         };
-        root["gmTools"] = factory(...dependencies.map(dep => require(dep)));
+        root["gmTools"] = factory(...dependencies.map(dep => require(dep))); /*jshint ignore:line */
     }
 }(typeof self !== 'undefined' ? self : this, function(undef){
 
