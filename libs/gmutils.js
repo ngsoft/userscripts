@@ -5,49 +5,78 @@
  */
 
 /**
- * gmtools Module
+ * Module gmTools
  */
-const
-        // Scallar types
-        s = "string",
-        b = "boolean",
-        f = "function",
-        o = "object",
-        u = "undefined",
-        n = "number",
-        //time
-        second = 1000,
-        minute = 60 * second,
-        hour = minute * 60,
-        day = hour * 24,
-        week = day * 7,
-        year = 365 * day,
-        month = Math.round(year / 12),
-        GMinfo = (GM_info ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
-        scriptname = `${GMinfo.script.name} version ${GMinfo.script.version}`,
-        UUID = GMinfo.script.uuid;
 
 (function(root, factory){
-    const deps = []; //your dependencies there
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmtools = factory(...deps.map(dep => root[dep]));
-}(this, () => {
+    /* globals define, require, module, self, GM, GM_info, EventTarget */
+    const dependencies = [];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmTools"] = factory(...dependencies.map(dep => require(dep))); /*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(undef){
 
-    const gmtools = {};
 
-    let undef;
-
-    const doc = document;
+    const
+            // Scallar types
+            s = "string",
+            b = "boolean",
+            f = "function",
+            o = "object",
+            u = "undefined",
+            n = "number",
+            //time
+            second = 1000,
+            minute = 60 * second,
+            hour = minute * 60,
+            day = hour * 24,
+            week = day * 7,
+            year = 365 * day,
+            month = Math.round(year / 12),
+            GMinfo = (typeof GM_info !== u ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
+            scriptname = `${GMinfo.script.name} @${GMinfo.script.version}`,
+            UUID = GMinfo.script.uuid,
+            doc = document;
 
     /**
      * Test if given argument is a plain object
      * @param {any} v
      * @returns {Boolean}
      */
-    const isPlainObject = gmtools.isPlainObject = function(v){
+    function isPlainObject(v){
         return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
-    };
+    }
+
+
+    /**
+     * Get the type of the current value
+     * @param {any} value
+     * @returns {string}
+     */
+    function gettype(value){
+        let type = typeof value;
+        if (type === o) {
+            if (value === null) type = "null";
+            else if (Array.isArray(value)) type = "array";
+        } else if (type === n) {
+            type = "float";
+            if (Number.isInteger(value)) type = "int";
+        }
+        return type;
+    }
+
 
 
     /**
@@ -55,14 +84,15 @@ const
      * @param {function} ...callbacks Run callback in order
      * @returns {undefined}
      */
-    const on = gmtools.on = function(callback){
+    function on(callback){
         const callbacks = [];
         for (let i = 0; i < arguments.length; i++) {
             let arg = arguments[i];
             if (typeof arg === f) callbacks.push(arg);
         }
         callbacks.forEach(c => c.call());
-    };
+    }
+
     /**
      * Run a Callback when body is created
      * @param {function} callback
@@ -148,34 +178,36 @@ const
      * @param {string} html
      * @returns {HTMLElement}
      */
-    const html2element = gmtools.html2element = function(html){
+    function html2element(html){
         if (typeof html === "string") {
             let template = doc.createElement('template');
             html = html.trim();
             template.innerHTML = html;
             return template.content.firstChild;
         }
-    };
+    }
+
 
     /**
      * Creates a Document from html code
      * @param {string} html
      * @returns {documentElement}
      */
-    const html2doc = gmtools.html2doc = function(html){
+    function html2doc(html){
         let node = doc.implementation.createHTMLDocument().documentElement;
         if (typeof html === s && html.length > 0) {
             node.innerHTML = html;
         }
         return node;
-    };
+    }
+
 
     /**
      * Adds CSS to the bottom of the body
      * @param {string} css
      * @returns {undefined}
      */
-    const addcss = gmtools.addcss = function(css){
+    function addcss(css){
         if (typeof css === "string" && css.length > 0) {
             let s = doc.createElement('style');
             s.setAttribute('type', "text/css");
@@ -184,21 +216,23 @@ const
                 doc.body.appendChild(s);
             });
         }
-    };
+    }
+
 
     /**
      * Adds CSS to the bottom of the head
      * @param {string} css
      * @returns {undefined}
      */
-    const addstyle = gmtools.addstyle = function(css){
+    function addstyle(css){
         if (typeof css === "string" && css.length > 0) {
             let s = doc.createElement('style');
             s.setAttribute('type', "text/css");
             s.appendChild(doc.createTextNode('<!-- ' + css + ' -->'));
             doc.head.appendChild(s);
         }
-    };
+    }
+
 
 
     /**
@@ -206,13 +240,14 @@ const
      * @param {string} url
      * @returns {boolean}
      */
-    const isValidUrl = gmtools.isValidUrl = function(url){
+    function isValidUrl(url){
         const weburl = new RegExp("^(?:(?:(?:https?|ftp):)?\\/\\/)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z0-9\\u00a1-\\uffff][a-z0-9\\u00a1-\\uffff_-]{0,62})?[a-z0-9\\u00a1-\\uffff]\\.)+(?:[a-z\\u00a1-\\uffff]{2,}\\.?))(?::\\d{2,5})?(?:[/?#]\\S*)?$", "i");
         if (typeof url === s && url.length > 0) {
             return weburl.test(url);
         }
         return false;
-    };
+    }
+
 
 
 
@@ -221,7 +256,7 @@ const
      * @param {string} uri
      * @returns {string|undefined}
      */
-    const getURL = gmtools.getURL = function(uri){
+    function getURL(uri){
         let retval;
         if (typeof uri === s && uri.length > 0) {
             try {
@@ -238,7 +273,8 @@ const
         }
         return retval;
 
-    };
+    }
+
 
 
     /**
@@ -247,7 +283,7 @@ const
      * @param {string} replacement
      * @returns {string}
      */
-    const sanitizeFileName = gmtools.sanitizeFileName = function(input, replacement){
+    function sanitizeFileName(input, replacement){
         replacement = typeof replacement === s ? replacement : "";
         if (typeof input === s) return input
                     .replace(/[\/\?<>\\:\*\|":\'\`\’]/g, replacement)
@@ -256,16 +292,18 @@ const
                     .replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, replacement)
                     .replace(/[\. ]+$/, replacement)
                     .substring(0, 255);
-    };
+    }
+
 
 
     /**
      * Generate a unique ID
      * @returns {String}
      */
-    const uniqid = gmtools.uniqid = function(){
+    function uniqid(){
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    };
+    }
+
 
 
     /**
@@ -274,9 +312,9 @@ const
      * @param {boolean} defer
      * @returns {Promise}
      */
-    const loadjs = gmtools.loadjs = function(src, defer){
-        
-        return new Promise((resolve,reject) => {
+    function loadjs(src, defer){
+
+        return new Promise((resolve, reject) => {
             if (isValidUrl(src)) {
                 let script = doc.createElement('script');
                 script.type = 'text/javascript';
@@ -288,30 +326,32 @@ const
                 script.src = src;
             } else reject(new Error("Invalid argument src."));
         });
-        
 
-    };
+
+    }
+
 
     /**
      * Adds script to the bottom of the head
      * @param {string} src
      * @returns {undefined}
      */
-    const addscript = gmtools.addscript = function(src){
+    function addscript(src){
         if (typeof src === s && src.length > 0) {
             let s = doc.createElement("script");
             s.setAttribute("type", "text/javascript");
             s.appendChild(doc.createTextNode(src));
             doc.head.appendChild(s);
         }
-    };
+    }
+
 
     /**
      * Loads an external CSS
      * @param {string} src
      * @returns {undefined}
      */
-    const loadcss = gmtools.loadcss = function(src){
+    function loadcss(src){
         if (isValidUrl(src)) {
             let style = doc.createElement('link');
             style.rel = "stylesheet";
@@ -319,14 +359,15 @@ const
             doc.head.appendChild(style);
             style.href = src;
         }
-    };
+    }
+
 
     /**
      * Copy given text to clipboard
      * @param {string} text
      * @returns {boolean}
      */
-    const copyToClipboard = gmtools.copyToClipboard = function(text){
+    function copyToClipboard(text){
         let r = false;
         if (typeof text === "string" && text.length > 0) {
             let el = doc.createElement('textarea');
@@ -338,7 +379,8 @@ const
             doc.body.removeChild(el);
         }
         return r;
-    };
+    }
+
 
     /**
      * Download given text as a file
@@ -347,14 +389,15 @@ const
      * @returns {undefined}
      * @link https://stackoverflow.com/questions/32225904/programmatical-click-on-a-tag-not-working-in-firefox
      */
-    const Text2File = gmtools.Text2File = function(text, filename){
+    function Text2File(text, filename){
         if (typeof text === s && typeof filename === s) {
             let link = doc.createElement("a"), blob = new Blob([text], {type: "application/octet-stream"});
             link.href = URL.createObjectURL(blob);
             link.download = filename;
             link.dispatchEvent(new MouseEvent(`click`));
         }
-    };
+    }
+
 
     /**
      * Gets list of events types
@@ -376,7 +419,7 @@ const
      * @param {any} data
      * @returns {undefined}
      */
-    const trigger = gmtools.trigger = function(el, type, data){
+    function trigger(el, type, data){
         if (el instanceof EventTarget) {
             let event;
             getEventTypes(type).forEach(t => {
@@ -386,7 +429,8 @@ const
                 el.dispatchEvent(event);
             });
         }
-    };
+    }
+
 
 
 
@@ -397,7 +441,7 @@ const
      * @param {Object} binding
      * @returns {Events}
      */
-    const Events = gmtools.Events = function(target, binding){
+    function Events(target, binding){
 
         if (typeof target === s) target = doc.querySelector(target);
 
@@ -426,7 +470,8 @@ const
             return this;
         } else if ((target instanceof EventTarget)) return new Events(...arguments);
 
-    };
+    }
+
     Events.prototype = {
         /**
          * Add an event listener
@@ -538,6 +583,58 @@ const
 
 
 
+    /**
+     * Defines an Interface
+     */
+    class Interface {
+
+        get __ABSTRACT(){
+            return [];
+        }
+
+        constructor(){
+
+            let
+                    name = this.constructor.name,
+                    proto = Object.getPrototypeOf(this),
+                    parents = [];
+
+            while (proto instanceof Interface) {
+                parents.push(proto);
+                proto = Object.getPrototypeOf(proto);
+            }
+            if (parents.length > 1) {
+                const
+                        iface = parents.pop(),
+                        abstract = Array.isArray(this.__ABSTRACT) ? this.__ABSTRACT : [],
+                        declared = [];
+                abstract.push('constructor');
+
+                const methods = Object.keys(Object.getOwnPropertyDescriptors(iface)).filter(key => typeof iface[key] === f && !abstract.includes(key));
+
+                if (methods.length === 0) {
+                    throw new Error('Interface class ' + iface.constructor.name + ' does not declare methods that are not abstract (do you need to make it an interface?).');
+                }
+
+                parents.forEach(proto => {
+                    Object.keys(Object.getOwnPropertyDescriptors(proto)).forEach(method => {
+                        if (typeof proto[method] === f && methods.includes(method)) {
+
+                            if (iface[method].length !== proto[method].length) {
+                                throw new Error(`Interface ${iface.constructor.name}.${method}() expects ${iface[method].length} parameters, ${proto[method].length} given in ${proto.constructor.name}.${method}()`);
+                            }
+                            declared.push(method);
+                        }
+                    });
+                });
+                if (methods.length !== declared.length) {
+                    throw new Error('class ' + name + ' does not declare ' + methods.filter(m => declared.includes(m) === false).join('(), ') + '().');
+                }
+            } else throw new Error('Interface ' + name + ' cannot be instanciated.');
+        }
+    }
+
+
 
     /**
      * Creates a gmTimer instance
@@ -598,11 +695,11 @@ const
             this.on(this.prefix + "stop", e => {
                 if (!this.started) return;
                 if ($this.current.timeout !== null) clearTimeout($this.current.timeout);
-                if ($this.current.interval !== null)  clearInterval($this.current.interval);
+                if ($this.current.interval !== null) clearInterval($this.current.interval);
                 $this.current.interval = $this.current.timeout = null;
-                
+
             }).on(this.prefix + "start", e => {
-                if ($this.started )return;
+                if ($this.started) return;
                 if (!$this.canstart) throw new Error('gmTimer cannot be started (no timeout, interval or callbacks set)');
                 if ($this.interval > 0) $this.current.interval = setInterval($this.callbacks.onInterval, $this.interval);
                 if ($this.timeout > 0) $this.current.timeout = setTimeout($this.callbacks.onTimeout, $this.timeout);
@@ -739,7 +836,55 @@ const
 
     }
 
-    gmtools.gmTimer = gmTimer;
+
+    /**
+     * ISO Language Codes (639-1 and 693-2) and IETF Language Types
+     * language-codes-3b2
+     * @link https://datahub.io/core/language-codes
+     * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/gmutils.min.js
+     */
+    const isoCode = (() => {
+
+        /**
+         * Get Langage infos using langcode
+         * @param {string} langcode
+         * @returns {Object}
+         */
+        function getLangInfos(langcode){
+            let result = {
+                lang: "Undetermined",
+                codes: ["und", "und"]
+            };
+            if (typeof langcode === s && langcode.length > 0) {
+                if (langcode.length > 1 && langcode.length < 4) result = getLangInfos.map.get(langcode.toLowerCase()) || result;
+                else result = getLangInfos.reverse.get(langcode.toLowerCase()) || result;
+            }
+            return result;
+        }
+
+        const data = JSON.parse(`[{"English": "Serbo-Croatian", "alpha2": "sh", "alpha3-b": "hbs"},{"English": "Afar", "alpha2": "aa", "alpha3-b": "aar"},{"English": "Abkhazian", "alpha2": "ab", "alpha3-b": "abk"},{"English": "Afrikaans", "alpha2": "af", "alpha3-b": "afr"},{"English": "Akan", "alpha2": "ak", "alpha3-b": "aka"},{"English": "Albanian", "alpha2": "sq", "alpha3-b": "alb"},{"English": "Amharic", "alpha2": "am", "alpha3-b": "amh"},{"English": "Arabic", "alpha2": "ar", "alpha3-b": "ara"},{"English": "Aragonese", "alpha2": "an", "alpha3-b": "arg"},{"English": "Armenian", "alpha2": "hy", "alpha3-b": "arm"},{"English": "Assamese", "alpha2": "as", "alpha3-b": "asm"},{"English": "Avaric", "alpha2": "av", "alpha3-b": "ava"},{"English": "Avestan", "alpha2": "ae", "alpha3-b": "ave"},{"English": "Aymara", "alpha2": "ay", "alpha3-b": "aym"},{"English": "Azerbaijani", "alpha2": "az", "alpha3-b": "aze"},{"English": "Bashkir", "alpha2": "ba", "alpha3-b": "bak"},{"English": "Bambara", "alpha2": "bm", "alpha3-b": "bam"},{"English": "Basque", "alpha2": "eu", "alpha3-b": "baq"},{"English": "Belarusian", "alpha2": "be", "alpha3-b": "bel"},{"English": "Bengali", "alpha2": "bn", "alpha3-b": "ben"},{"English": "Bihari languages", "alpha2": "bh", "alpha3-b": "bih"},{"English": "Bislama", "alpha2": "bi", "alpha3-b": "bis"},{"English": "Bosnian", "alpha2": "bs", "alpha3-b": "bos"},{"English": "Breton", "alpha2": "br", "alpha3-b": "bre"},{"English": "Bulgarian", "alpha2": "bg", "alpha3-b": "bul"},{"English": "Burmese", "alpha2": "my", "alpha3-b": "bur"},{"English": "Catalan; Valencian", "alpha2": "ca", "alpha3-b": "cat"},{"English": "Chamorro", "alpha2": "ch", "alpha3-b": "cha"},{"English": "Chechen", "alpha2": "ce", "alpha3-b": "che"},{"English": "Chinese", "alpha2": "zh", "alpha3-b": "chi"},{"English": "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic", "alpha2": "cu", "alpha3-b": "chu"},{"English": "Chuvash", "alpha2": "cv", "alpha3-b": "chv"},{"English": "Cornish", "alpha2": "kw", "alpha3-b": "cor"},{"English": "Corsican", "alpha2": "co", "alpha3-b": "cos"},{"English": "Cree", "alpha2": "cr", "alpha3-b": "cre"},{"English": "Czech", "alpha2": "cs", "alpha3-b": "cze"},{"English": "Danish", "alpha2": "da", "alpha3-b": "dan"},{"English": "Divehi; Dhivehi; Maldivian", "alpha2": "dv", "alpha3-b": "div"},{"English": "Dutch; Flemish", "alpha2": "nl", "alpha3-b": "dut"},{"English": "Dzongkha", "alpha2": "dz", "alpha3-b": "dzo"},{"English": "English", "alpha2": "en", "alpha3-b": "eng"},{"English": "Esperanto", "alpha2": "eo", "alpha3-b": "epo"},{"English": "Estonian", "alpha2": "et", "alpha3-b": "est"},{"English": "Ewe", "alpha2": "ee", "alpha3-b": "ewe"},{"English": "Faroese", "alpha2": "fo", "alpha3-b": "fao"},{"English": "Fijian", "alpha2": "fj", "alpha3-b": "fij"},{"English": "Finnish", "alpha2": "fi", "alpha3-b": "fin"},{"English": "French", "alpha2": "fr", "alpha3-b": "fre"},{"English": "Western Frisian", "alpha2": "fy", "alpha3-b": "fry"},{"English": "Fulah", "alpha2": "ff", "alpha3-b": "ful"},{"English": "Georgian", "alpha2": "ka", "alpha3-b": "geo"},{"English": "German", "alpha2": "de", "alpha3-b": "ger"},{"English": "Gaelic; Scottish Gaelic", "alpha2": "gd", "alpha3-b": "gla"},{"English": "Irish", "alpha2": "ga", "alpha3-b": "gle"},{"English": "Galician", "alpha2": "gl", "alpha3-b": "glg"},{"English": "Manx", "alpha2": "gv", "alpha3-b": "glv"},{"English": "Greek, Modern (1453-)", "alpha2": "el", "alpha3-b": "gre"},{"English": "Guarani", "alpha2": "gn", "alpha3-b": "grn"},{"English": "Gujarati", "alpha2": "gu", "alpha3-b": "guj"},{"English": "Haitian; Haitian Creole", "alpha2": "ht", "alpha3-b": "hat"},{"English": "Hausa", "alpha2": "ha", "alpha3-b": "hau"},{"English": "Hebrew", "alpha2": "he", "alpha3-b": "heb"},{"English": "Herero", "alpha2": "hz", "alpha3-b": "her"},{"English": "Hindi", "alpha2": "hi", "alpha3-b": "hin"},{"English": "Hiri Motu", "alpha2": "ho", "alpha3-b": "hmo"},{"English": "Croatian", "alpha2": "hr", "alpha3-b": "hrv"},{"English": "Hungarian", "alpha2": "hu", "alpha3-b": "hun"},{"English": "Igbo", "alpha2": "ig", "alpha3-b": "ibo"},{"English": "Icelandic", "alpha2": "is", "alpha3-b": "ice"},{"English": "Ido", "alpha2": "io", "alpha3-b": "ido"},{"English": "Sichuan Yi; Nuosu", "alpha2": "ii", "alpha3-b": "iii"},{"English": "Inuktitut", "alpha2": "iu", "alpha3-b": "iku"},{"English": "Interlingue; Occidental", "alpha2": "ie", "alpha3-b": "ile"},{"English": "Interlingua (International Auxiliary Language Association)", "alpha2": "ia", "alpha3-b": "ina"},{"English": "Indonesian", "alpha2": "id", "alpha3-b": "ind"},{"English": "Inupiaq", "alpha2": "ik", "alpha3-b": "ipk"},{"English": "Italian", "alpha2": "it", "alpha3-b": "ita"},{"English": "Javanese", "alpha2": "jv", "alpha3-b": "jav"},{"English": "Japanese", "alpha2": "ja", "alpha3-b": "jpn"},{"English": "Kalaallisut; Greenlandic", "alpha2": "kl", "alpha3-b": "kal"},{"English": "Kannada", "alpha2": "kn", "alpha3-b": "kan"},{"English": "Kashmiri", "alpha2": "ks", "alpha3-b": "kas"},{"English": "Kanuri", "alpha2": "kr", "alpha3-b": "kau"},{"English": "Kazakh", "alpha2": "kk", "alpha3-b": "kaz"},{"English": "Central Khmer", "alpha2": "km", "alpha3-b": "khm"},{"English": "Kikuyu; Gikuyu", "alpha2": "ki", "alpha3-b": "kik"},{"English": "Kinyarwanda", "alpha2": "rw", "alpha3-b": "kin"},{"English": "Kirghiz; Kyrgyz", "alpha2": "ky", "alpha3-b": "kir"},{"English": "Komi", "alpha2": "kv", "alpha3-b": "kom"},{"English": "Kongo", "alpha2": "kg", "alpha3-b": "kon"},{"English": "Korean", "alpha2": "ko", "alpha3-b": "kor"},{"English": "Kuanyama; Kwanyama", "alpha2": "kj", "alpha3-b": "kua"},{"English": "Kurdish", "alpha2": "ku", "alpha3-b": "kur"},{"English": "Lao", "alpha2": "lo", "alpha3-b": "lao"},{"English": "Latin", "alpha2": "la", "alpha3-b": "lat"},{"English": "Latvian", "alpha2": "lv", "alpha3-b": "lav"},{"English": "Limburgan; Limburger; Limburgish", "alpha2": "li", "alpha3-b": "lim"},{"English": "Lingala", "alpha2": "ln", "alpha3-b": "lin"},{"English": "Lithuanian", "alpha2": "lt", "alpha3-b": "lit"},{"English": "Luxembourgish; Letzeburgesch", "alpha2": "lb", "alpha3-b": "ltz"},{"English": "Luba-Katanga", "alpha2": "lu", "alpha3-b": "lub"},{"English": "Ganda", "alpha2": "lg", "alpha3-b": "lug"},{"English": "Macedonian", "alpha2": "mk", "alpha3-b": "mac"},{"English": "Marshallese", "alpha2": "mh", "alpha3-b": "mah"},{"English": "Malayalam", "alpha2": "ml", "alpha3-b": "mal"},{"English": "Maori", "alpha2": "mi", "alpha3-b": "mao"},{"English": "Marathi", "alpha2": "mr", "alpha3-b": "mar"},{"English": "Malay", "alpha2": "ms", "alpha3-b": "may"},{"English": "Malagasy", "alpha2": "mg", "alpha3-b": "mlg"},{"English": "Maltese", "alpha2": "mt", "alpha3-b": "mlt"},{"English": "Mongolian", "alpha2": "mn", "alpha3-b": "mon"},{"English": "Nauru", "alpha2": "na", "alpha3-b": "nau"},{"English": "Navajo; Navaho", "alpha2": "nv", "alpha3-b": "nav"},{"English": "Ndebele, South; South Ndebele", "alpha2": "nr", "alpha3-b": "nbl"},{"English": "Ndebele, North; North Ndebele", "alpha2": "nd", "alpha3-b": "nde"},{"English": "Ndonga", "alpha2": "ng", "alpha3-b": "ndo"},{"English": "Nepali", "alpha2": "ne", "alpha3-b": "nep"},{"English": "Norwegian Nynorsk; Nynorsk, Norwegian", "alpha2": "nn", "alpha3-b": "nno"},{"English": "Bokm\u00e5l, Norwegian; Norwegian Bokm\u00e5l", "alpha2": "nb", "alpha3-b": "nob"},{"English": "Norwegian", "alpha2": "no", "alpha3-b": "nor"},{"English": "Chichewa; Chewa; Nyanja", "alpha2": "ny", "alpha3-b": "nya"},{"English": "Occitan (post 1500); Proven\u00e7al", "alpha2": "oc", "alpha3-b": "oci"},{"English": "Ojibwa", "alpha2": "oj", "alpha3-b": "oji"},{"English": "Oriya", "alpha2": "or", "alpha3-b": "ori"},{"English": "Oromo", "alpha2": "om", "alpha3-b": "orm"},{"English": "Ossetian; Ossetic", "alpha2": "os", "alpha3-b": "oss"},{"English": "Panjabi; Punjabi", "alpha2": "pa", "alpha3-b": "pan"},{"English": "Persian", "alpha2": "fa", "alpha3-b": "per"},{"English": "Pali", "alpha2": "pi", "alpha3-b": "pli"},{"English": "Polish", "alpha2": "pl", "alpha3-b": "pol"},{"English": "Portuguese", "alpha2": "pt", "alpha3-b": "por"},{"English": "Pushto; Pashto", "alpha2": "ps", "alpha3-b": "pus"},{"English": "Quechua", "alpha2": "qu", "alpha3-b": "que"},{"English": "Romansh", "alpha2": "rm", "alpha3-b": "roh"},{"English": "Romanian; Moldavian; Moldovan", "alpha2": "ro", "alpha3-b": "rum"},{"English": "Rundi", "alpha2": "rn", "alpha3-b": "run"},{"English": "Russian", "alpha2": "ru", "alpha3-b": "rus"},{"English": "Sango", "alpha2": "sg", "alpha3-b": "sag"},{"English": "Sanskrit", "alpha2": "sa", "alpha3-b": "san"},{"English": "Sinhala; Sinhalese", "alpha2": "si", "alpha3-b": "sin"},{"English": "Slovak", "alpha2": "sk", "alpha3-b": "slo"},{"English": "Slovenian", "alpha2": "sl", "alpha3-b": "slv"},{"English": "Northern Sami", "alpha2": "se", "alpha3-b": "sme"},{"English": "Samoan", "alpha2": "sm", "alpha3-b": "smo"},{"English": "Shona", "alpha2": "sn", "alpha3-b": "sna"},{"English": "Sindhi", "alpha2": "sd", "alpha3-b": "snd"},{"English": "Somali", "alpha2": "so", "alpha3-b": "som"},{"English": "Sotho, Southern", "alpha2": "st", "alpha3-b": "sot"},{"English": "Spanish; Castilian", "alpha2": "es", "alpha3-b": "spa"},{"English": "Sardinian", "alpha2": "sc", "alpha3-b": "srd"},{"English": "Serbian", "alpha2": "sr", "alpha3-b": "srp"},{"English": "Swati", "alpha2": "ss", "alpha3-b": "ssw"},{"English": "Sundanese", "alpha2": "su", "alpha3-b": "sun"},{"English": "Swahili", "alpha2": "sw", "alpha3-b": "swa"},{"English": "Swedish", "alpha2": "sv", "alpha3-b": "swe"},{"English": "Tahitian", "alpha2": "ty", "alpha3-b": "tah"},{"English": "Tamil", "alpha2": "ta", "alpha3-b": "tam"},{"English": "Tatar", "alpha2": "tt", "alpha3-b": "tat"},{"English": "Telugu", "alpha2": "te", "alpha3-b": "tel"},{"English": "Tajik", "alpha2": "tg", "alpha3-b": "tgk"},{"English": "Tagalog", "alpha2": "tl", "alpha3-b": "tgl"},{"English": "Thai", "alpha2": "th", "alpha3-b": "tha"},{"English": "Tibetan", "alpha2": "bo", "alpha3-b": "tib"},{"English": "Tigrinya", "alpha2": "ti", "alpha3-b": "tir"},{"English": "Tonga (Tonga Islands)", "alpha2": "to", "alpha3-b": "ton"},{"English": "Tswana", "alpha2": "tn", "alpha3-b": "tsn"},{"English": "Tsonga", "alpha2": "ts", "alpha3-b": "tso"},{"English": "Turkmen", "alpha2": "tk", "alpha3-b": "tuk"},{"English": "Turkish", "alpha2": "tr", "alpha3-b": "tur"},{"English": "Twi", "alpha2": "tw", "alpha3-b": "twi"},{"English": "Uighur; Uyghur", "alpha2": "ug", "alpha3-b": "uig"},{"English": "Ukrainian", "alpha2": "uk", "alpha3-b": "ukr"},{"English": "Urdu", "alpha2": "ur", "alpha3-b": "urd"},{"English": "Uzbek", "alpha2": "uz", "alpha3-b": "uzb"},{"English": "Venda", "alpha2": "ve", "alpha3-b": "ven"},{"English": "Vietnamese", "alpha2": "vi", "alpha3-b": "vie"},{"English": "Volap\u00fck", "alpha2": "vo", "alpha3-b": "vol"},{"English": "Welsh", "alpha2": "cy", "alpha3-b": "wel"},{"English": "Walloon", "alpha2": "wa", "alpha3-b": "wln"},{"English": "Wolof", "alpha2": "wo", "alpha3-b": "wol"},{"English": "Xhosa", "alpha2": "xh", "alpha3-b": "xho"},{"English": "Yiddish", "alpha2": "yi", "alpha3-b": "yid"},{"English": "Yoruba", "alpha2": "yo", "alpha3-b": "yor"},{"English": "Zhuang; Chuang", "alpha2": "za", "alpha3-b": "zha"},{"English": "Zulu", "alpha2": "zu", "alpha3-b": "zul"}]`);
+        const map = new Map();
+        const reversemap = new Map();
+
+        getLangInfos.data = data.map((entry, index) => {
+            let newentry = {
+                lang: entry.English,
+                langword: entry.English.replace(/^([\w\-]+).*$/, '$1'),
+                codes: [entry.alpha2, entry["alpha3-b"]]
+            };
+            map.set(entry.alpha2, newentry);
+            map.set(entry["alpha3-b"], newentry);
+            reversemap.set(entry.English.toLowerCase(), newentry);
+            return newentry;
+        }).sort((a, b) => a.langword.localeCompare(b.langword));
+
+        getLangInfos.map = map;
+        getLangInfos.reverse = reversemap;
+
+
+
+        return getLangInfos;
+    })();
 
 
     /**
@@ -821,59 +966,18 @@ const
         };
     }
 
-    /**
-     * ISO Language Codes (639-1 and 693-2) and IETF Language Types
-     * language-codes-3b2
-     * @link https://datahub.io/core/language-codes
-     * @link https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/gmutils.min.js
-     */
-    const isoCode = gmtools.isoCode = (() => {
-
-        /**
-         * Get Langage infos using langcode
-         * @param {string} langcode
-         * @returns {Object}
-         */
-        function getLangInfos(langcode){
-            let result = {
-                lang: "Undetermined",
-                codes: ["und", "und"]
-            };
-            if (typeof langcode === s && langcode.length > 0) {
-                if (langcode.length > 1 && langcode.length < 4) result = getLangInfos.map.get(langcode.toLowerCase()) || result;
-                else result = getLangInfos.reverse.get(langcode.toLowerCase()) || result;
-            }
-            return result;
-        }
-
-        const data = JSON.parse(`[{"English": "Serbo-Croatian", "alpha2": "sh", "alpha3-b": "hbs"},{"English": "Afar", "alpha2": "aa", "alpha3-b": "aar"},{"English": "Abkhazian", "alpha2": "ab", "alpha3-b": "abk"},{"English": "Afrikaans", "alpha2": "af", "alpha3-b": "afr"},{"English": "Akan", "alpha2": "ak", "alpha3-b": "aka"},{"English": "Albanian", "alpha2": "sq", "alpha3-b": "alb"},{"English": "Amharic", "alpha2": "am", "alpha3-b": "amh"},{"English": "Arabic", "alpha2": "ar", "alpha3-b": "ara"},{"English": "Aragonese", "alpha2": "an", "alpha3-b": "arg"},{"English": "Armenian", "alpha2": "hy", "alpha3-b": "arm"},{"English": "Assamese", "alpha2": "as", "alpha3-b": "asm"},{"English": "Avaric", "alpha2": "av", "alpha3-b": "ava"},{"English": "Avestan", "alpha2": "ae", "alpha3-b": "ave"},{"English": "Aymara", "alpha2": "ay", "alpha3-b": "aym"},{"English": "Azerbaijani", "alpha2": "az", "alpha3-b": "aze"},{"English": "Bashkir", "alpha2": "ba", "alpha3-b": "bak"},{"English": "Bambara", "alpha2": "bm", "alpha3-b": "bam"},{"English": "Basque", "alpha2": "eu", "alpha3-b": "baq"},{"English": "Belarusian", "alpha2": "be", "alpha3-b": "bel"},{"English": "Bengali", "alpha2": "bn", "alpha3-b": "ben"},{"English": "Bihari languages", "alpha2": "bh", "alpha3-b": "bih"},{"English": "Bislama", "alpha2": "bi", "alpha3-b": "bis"},{"English": "Bosnian", "alpha2": "bs", "alpha3-b": "bos"},{"English": "Breton", "alpha2": "br", "alpha3-b": "bre"},{"English": "Bulgarian", "alpha2": "bg", "alpha3-b": "bul"},{"English": "Burmese", "alpha2": "my", "alpha3-b": "bur"},{"English": "Catalan; Valencian", "alpha2": "ca", "alpha3-b": "cat"},{"English": "Chamorro", "alpha2": "ch", "alpha3-b": "cha"},{"English": "Chechen", "alpha2": "ce", "alpha3-b": "che"},{"English": "Chinese", "alpha2": "zh", "alpha3-b": "chi"},{"English": "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic", "alpha2": "cu", "alpha3-b": "chu"},{"English": "Chuvash", "alpha2": "cv", "alpha3-b": "chv"},{"English": "Cornish", "alpha2": "kw", "alpha3-b": "cor"},{"English": "Corsican", "alpha2": "co", "alpha3-b": "cos"},{"English": "Cree", "alpha2": "cr", "alpha3-b": "cre"},{"English": "Czech", "alpha2": "cs", "alpha3-b": "cze"},{"English": "Danish", "alpha2": "da", "alpha3-b": "dan"},{"English": "Divehi; Dhivehi; Maldivian", "alpha2": "dv", "alpha3-b": "div"},{"English": "Dutch; Flemish", "alpha2": "nl", "alpha3-b": "dut"},{"English": "Dzongkha", "alpha2": "dz", "alpha3-b": "dzo"},{"English": "English", "alpha2": "en", "alpha3-b": "eng"},{"English": "Esperanto", "alpha2": "eo", "alpha3-b": "epo"},{"English": "Estonian", "alpha2": "et", "alpha3-b": "est"},{"English": "Ewe", "alpha2": "ee", "alpha3-b": "ewe"},{"English": "Faroese", "alpha2": "fo", "alpha3-b": "fao"},{"English": "Fijian", "alpha2": "fj", "alpha3-b": "fij"},{"English": "Finnish", "alpha2": "fi", "alpha3-b": "fin"},{"English": "French", "alpha2": "fr", "alpha3-b": "fre"},{"English": "Western Frisian", "alpha2": "fy", "alpha3-b": "fry"},{"English": "Fulah", "alpha2": "ff", "alpha3-b": "ful"},{"English": "Georgian", "alpha2": "ka", "alpha3-b": "geo"},{"English": "German", "alpha2": "de", "alpha3-b": "ger"},{"English": "Gaelic; Scottish Gaelic", "alpha2": "gd", "alpha3-b": "gla"},{"English": "Irish", "alpha2": "ga", "alpha3-b": "gle"},{"English": "Galician", "alpha2": "gl", "alpha3-b": "glg"},{"English": "Manx", "alpha2": "gv", "alpha3-b": "glv"},{"English": "Greek, Modern (1453-)", "alpha2": "el", "alpha3-b": "gre"},{"English": "Guarani", "alpha2": "gn", "alpha3-b": "grn"},{"English": "Gujarati", "alpha2": "gu", "alpha3-b": "guj"},{"English": "Haitian; Haitian Creole", "alpha2": "ht", "alpha3-b": "hat"},{"English": "Hausa", "alpha2": "ha", "alpha3-b": "hau"},{"English": "Hebrew", "alpha2": "he", "alpha3-b": "heb"},{"English": "Herero", "alpha2": "hz", "alpha3-b": "her"},{"English": "Hindi", "alpha2": "hi", "alpha3-b": "hin"},{"English": "Hiri Motu", "alpha2": "ho", "alpha3-b": "hmo"},{"English": "Croatian", "alpha2": "hr", "alpha3-b": "hrv"},{"English": "Hungarian", "alpha2": "hu", "alpha3-b": "hun"},{"English": "Igbo", "alpha2": "ig", "alpha3-b": "ibo"},{"English": "Icelandic", "alpha2": "is", "alpha3-b": "ice"},{"English": "Ido", "alpha2": "io", "alpha3-b": "ido"},{"English": "Sichuan Yi; Nuosu", "alpha2": "ii", "alpha3-b": "iii"},{"English": "Inuktitut", "alpha2": "iu", "alpha3-b": "iku"},{"English": "Interlingue; Occidental", "alpha2": "ie", "alpha3-b": "ile"},{"English": "Interlingua (International Auxiliary Language Association)", "alpha2": "ia", "alpha3-b": "ina"},{"English": "Indonesian", "alpha2": "id", "alpha3-b": "ind"},{"English": "Inupiaq", "alpha2": "ik", "alpha3-b": "ipk"},{"English": "Italian", "alpha2": "it", "alpha3-b": "ita"},{"English": "Javanese", "alpha2": "jv", "alpha3-b": "jav"},{"English": "Japanese", "alpha2": "ja", "alpha3-b": "jpn"},{"English": "Kalaallisut; Greenlandic", "alpha2": "kl", "alpha3-b": "kal"},{"English": "Kannada", "alpha2": "kn", "alpha3-b": "kan"},{"English": "Kashmiri", "alpha2": "ks", "alpha3-b": "kas"},{"English": "Kanuri", "alpha2": "kr", "alpha3-b": "kau"},{"English": "Kazakh", "alpha2": "kk", "alpha3-b": "kaz"},{"English": "Central Khmer", "alpha2": "km", "alpha3-b": "khm"},{"English": "Kikuyu; Gikuyu", "alpha2": "ki", "alpha3-b": "kik"},{"English": "Kinyarwanda", "alpha2": "rw", "alpha3-b": "kin"},{"English": "Kirghiz; Kyrgyz", "alpha2": "ky", "alpha3-b": "kir"},{"English": "Komi", "alpha2": "kv", "alpha3-b": "kom"},{"English": "Kongo", "alpha2": "kg", "alpha3-b": "kon"},{"English": "Korean", "alpha2": "ko", "alpha3-b": "kor"},{"English": "Kuanyama; Kwanyama", "alpha2": "kj", "alpha3-b": "kua"},{"English": "Kurdish", "alpha2": "ku", "alpha3-b": "kur"},{"English": "Lao", "alpha2": "lo", "alpha3-b": "lao"},{"English": "Latin", "alpha2": "la", "alpha3-b": "lat"},{"English": "Latvian", "alpha2": "lv", "alpha3-b": "lav"},{"English": "Limburgan; Limburger; Limburgish", "alpha2": "li", "alpha3-b": "lim"},{"English": "Lingala", "alpha2": "ln", "alpha3-b": "lin"},{"English": "Lithuanian", "alpha2": "lt", "alpha3-b": "lit"},{"English": "Luxembourgish; Letzeburgesch", "alpha2": "lb", "alpha3-b": "ltz"},{"English": "Luba-Katanga", "alpha2": "lu", "alpha3-b": "lub"},{"English": "Ganda", "alpha2": "lg", "alpha3-b": "lug"},{"English": "Macedonian", "alpha2": "mk", "alpha3-b": "mac"},{"English": "Marshallese", "alpha2": "mh", "alpha3-b": "mah"},{"English": "Malayalam", "alpha2": "ml", "alpha3-b": "mal"},{"English": "Maori", "alpha2": "mi", "alpha3-b": "mao"},{"English": "Marathi", "alpha2": "mr", "alpha3-b": "mar"},{"English": "Malay", "alpha2": "ms", "alpha3-b": "may"},{"English": "Malagasy", "alpha2": "mg", "alpha3-b": "mlg"},{"English": "Maltese", "alpha2": "mt", "alpha3-b": "mlt"},{"English": "Mongolian", "alpha2": "mn", "alpha3-b": "mon"},{"English": "Nauru", "alpha2": "na", "alpha3-b": "nau"},{"English": "Navajo; Navaho", "alpha2": "nv", "alpha3-b": "nav"},{"English": "Ndebele, South; South Ndebele", "alpha2": "nr", "alpha3-b": "nbl"},{"English": "Ndebele, North; North Ndebele", "alpha2": "nd", "alpha3-b": "nde"},{"English": "Ndonga", "alpha2": "ng", "alpha3-b": "ndo"},{"English": "Nepali", "alpha2": "ne", "alpha3-b": "nep"},{"English": "Norwegian Nynorsk; Nynorsk, Norwegian", "alpha2": "nn", "alpha3-b": "nno"},{"English": "Bokm\u00e5l, Norwegian; Norwegian Bokm\u00e5l", "alpha2": "nb", "alpha3-b": "nob"},{"English": "Norwegian", "alpha2": "no", "alpha3-b": "nor"},{"English": "Chichewa; Chewa; Nyanja", "alpha2": "ny", "alpha3-b": "nya"},{"English": "Occitan (post 1500); Proven\u00e7al", "alpha2": "oc", "alpha3-b": "oci"},{"English": "Ojibwa", "alpha2": "oj", "alpha3-b": "oji"},{"English": "Oriya", "alpha2": "or", "alpha3-b": "ori"},{"English": "Oromo", "alpha2": "om", "alpha3-b": "orm"},{"English": "Ossetian; Ossetic", "alpha2": "os", "alpha3-b": "oss"},{"English": "Panjabi; Punjabi", "alpha2": "pa", "alpha3-b": "pan"},{"English": "Persian", "alpha2": "fa", "alpha3-b": "per"},{"English": "Pali", "alpha2": "pi", "alpha3-b": "pli"},{"English": "Polish", "alpha2": "pl", "alpha3-b": "pol"},{"English": "Portuguese", "alpha2": "pt", "alpha3-b": "por"},{"English": "Pushto; Pashto", "alpha2": "ps", "alpha3-b": "pus"},{"English": "Quechua", "alpha2": "qu", "alpha3-b": "que"},{"English": "Romansh", "alpha2": "rm", "alpha3-b": "roh"},{"English": "Romanian; Moldavian; Moldovan", "alpha2": "ro", "alpha3-b": "rum"},{"English": "Rundi", "alpha2": "rn", "alpha3-b": "run"},{"English": "Russian", "alpha2": "ru", "alpha3-b": "rus"},{"English": "Sango", "alpha2": "sg", "alpha3-b": "sag"},{"English": "Sanskrit", "alpha2": "sa", "alpha3-b": "san"},{"English": "Sinhala; Sinhalese", "alpha2": "si", "alpha3-b": "sin"},{"English": "Slovak", "alpha2": "sk", "alpha3-b": "slo"},{"English": "Slovenian", "alpha2": "sl", "alpha3-b": "slv"},{"English": "Northern Sami", "alpha2": "se", "alpha3-b": "sme"},{"English": "Samoan", "alpha2": "sm", "alpha3-b": "smo"},{"English": "Shona", "alpha2": "sn", "alpha3-b": "sna"},{"English": "Sindhi", "alpha2": "sd", "alpha3-b": "snd"},{"English": "Somali", "alpha2": "so", "alpha3-b": "som"},{"English": "Sotho, Southern", "alpha2": "st", "alpha3-b": "sot"},{"English": "Spanish; Castilian", "alpha2": "es", "alpha3-b": "spa"},{"English": "Sardinian", "alpha2": "sc", "alpha3-b": "srd"},{"English": "Serbian", "alpha2": "sr", "alpha3-b": "srp"},{"English": "Swati", "alpha2": "ss", "alpha3-b": "ssw"},{"English": "Sundanese", "alpha2": "su", "alpha3-b": "sun"},{"English": "Swahili", "alpha2": "sw", "alpha3-b": "swa"},{"English": "Swedish", "alpha2": "sv", "alpha3-b": "swe"},{"English": "Tahitian", "alpha2": "ty", "alpha3-b": "tah"},{"English": "Tamil", "alpha2": "ta", "alpha3-b": "tam"},{"English": "Tatar", "alpha2": "tt", "alpha3-b": "tat"},{"English": "Telugu", "alpha2": "te", "alpha3-b": "tel"},{"English": "Tajik", "alpha2": "tg", "alpha3-b": "tgk"},{"English": "Tagalog", "alpha2": "tl", "alpha3-b": "tgl"},{"English": "Thai", "alpha2": "th", "alpha3-b": "tha"},{"English": "Tibetan", "alpha2": "bo", "alpha3-b": "tib"},{"English": "Tigrinya", "alpha2": "ti", "alpha3-b": "tir"},{"English": "Tonga (Tonga Islands)", "alpha2": "to", "alpha3-b": "ton"},{"English": "Tswana", "alpha2": "tn", "alpha3-b": "tsn"},{"English": "Tsonga", "alpha2": "ts", "alpha3-b": "tso"},{"English": "Turkmen", "alpha2": "tk", "alpha3-b": "tuk"},{"English": "Turkish", "alpha2": "tr", "alpha3-b": "tur"},{"English": "Twi", "alpha2": "tw", "alpha3-b": "twi"},{"English": "Uighur; Uyghur", "alpha2": "ug", "alpha3-b": "uig"},{"English": "Ukrainian", "alpha2": "uk", "alpha3-b": "ukr"},{"English": "Urdu", "alpha2": "ur", "alpha3-b": "urd"},{"English": "Uzbek", "alpha2": "uz", "alpha3-b": "uzb"},{"English": "Venda", "alpha2": "ve", "alpha3-b": "ven"},{"English": "Vietnamese", "alpha2": "vi", "alpha3-b": "vie"},{"English": "Volap\u00fck", "alpha2": "vo", "alpha3-b": "vol"},{"English": "Welsh", "alpha2": "cy", "alpha3-b": "wel"},{"English": "Walloon", "alpha2": "wa", "alpha3-b": "wln"},{"English": "Wolof", "alpha2": "wo", "alpha3-b": "wol"},{"English": "Xhosa", "alpha2": "xh", "alpha3-b": "xho"},{"English": "Yiddish", "alpha2": "yi", "alpha3-b": "yid"},{"English": "Yoruba", "alpha2": "yo", "alpha3-b": "yor"},{"English": "Zhuang; Chuang", "alpha2": "za", "alpha3-b": "zha"},{"English": "Zulu", "alpha2": "zu", "alpha3-b": "zul"}]`);
-        const map = new Map();
-        const reversemap = new Map();
-
-        getLangInfos.data = data.map((entry, index) => {
-            let newentry = {
-                lang: entry.English,
-                langword: entry.English.replace(/^([\w\-]+).*$/, '$1'),
-                codes: [entry.alpha2, entry["alpha3-b"]]
-            };
-            map.set(entry.alpha2, newentry);
-            map.set(entry["alpha3-b"], newentry);
-            reversemap.set(entry.English.toLowerCase(), newentry);
-            return newentry;
-        }).sort((a, b) => a.langword.localeCompare(b.langword));
-
-        getLangInfos.map = map;
-        getLangInfos.reverse = reversemap;
 
 
-
-        return getLangInfos;
-    })();
-
-    return gmtools;
-}, window));
-
-/*
+    return {
+        isPlainObject, on, uniqid, trigger, Events, gmTimer,
+        html2element, html2doc, copyToClipboard, Text2File,
+        addcss, addstyle, loadjs, addscript, loadcss,
+        isValidUrl, getURL, sanitizeFileName,
+        s, b, f, o, u, n, gettype, Interface,
+        second, minute, hour, day, week, year, month,
+        GMinfo, scriptname, UUID
+    };
+}));/*
  * JavaScript MD5
  * https://github.com/blueimp/JavaScript-MD5
  *
@@ -895,7 +999,7 @@ const
 /* global define */
 
 /* eslint-disable strict */
-
+/*jshint ignore:start */
 ;(function ($) {
     'use strict';
 
@@ -1275,37 +1379,73 @@ const
         $.md5 = md5;
   }
 })(this);
-/**
- * gmdata Module
+/*jshint ignore:end *//**
+ * Module gmData
  */
-
 (function(root, factory){
-    const deps = ["gmtools", "md5"]; //your dependencies there
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmdata = factory(...deps.map(dep => root[dep]));
-}(this, function(gmtools, md5, undef){
+    /* globals define, require, module, self */
+    const dependencies = ["gmtools", "md5"];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmData"] = factory(...dependencies.map(dep => require(dep))); /*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(gmtools, md5, undef){
 
 
-    const {isPlainObject, isValidUrl, getURL, addstyle, addscript} = gmtools;
+
+    const {
+        isPlainObject, isValidUrl, getURL, addstyle, addscript,
+        f, s, u, n, minute, UUID, gettype, Interface
+    } = gmtools;
 
 
     /**
      * DataStore Interface
      * @type {Class}
      */
-    class DataStore {
-        constructor(){
-            if (!(["get", "set", "has", "remove", "clear"].every(x => typeof this[x] === f))) {
-                throw new Error("DataStore Interface Error : Missing Methods.");
-            }
-            Object.defineProperty(this, '_isDataStore', {
-                value: true,
-                configurable: true
-            });
-        }
+    class DataStore extends Interface {
+        /**
+         * Gets a value from the storage
+         * @param {string|undefined} key if not using key all the storage will be returned
+         * @returns {any}
+         */
+        get(key){}
+        /**
+         * Adds a value to the storage
+         * @param {string|Object} key storage key or key/value pair
+         * @param {any} [val]
+         * @returns {DataStore}
+         */
+        set(key, val){}
+        /**
+         * Checks if storage has a value for the given key
+         * @param {string} key
+         * @returns {Boolean}
+         */
+        has(key){}
+        /**
+         * Remove a value from the storage
+         * @param {string} key
+         * @returns {DataStore}
+         */
+        remove(key){}
+        /**
+         * Empty the storage
+         * @returns {DataStore}
+         */
+        clear(){}
     }
-
 
     /**
      * Store data into an Object
@@ -1316,44 +1456,35 @@ const
 
         constructor(storage){
             super();
-            Object.defineProperty(this, '_storage', {
+            Object.defineProperty(this, 'storage', {
                 value: {}, enumerable: false,
                 configurable: true, writable: true
             });
         }
-
         get(key){
-            let retval, sval;
-            if (typeof key === s) retval = this._storage[key];
-            else if (typeof key === u) retval = Object.assign({}, this._storage);//clone
+            let retval;
+            if (typeof key === s) retval = this.storage[key];
+            else if (typeof key === u) retval = Object.assign({}, this.storage);
             return retval;
-
         }
         set(key, val){
-            if (typeof key === s && typeof val !== u) this._storage[key] = val;
-            else if (isPlainObject(key)) Object.assign(this._storage, key);
+            if (typeof key === s && typeof val !== u) this.storage[key] = val;
+            else if (isPlainObject(key)) Object.assign(this.storage, key);
             return this;
-
         }
         has(key){
-            return typeof this._storage[key] !== u;
-
+            return typeof this.storage.hasOwnProperty(key);
         }
         remove(key){
-            delete this._storage[key];
+            delete this.storage[key];
             return this;
         }
         clear(){
-            this._storage = {};
+            this.storage = {};
             return this;
         }
 
     }
-
-
-
-
-
 
 
 
@@ -1370,17 +1501,16 @@ const
             if (!(storage instanceof Storage)) {
                 throw new Error('xStore : argument not instance of Storage');
             }
-            Object.defineProperty(this, '_storage', {
-                value: storage,
-                configurable: true
+            Object.defineProperty(this, 'storage', {
+                value: storage, configurable: true,
+                enumerable: false, writable: false
             });
         }
 
         get(key){
             let retval, sval;
-            //get one
             if (typeof key === s) {
-                if ((sval = this._storage.getItem(key)) !== null) {
+                if ((sval = this.storage.getItem(key)) !== null) {
                     try {
                         retval = JSON.parse(sval);
                     } catch (e) {
@@ -1390,8 +1520,8 @@ const
             } else if (typeof key === u) {
                 //get all
                 retval = {};
-                for (let i = 0; i < this._storage.length; i++) {
-                    key = this._storage.key(i);
+                for (let i = 0; i < this.storage.length; i++) {
+                    key = this.storage.key(i);
                     retval[key] = this.get(key);
                 }
             }
@@ -1408,143 +1538,69 @@ const
                         val = sval;
                     }
                 }
-                this._storage.setItem(key, val);
+                this.storage.setItem(key, val);
 
-            } else if (isPlainObject(key)) {
-                Object.keys(key).forEach((k) => {
-                    this.set(k, key[k]);
-                });
-            }
+            } else if (isPlainObject(key)) Object.keys(key).forEach(k => this.set(k, key[k]));
             return this;
-
         }
         has(key){
-            return typeof this.get(key) !== u;
-
+            return this.storage.hasOwnProperty(key);
         }
         remove(key){
-            if (typeof key === s) {
-                key = key.split(' ');
-            }
-            if (Array.isArray(key)) {
-                key.forEach((k) => {
-                    this._storage.removeItem(k);
-                });
-            }
+            if (typeof key === s) this.storage.removeItem(key);
             return this;
         }
         clear(){
-            this._storage.clear();
+            this.storage.clear();
             return this;
         }
 
     }
 
 
-    /* jshint -W117 */
     /**
      * Store data into GreaseMonkey 3 or Tampermonkey
      * @type {Class}
      * @extends {DataStore}
      */
     class gmStore extends DataStore {
-        static get available(){
-            return ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].every((fn) => {
-                /*jshint evil:true */
-                try {
-                    if (typeof (eval(fn)) === f) return true;
-                } catch (e) {
-                    return false;
-                }
-                /*jshint evil:false */
-            });
-        }
-
+        /* globals GM_getValue, GM_setValue, GM_deleteValue, GM_listValues */
         constructor(){
             super();
-
-            let disabled = [];
-            ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].forEach((fn) => {
-                /*jshint evil:true */
-                try {
-                    if (typeof (eval(fn)) !== f) disabled.push(fn);
-                } catch (e) {
-                    disabled.push(fn);
-                }
-                /*jshint evil:false */
-            });
-            if (disabled.length > 0) {
-                if (disabled.length === 4) {
-                    console.warn("gmStore disabled.");
-                    return;
-                }
-                disabled.forEach((fn) => {
-                    console.warn('gmStore cannot use', fn);
-                });
-            }
+            const errors = ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].filter(x => typeof self[x] !== f);
+            if (errors.length > 0) throw new Error('gmStore:  %s are not available.'.replace('%s', errors.join(', ')));
         }
-
-
-
         get(key){
-            let retval = undef;
-            //get one
-            if (typeof key === s) {
-                if (typeof GM_getValue === f) {
-                    retval = GM_getValue(key); // eslint-disable-line
-                }
-            } else if (typeof key === u) {
-                //get all
+            let retval;
+            if (typeof key === s) retval = GM_getValue(key);
+            else if (typeof key === u) {
                 retval = {};
-                if (typeof GM_listValues === f) {
-                    GM_listValues().forEach((key) => { // eslint-disable-line
-                        retval[key] = this.get(key);
-                    });
-                }
+                GM_listValues().forEach(key => retval[key] = this.get(key));
             }
             return retval;
 
         }
         set(key, val){
-
-            if (typeof key === s && typeof val !== u) {
-                if (typeof GM_setValue === f) {
-                    GM_setValue(key, val); // eslint-disable-line
-                }
-            } else if (isPlainObject(key)) {
-                Object.keys(key).forEach((k) => {
-                    this.set(k, key[k]);
-                });
-            }
+            if (typeof key === s && typeof val !== u) GM_setValue(key, val);
+            else if (isPlainObject(key)) Object.keys(key).forEach(k => this.set(k, key[k]));
             return this;
         }
         has(key){
-            return typeof this.get(key) !== u;
+            return GM_listValues().includes(key);
         }
         remove(key){
-            if (typeof key === s) {
-                key = key.split(' ');
-            }
-            if (Array.isArray(key)) {
-                if (typeof GM_deleteValue === f) {
-                    key.forEach((k) => {
-                        GM_deleteValue(k); // eslint-disable-line
-                    });
-                }
-            }
+            if (typeof key === s) GM_deleteValue(key);
             return this;
         }
-
         clear(){
-            Object.keys(this.get()).forEach((key) => {
-                this.remove(key);
-            });
+            GM_listValues().forEach(key => this.remove(key));
             return this;
         }
-
     }
 
-    /* jshint +W117 */
+
+
+
 
     /**
      * Injects defaults settings into gmStore
@@ -1556,13 +1612,24 @@ const
          */
         constructor(defaults){
             super();
-            if (isPlainObject(defaults)) {
-                Object.keys(defaults).forEach((x) => {
-                    if (typeof this.get(x) !== typeof defaults[x]) {
-                        this.set(x, defaults[x]);
-                    }
-                }, this);
-            }
+            defaults = isPlainObject(defaults) ? defaults : {};
+            Object.keys(defaults).forEach(key => {
+                if (gettype(this.get(key)) !== gettype(defaults[key])) {
+                    this.set(key, defaults[key]);
+                }
+                if (typeof this[key] === u) {
+                    Object.defineProperty(this, key, {
+                        configurable: true, enumerable: false,
+                        get(){
+                            return this.get(key);
+                        },
+                        set(val){
+                            if (gettype(defaults[key]) === gettype(val)) this.set(key, val);
+                        }
+                    });
+                }
+            });
+
 
         }
 
@@ -1987,10 +2054,11 @@ const
         require(){
             const
                     $this = this,
-                    prefix = 'gmloader:',
                     queue = [],
                     args = Array.from(arguments),
-                    defaults = {from: "", as: "", name: "", then: null, ttl: this.ttl},
+                    defaults = {
+                        from: "", as: "", name: "", then: null, ttl: this.ttl
+                    },
                     buildQueue = function(args){
                         let item = Object.assign({}, defaults);
                         args.forEach(arg => {
@@ -2001,8 +2069,7 @@ const
                                 if (isValidUrl(arg)) {
                                     if (item.from.length > 0) return buildQueue([arg]);
                                     item.from = arg;
-                                }
-                                else if (/^(js|css)$/.test(arg)) item.as = arg;
+                                } else if (/^(js|css)$/.test(arg)) item.as = arg;
                                 else item.name = arg;
                             } else if (isPlainObject(arg)) {
                                 if (typeof arg.from === s ? isValidUrl(arg.from) : false) item.from = arg.from;
@@ -2082,26 +2149,32 @@ const
 
     }
 
-
-
     return {
-        xStore: xStore,
-        gmStore: gmStore,
-        nullStore: nullStore,
-        UserSettings: UserSettings,
-        LSCache: LSCache,
-        gmLoader: gmLoader
+        xStore, gmStore, nullStore,
+        UserSettings, LSCache, gmLoader
     };
 }));/**
- * gmfind Module
+ * Module gmFind
  */
-
 (function(root, factory){
-    if (typeof define === 'function' && define.amd) define([], factory);
-    else if (typeof exports === 'object') module.exports = factory();
-    else root.gmfind = factory();
-}(this, function(s = "string", f = "function", n = "number", undef){
-
+    /* globals define, require, module, self, EventTarget */
+    const dependencies = [];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmFind"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(undef, s = "string", f = "function", n = "number"){
 
     const doc = document;
 
@@ -2458,35 +2531,35 @@ const
 
 
 
-
-
-
-
-
-
     return{
-        isValidSelector: isValidSelector,
-        NodeFinder: NodeFinder,
-        ResizeSensor: ResizeSensor
-
+        isValidSelector, NodeFinder, ResizeSensor
     };
-}));
-
-/**
- * gmui Module
+}));/**
+ * Module gmUI
  */
-
 (function(root, factory){
-    const deps = ["gmtools", "gmfind"]; //your dependencies there
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmui = factory(...deps.map(dep => root[dep]));
-}(this, function(gmtools, gmfind, undef){
-
+    /* globals define, require, module, self, innerWidth */
+    const dependencies = ["gmtools", "gmfind"];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmUI"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, undef){
 
     const doc = document;
     const {NodeFinder, ResizeSensor, isValidSelector} = gmfind;
-    const {trigger, isPlainObject, html2element, Events, uniqid} = gmtools;
+    const {trigger, isPlainObject, html2element, Events, uniqid, GMinfo, u, s, b, f, n} = gmtools;
 
 
     /**
@@ -3563,10 +3636,6 @@ const
     }
 
 
-
-
-
-
     return {
         gmButtons: gmButtons,
         gmDialog: gmDialog,
@@ -3576,15 +3645,29 @@ const
 }));
 
 
+
+
 /**
- * All in one Module
+ * AiO Module
  */
 (function(root, factory){
-    const deps = ['gmtools', 'md5', 'gmdata', 'gmfind', 'gmui'];
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmutils = factory(...deps.map(dep => root[dep]));
-}(this, function(...args){
+    /* globals define, require, module, self */
+    const dependencies = ['gmtools', 'md5', 'gmdata', 'gmfind', 'gmui'];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmUtils"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(...args){
     return Object.assign({version: "1.2.6"}, ...args);
 }));
-

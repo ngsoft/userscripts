@@ -20,7 +20,7 @@
 /* global define */
 
 /* eslint-disable strict */
-
+/*jshint ignore:start */
 ;(function ($) {
     'use strict';
 
@@ -400,3 +400,4 @@
         $.md5 = md5;
   }
 })(this);
+/*jshint ignore:end */
