@@ -1,18 +1,29 @@
 /**
- * gmui Module
+ * Module gmUI
  */
-
 (function(root, factory){
-    const deps = ["gmtools", "gmfind"]; //your dependencies there
-    if (typeof define === 'function' && define.amd) define(deps, factory);
-    else if (typeof exports === 'object') module.exports = factory(...deps.map(dep => require(dep)));
-    else root.gmui = factory(...deps.map(dep => root[dep]));
-}(this, function(gmtools, gmfind, undef){
-
+    /* globals define, require, module, self, innerWidth */
+    const dependencies = ["gmtools", "gmfind"];
+    if (typeof define === 'function' && define.amd) {
+        define(dependencies, factory);
+    } else if (typeof exports === 'object' && module.exports) {
+        module.exports = factory(...dependencies.map(dep => require(dep)));
+    } else {
+        root.require = root.require || function(dep){
+            let result;
+            Object.keys(Object.getOwnPropertyDescriptors(root)).some(key => {
+                if (key.toLowerCase() === dep.toLowerCase()) result = root[key];
+                return typeof result !== "undefined";
+            });
+            return result;
+        };
+        root["gmUI"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+    }
+}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, undef){
 
     const doc = document;
     const {NodeFinder, ResizeSensor, isValidSelector} = gmfind;
-    const {trigger, isPlainObject, html2element, Events, uniqid} = gmtools;
+    const {trigger, isPlainObject, html2element, Events, uniqid, GMinfo, u, s, b, f, n} = gmtools;
 
 
     /**
@@ -1089,10 +1100,6 @@
     }
 
 
-
-
-
-
     return {
         gmButtons: gmButtons,
         gmDialog: gmDialog,
@@ -1100,4 +1107,6 @@
         gmTabs: gmTabs
     };
 }));
+
+
 
