@@ -58,7 +58,6 @@
             NodeFinder(root).find('.gm-button', button => {
                 let name = button.data('name') || "";
                 if (button.data('uid') === undef) button.data('uid', uniqid());
-                else return;
                 if (button.disabled === undef) {
                     Object.defineProperty(button, 'disabled', {
                         configurable: true, enumerable: false,
@@ -68,7 +67,11 @@
                         },
                         set(flag){
                             this.setAttribute('disabled', '');
-                            if (flag === null ? true : flag === false) this.removeAttribute('disabled');
+                            this.classList.remove('disabled');
+                            if (flag === null ? true : flag === false) {
+                                this.removeAttribute('disabled');
+                                this.classList.add('disabled');
+                            }
                         }
                     });
 
@@ -379,7 +382,6 @@
 
                                 if ($this.ready === true) return;
                                 gmStyles();
-                                new gmButtons(dialog);
                                 let scroll = getScrollbarWidth();
                                 if (scroll > 0) {
                                     $this.body.style["padding-right"] = "50px";
@@ -467,6 +469,8 @@
                         if (typeof conf.events[type] === f) $this.on(eventPrefix + type, conf.events[type]);
                     });
                 }
+                //enable buttons features
+                new gmButtons(dialog);
 
                 //set body and title
                 ["body", "title"].forEach(key => $this[key] = conf[key]);

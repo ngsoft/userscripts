@@ -43,12 +43,13 @@
 
     let d = new gmDialog();
     d.body = "test";
+    d.elements.buttons.confirm.disabled = true;
     d.open().then(e => {
         console.debug(e);
     });
 
 
-
+    console.debug(d.elements.buttons.confirm.disabled, d.elements.buttons.confirm);
 
 
 
