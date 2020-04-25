@@ -59,8 +59,6 @@
                 let name = button.data('name') || "";
                 if (button.data('uid') === undef) button.data('uid', uniqid());
                 else return;
-                button.classList.add('ui', 'button');
-
                 if (button.disabled === undef) {
                     Object.defineProperty(button, 'disabled', {
                         configurable: true, enumerable: false,
@@ -184,13 +182,13 @@
         }
 
         const template =
-                `<div class="gm-overlay pure">
-                    <dialog class="gm-dialog">
+                `<div class="gm-dialog overlay pure">
+                    <dialog>
                         <header><h1></h1><span class="gm-button ui button mini" data-name="close">&times;</span></header>
                         <section></section>
                         <footer>
-                            <span class="gm-button ui basic button negative" data-name="dismiss">Cancel</span>
-                            <span class="gm-button ui basic button primary" data-name="confirm">OK</span>
+                            <span class="gm-button ui inverted button red" data-name="dismiss">Cancel</span>
+                            <span class="gm-button ui inverted button primary" data-name="confirm">OK</span>
                         </footer>
                     </dialog>
                 </div>`;
@@ -253,9 +251,9 @@
                     elements: {configurable: true, writable: false, enumerable: false, value: {
                             dialog: $this.overlay.querySelector('dialog'),
                             header: $this.overlay.querySelector('header'),
-                            title: $this.overlay.querySelector('h1'),
-                            footer: $this.overlay.querySelector('footer'),
-                            body: $this.overlay.querySelector('section'),
+                            title: $this.overlay.querySelector('dialog > header > h1'),
+                            footer: $this.overlay.querySelector('dialog > footer'),
+                            body: $this.overlay.querySelector('dialog > section'),
                             buttons: {}
                         }},
                     root: {configurable: true, writable: false, enumerable: false, value: $this.overlay.querySelector('dialog')},
@@ -342,8 +340,8 @@
                                     $this.overlay.addEventListener('click', overlay);
                                 }
 
-                                dialog.classList.remove('gm-fullscreen');
-                                if (conf.fullscreen === true) dialog.classList.add('gm-fullscreen');
+                                dialog.classList.remove('fullscreen');
+                                if (conf.fullscreen === true) dialog.classList.add('fullscreen');
 
                                 //position
                                 if (isPlainObject(conf.position)) {
@@ -356,8 +354,8 @@
                                             flag = true;
                                         }
                                     });
-                                    dialog.classList.remove('gm-screencenter');
-                                    if (conf.position.center === true ? flag === false : false) dialog.classList.add('gm-screencenter');
+                                    dialog.classList.remove('screencenter');
+                                    if (conf.position.center === true ? flag === false : false) dialog.classList.add('screencenter');
                                 }
 
                                 //dimensions
@@ -394,7 +392,7 @@
                                 $this.trigger(init);
                                 if (dialog.open === true) return;
                                 $this.status = 0;
-                                $this.container.classList.add('gm-noscroll');
+                                $this.container.classList.add('noscroll');
                                 $this.overlay.hidden = null;
                                 if (!$this.container.contains($this.overlay)) $this.container.appendChild($this.overlay);
 
@@ -437,7 +435,7 @@
                                     if (dialog === $this) return;
                                     if (dialog.container === $this.container ? dialog.isClosed === false : false) allclosed = false;
                                 });
-                                if (allclosed === true) $this.container.classList.remove('gm-noscroll');
+                                if (allclosed === true) $this.container.classList.remove('noscroll');
                                 if ($this.status === 1) $this.trigger(confirm);
                                 else $this.trigger(dismiss);
                             }
@@ -584,8 +582,8 @@
                     this.elements.body.appendChild(body);
                 }
                 //only text?
-                this.elements.body.classList.remove('gm-flex-center');
-                if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
+                this.elements.body.classList.remove('flex-center');
+                if (this.elements.body.children.length === 0) this.elements.body.classList.add('flex-center');
             }
 
         }
