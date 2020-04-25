@@ -3,7 +3,7 @@
  */
 (function(root, factory){
     /* globals define, require, module, self, innerWidth */
-    const dependencies = ["gmtools", "gmfind", "gmdata"];
+    const dependencies = ["gmtools", "gmfind", "gmdata", "gmstyles"];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -19,7 +19,7 @@
         };
         root["gmUI"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, gmdata, undef, doc = document){
+}(typeof self !== 'undefined' ? self : this, function(gmtools, gmfind, gmdata, gmStyles, undef, doc = document){
 
     const {NodeFinder, ResizeSensor, isValidSelector} = gmfind;
     const {trigger, isPlainObject, html2element, loadcss, Events, uniqid, GMinfo, u, s, b, f, n} = gmtools;
@@ -52,6 +52,7 @@
             NodeFinder(root).find('.gm-button', button => {
                 let name = button.data('name') || "";
                 if (button.data('uid') === undef) button.data('uid', uniqid());
+                button.classList.add('pure-button');
                 if (button.disabled === undef) {
                     Object.defineProperty(button, 'disabled', {
                         configurable: true, enumerable: false,
@@ -1100,24 +1101,6 @@
     }
 
 
-
-    function gmStyles(){
-
-        if (gmStyles.loaded === true) return;
-        gmStyles.loaded = true;
-        let styles = ``;
-
-        loadcss().then(e => {
-            console.debug(e);
-
-            addstyle(styles);
-
-
-        });
-
-
-
-    }
 
 
 
