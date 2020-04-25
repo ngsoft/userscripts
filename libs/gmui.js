@@ -41,6 +41,10 @@
             return result;
         }
 
+        isManaged(button){
+            return button instanceof Element && this.list.some(item => item.element === button);
+        }
+
         constructor(root){
             if (root instanceof Element === false) throw new Error('gmButtons Invalid argument root');
             Object.defineProperties(this, {
@@ -49,10 +53,14 @@
             });
             const $this = this;
 
+
+            /** Button Detection **/
             NodeFinder(root).find('.gm-button', button => {
                 let name = button.data('name') || "";
                 if (button.data('uid') === undef) button.data('uid', uniqid());
-                button.classList.add('pure-button');
+                else return;
+                button.classList.add('ui', 'button');
+
                 if (button.disabled === undef) {
                     Object.defineProperty(button, 'disabled', {
                         configurable: true, enumerable: false,
@@ -82,13 +90,14 @@
 
                 }
                 if (button.name.length === 0 ? name.length > 0 : false) button.name = name;
+
                 $this.list.push({
                     name: name,
                     element: button,
                     uid: button.data('uid')
                 });
             });
-
+            gmStyles();
 
         }
     }
@@ -177,11 +186,11 @@
         const template =
                 `<div class="gm-overlay pure">
                     <dialog class="gm-dialog">
-                        <header><h1></h1><span class="gm-button gm-rounded" data-name="close">&times;</span></header>
+                        <header><h1></h1><span class="gm-button ui button mini" data-name="close">&times;</span></header>
                         <section></section>
                         <footer>
-                            <span class="gm-button error reverse" data-name="dismiss">Cancel</span>
-                            <span class="gm-button info reverse" data-name="confirm">OK</span>
+                            <span class="gm-button ui basic button negative" data-name="dismiss">Cancel</span>
+                            <span class="gm-button ui basic button primary" data-name="confirm">OK</span>
                         </footer>
                     </dialog>
                 </div>`;
