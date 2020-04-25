@@ -67,11 +67,10 @@
                         },
                         set(flag){
                             this.setAttribute('disabled', '');
-                            this.classList.remove('disabled');
                             if (flag === null ? true : flag === false) {
                                 this.removeAttribute('disabled');
-                                this.classList.add('disabled');
-                            }
+                                this.classList.remove('disabled');
+                            }else this.classList.add('disabled');
                         }
                     });
 
