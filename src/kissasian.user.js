@@ -182,7 +182,7 @@
         #subcontent > div:not([id]),
         [id*="mgi"], [style*="fixed"], [style*="fixed"] *,
         [style*="width: 610px"], [style*="width: 610px"] *,
-        .cmpbox, body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui), body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui)
+        .cmpbox, body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui), body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui) *
         {
             position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
             height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;

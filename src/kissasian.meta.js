@@ -4,7 +4,7 @@
 // @version	1.1.4
 // @description	Kissasian, Kissanime, Kissmanga Integration
 // @author	daedelus
-// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
+// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @noframes
 // @grant	none
 // @run-at	document-body
