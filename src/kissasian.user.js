@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.1.3
+// @version      1.1.4
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @noframes
 // @grant none
 // @run-at       document-body
@@ -148,7 +148,7 @@
 
             if (self.container === null) {
                 return;
-                throw new Error("Cannot insert submenu.");
+                //throw new Error("Cannot insert submenu.");
             }
             if (self.container.querySelectorAll('a').length > 0) {
                 self.container.appendChild(doc.createTextNode("| "));
@@ -182,7 +182,7 @@
         #subcontent > div:not([id]),
         [id*="mgi"], [style*="fixed"], [style*="fixed"] *,
         [style*="width: 610px"], [style*="width: 610px"] *,
-        .cmpbox
+        .cmpbox, body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui), body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui)
         {
             position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
             height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
