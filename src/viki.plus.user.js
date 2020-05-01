@@ -1,11 +1,11 @@
 // ==UserScript==
-// @version     2.4
+// @version     2.4.1
 // @name        ViKi+
 // @description Download Subtitles on Viki
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.4/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @grant       none
 // @noframes
 //
@@ -520,15 +520,12 @@
     }
 
 
-    /**
-     * API Load data
-     */
-    let matches;
-    if ((matches = /^\/videos\/(\w+)\-/.exec(location.pathname)) !== null) {
-        let id = matches[1], api = 'https://www.viki.com/api/videos/' + id;
 
-        fetch(api, {cache: "no-store", redirect: 'follow', credentials: "same-origin"})
+    function main(api, id, version){
+        const headers = new Headers({'x-viki-app-ver': version});
+        fetch(api, {cache: "no-store", redirect: 'follow', credentials: "same-origin", headers: headers})
                 .then((r) => {
+                    console.debug(r);
                     if (r.status === 200) return r.json();
                     throw new Error("Cannot Fetch", api);
                 })
@@ -539,6 +536,34 @@
                 .catch((err) => {
                     console.warn(err);
                 });
+        
+        
+        
+        
+    }
+
+
+
+    /**
+     * API Load data
+     */
+    let matches;
+    if ((matches = /^\/videos\/(\w+)\-/.exec(location.pathname)) !== null) {
+        let id = matches[1], api = 'https://www.viki.com/api/videos/' + id, version;
+
+        NodeFinder.find('script[src*="player"]', script => {
+            let src = script.src;
+
+            if ((matches = /\-(\d+\.\d+\.\d+)\-/.exec(src)) !== null) {
+                if (version === undef) {
+                    version = matches[1];
+                    main(api, id, version)
+                }
+            }
+
+
+        });
+
 
 
     }
