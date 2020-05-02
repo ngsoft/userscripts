@@ -1,11 +1,11 @@
 // ==UserScript==
-// @version     1.1.3
+// @version     1.2
 // @name        WETV Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @grant       none
 // @noframes
 //
@@ -271,7 +271,7 @@
                 url: url
             });
             return old.call(history, state, title, url);
-        }
+        };
     })();
 
     NodeFinder.findOne(`.txp_right_controls .txp_btn[data-role*="txp-ui-control-subtitle-btn"]`, el => {
