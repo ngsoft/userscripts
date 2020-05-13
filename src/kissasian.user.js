@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.1.4
+// @version      1.1.5
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
