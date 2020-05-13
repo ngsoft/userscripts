@@ -182,7 +182,8 @@
         #subcontent > div:not([id]),
         [id*="mgi"], [style*="fixed"], [style*="fixed"] *,
         [style*="width: 610px"], [style*="width: 610px"] *,
-        .cmpbox, body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui), body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui) *
+        .cmpbox, body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui):not(.kodirpc-settings),
+        body > *:not(#footer):not(#containerRoot):not(.kodirpc-ui):not(.kodirpc-settings) *
         {
             position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
             height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
@@ -254,21 +255,19 @@
                         location.href = select.value;
                     };
                 });
-
-
-
-
-
             }
         })
-         
-         
-         
-         
      };
 
-
-
+    //KodiRPC Compat
+    NodeFinder.find('video.vjs-tech', video => {
+        console.debug(video);
+        let parent = video.closest('div[id]');
+        vjs = videojs(parent.id);
+        console.debug(vjs);
+        if (vjs.tech_ && vjs.tech_.currentSource_ && vjs.tech_.currentSource_.src) video.data('src', vjs.tech_.currentSource_.src);
+        //html2element('<video preload="none" controls tabindex="-1" src="" class="altvideo" data-src=""></video>')
+    });
 
 
 

@@ -1,13 +1,14 @@
 // ==UserScript==
-// @version	1.2.3
+// @version	1.2.4
 // @name	iQiyi Video Player
 // @description	Video Player modificatons
 // @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
-// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
+// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @require	https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js
 // @grant	none
 // @noframes
 // @include	/^https?:\/\/(www\.)?iqiyi.com\/intl\/play\//
+// @include	/^https?:\/\/(www\.)?iq.com\/play\//
 // @icon	https://www.iqiyipic.com/common/images/logo.ico
 // ==/UserScript==
