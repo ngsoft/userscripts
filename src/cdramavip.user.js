@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.6.5
+// @version      1.6.6
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -13,7 +13,7 @@
 // @run-at      document-body
 // @noframes
 //
-// @include     /^https?:\/\/(\w+\.)?(5nj|zhuijukan|16ys|duboku|fanstui)\.\w+\//
+// @include     /^https?:\/\/(\w+\.)?(5nj|zhuijukan|16ys|duboku|fanstui|newsinportal)\.\w+\//
 // @icon        https://cdn.jsdelivr.net/gh/ngsoft/userscripts/dist/altvideo.png
 // ==/UserScript==
 
@@ -864,7 +864,7 @@
                     input.value = q;
                     btn.click();
                 });
-            } else if (/(duboku|fanstui)/.test(location.host)) {
+            } else if (/(duboku|fanstui|newsinportal)/.test(location.host)) {
                 find('form#search', (form) => {
                     let input = form.querySelector('input[name="wd"]'),
                             btn = form.querySelector('button[type="submit"]');
@@ -1036,7 +1036,7 @@
             });
         });
 
-    } else if (/(duboku|fanstui)/.test(location.host) && /^\/vodplay\//.test(location.pathname) && typeof MacPlayer !== u && typeof MacPlayer.PlayUrl === s) {
+    } else if (/(duboku|fanstui|newsinportal)/.test(location.host) && /^\/vodplay\//.test(location.pathname) && typeof MacPlayer !== u && typeof MacPlayer.PlayUrl === s) {
         return find('.embed-responsive .MacPlayer', (player, obs) => {
             obs.stop();
             app = new AltVideoPlayer(player.parentElement.parentElement);
