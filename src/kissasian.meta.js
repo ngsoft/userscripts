@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name	Kissasian 2.0
 // @namespace	https://github.com/ngsoft
-// @version	1.1.5
+// @version	1.1.6
 // @description	Kissasian, Kissanime, Kissmanga Integration
 // @author	daedelus
 // @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js

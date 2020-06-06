@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.1.5
+// @version      1.1.6
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -194,6 +194,7 @@
         #headnav #navsubbar p a [type="checkbox"]{vertical-align: top; margin: 4px;}
         #headnav #navsubbar p label{cursor: pointer;}
         span.server-name:not(:empty):before{display: inline; content: ": ";}
+        body{overflow: inherit !important;}
     `);
 
 
