@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.6.6
+// @version      1.6.7
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -1041,6 +1041,7 @@
             obs.stop();
             app = new AltVideoPlayer(player.parentElement.parentElement);
             app.onReady(() => {
+                doc.querySelectorAll('[src*="/ads/"]').forEach(x => x.parentElement.remove());
                 player.parentElement.remove();
                 app.elements.root.style = "position: absolute; top: 0; height: calc(100% - 32px);";
                 app.elements.root.parentElement.style = "padding-top: 56.25%";

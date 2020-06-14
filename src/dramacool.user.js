@@ -342,6 +342,7 @@
         [class*="ads"]:not(.ads-evt), [class*="ads"]:not(.ads-evt) *,
         [id*="ScriptRoot"], [id*="ScriptRoot"] *,
         .content-right .tab .right-tab-1, .content-right [data-tab="right-tab-1"]
+        
         {
             position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
             height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
