@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.1.6
+// @version      1.1.7
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -39,16 +39,16 @@
     /**
      * Some Alterations
      */
-    find('[src*="firefox.png"]', (node) => {
+    NodeFinder.find('[src*="firefox.png"]', (node) => {
         node.parentElement.parentElement.classList.add('hidden');
     });
 
-    find('#divContentVideo, #my_video_1', (node) => {
+    NodeFinder.find('#divContentVideo, #my_video_1', (node) => {
         node.style.width = "854px";
         node.style.height = "552px";
     });
 
-    find('#rightside .rightBox .barTitle', (div) => {
+    NodeFinder.find('#rightside .rightBox .barTitle', (div) => {
         let title = div.innerText;
         if(/ads/.test(title) || /Like me/.test(title)){
             div.parentElement.classList.add('hidden');
@@ -59,7 +59,7 @@
     /**
      * Reverse Episode List
      */
-    find('.episodeList .listing', (node) => {
+    NodeFinder.find('.episodeList .listing', (node) => {
         let list = [], header = [];
         node.querySelectorAll('tr').forEach((tr) => {
             if (tr.querySelector('td') === null) header.push(tr);
@@ -73,7 +73,7 @@
     /**
      * Same for mobile
      */
-    find('.shifter-page .main ul.list', (ul) => {
+    NodeFinder.find('.shifter-page .main ul.list', (ul) => {
 
         let list = Array.from(ul.querySelectorAll('li')).map((li) => {
             li.remove();
@@ -177,7 +177,7 @@
         .bigBarContainer + div:not(.bigBarContainer),
         [id*="ads"]:not(.bigBarContainer), [id*="ads"]:not(.bigBarContainer) *,
         [id*="Ads"], [id*="Ads"] *,[class*="Ads"], [class*="Ads"] *,
-        [src*="/Ads"], [src*="/Ads"] *,
+        [src*="/Ads"]:not(#my_video_1), [src*="/Ads"] *,
         .episodeList div:not(.arrow-general) div:not([id]),
         #subcontent > div:not([id]),
         [id*="mgi"], [style*="fixed"], [style*="fixed"] *,
