@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.1.7
+// @version      1.1.8
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -19,7 +19,7 @@
     /* jshint -W018 */
     /* jshint -W083 */
 
-    if (doc.querySelector('.ray_id') !== null) {
+    if (doc.querySelector('.ray_id, #cf-wrapper') !== null) {
         return;
     }
 
