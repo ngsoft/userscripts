@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.1.9
+// @version      1.2
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -34,6 +34,9 @@
             input.value = query;
             btn.click();
         });
+    }
+    if (/kissanime/.test(url.host)) {
+        location.replace('https://animekisa.tv/');
     }
 
     /**
