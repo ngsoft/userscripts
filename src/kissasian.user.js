@@ -36,6 +36,7 @@
         });
     }
     if (/kissanime/.test(url.host)) {
+        // kissanime down permanently
         location.replace('https://animekisa.tv/');
     }
 
