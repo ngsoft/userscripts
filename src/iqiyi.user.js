@@ -1,6 +1,6 @@
 // ==UserScript==
-// @version     1.2.4
-// @name        iQiyi Video Player
+// @version     1.2.5
+// @name        iQiyi
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
@@ -10,7 +10,6 @@
 // @grant       none
 // @noframes
 //
-// @include     /^https?:\/\/(www\.)?iqiyi.com\/intl\/play\//
 // @include     /^https?:\/\/(www\.)?iq.com\/play\//
 // @icon        https://www.iqiyipic.com/common/images/logo.ico
 // ==/UserScript==
@@ -239,10 +238,6 @@
                     let prevent = false;
 
                     switch (e.keyCode) {
-                        case 32: //space
-                            prevent = true;
-                            self.trigger('video_playpause');
-                            break;
                         case 13: //Enter
                             prevent = true;
                             self.trigger('video_fullscreen');
@@ -328,36 +323,11 @@
         NodeFinder(video.parentElement).findOne(`.iqp-btn-subtitle`, el => {
             new SubtitleDownloader(el);
         });
-
-
     });
 
-
-
-    /*find({
-        selector: `.iqp-btn-subtitle`,
-        timeout: 0,
-        interval: 100,
-        onload(el){
-            new SubtitleDownloader(el);
-        }
-
-    });*/
 
     NodeFinder.findOne(`h1.intl-play-title`, el => {
         new MDLSearch(el);
     });
-    /*find({
-        selector: `h1.intl-play-title`,
-        timeout: 0,
-        interval: 100,
-        onload(el){
-            new MDLSearch(el);
-        }
-
-    });*/
-
-
-
 
 })(document);

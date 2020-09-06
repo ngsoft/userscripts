@@ -1,6 +1,6 @@
 // ==UserScript==
-// @version	1.2.4
-// @name	iQiyi Video Player
+// @version	1.2.5
+// @name	iQiyi
 // @description	Video Player modificatons
 // @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
