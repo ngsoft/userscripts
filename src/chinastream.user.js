@@ -37,6 +37,128 @@
         localStorage.setItem(UUID, GMinfo.script.version);
     })();
 
+
+    /**
+     * MDL Parser
+     */
+    class MyDramaList {
+
+        static get cors(){
+            return "https://cors-anywhere.herokuapp.com/";
+        }
+        static get endpoint(){
+            return "/search?adv=titles&so=newest";
+        }
+        static get base(){
+            return "https://mydramalist.com";
+        }
+
+
+        static search(query, callback){
+
+            if (typeof query === s && typeof callback === f) {
+
+                let url = new URL(this.base + this.endpoint);
+                url.searchParams.set("q", query);
+
+                const results = [];
+                fetch(this.cors + url.href).then(r => {
+                    if (r.status === 200) return r.text();
+                }).then(text => html2doc(text)).then(page => page.querySelectorAll('[id*="mdl-"].box')).then(list => {
+                    list.forEach(node => {
+                        results.push(new MyDramaList(node));
+                    });
+                    callback(results);
+                }).catch(console.warn);
+            }
+        }
+
+        constructor(node){
+            Object.assign(this, {
+                title: "",
+                id: 0,
+                url: "",
+                description: "",
+                type: "",
+                year: 0,
+                cover: ""
+            });
+
+            if (node instanceof HTMLElement) this.parse(node);
+        }
+
+        parse(node){
+            if (node instanceof HTMLElement) {
+                let el = node.querySelector('h6.title a'), matches;
+                this.url = new URL(MyDramaList.base + el.href);
+                this.title = el.innerText.trim();
+                this.description = node.querySelector('p+p').innerText.trim();
+                if ((matches = /(\d+)$/.exec(node.id)) !== null) {
+                    this.id = matches[1];
+                }
+                if ((el = node.querySelector('span.text-muted')) !== null) {
+                    let val = el.innerText.split('-'), type, year;
+                    [type, year] = val;
+                    this.type = type.trim();
+                    this.year = parseInt(year.split(',').shift().trim());
+                }
+                this.cover = getURL(node.querySelector('img').src);
+            }
+        }
+    }
+
+    class Media {
+
+        set show(show){
+            if (typeof show === s) {
+                this.__show = show;
+
+            }
+        }
+        get show(){
+            return typeof this.__show === s ? this.__show : undef;
+        }
+
+        set translation(show){
+            if (typeof show === s) this.__translation = show;
+        }
+        get translation(){
+            return typeof this.__translation === s ? this.__translation : undef;
+        }
+        set episode(ep){
+            if (typeof ep === n) this.__episode = ep;
+        }
+
+        get episode(){
+            return this.__episode;
+        }
+
+        get title(){
+            let
+                    title = this.translation || this.show,
+                    ep = this.episode;
+            if (title === undef) return undef;
+            if (ep > 0) {
+                if (ep < 10) ep = `0${ep}`;
+                title += `.E${ep}`;
+            }
+            title += ".mp4";
+            return title;
+        }
+
+
+        constructor(){
+            Object.assign(this, {
+                "__show": null,
+                "__episode": 0,
+                "__translation": null
+            });
+        }
+
+    }
+
+
+
     class Assets {
 
         static load(){
