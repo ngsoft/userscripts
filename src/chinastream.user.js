@@ -168,13 +168,19 @@
                 const self = this;
 
                 [
+                    "https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js",
+                    "https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css",
+                    "https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/semantic.min.css",
                     "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
                     "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css",
                     // "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.2/dist/altvideo.css",
                     "https://cdn.jsdelivr.net/npm/hls.js@0.14.12/dist/hls.min.js",
-                    "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js"
+                    "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js",
+
                 ].forEach(params => {
-                    rload.require(params);
+                    if (/\.js$/.test(params)) loadjs(params);
+                    else loadcss(params);
+                    // rload.require(params);
                 });
 
                 new Timer(timer => {
@@ -318,7 +324,7 @@
                     'volume', // Volume control
                     'captions', // Toggle captions
                     'settings', // Settings menu
-                    'fullscreen', // Toggle fullscreen
+                    'fullscreen' // Toggle fullscreen
                 ]
             };
 
