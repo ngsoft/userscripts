@@ -1,0 +1,226 @@
+// ==UserScript==
+// @name         9Anime
+// @namespace    https://github.com/ngsoft/userscripts
+// @version      3.0
+// @description  UI Remaster
+// @author       daedelus
+//
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
+// @noframes
+// @grant none
+// @run-at       document-start
+//
+// @icon        https://staticf.akacdn.ru/assets/9anime/favicons/favicon-32x32.png
+// @include     /^https?:\/\/(\w+\.)?9anime\.\w+\//
+// ==/UserScript==
+
+((doc, undef) => {
+
+    /* jshint expr: true */
+    /* jshint -W018 */
+    /* jshint -W083 */
+
+    class Toast {
+
+        static notify(message){
+            if (typeof message === "string") {
+                let
+                        root = this.root,
+                        notification = html2element('<div style="min-width: 392px; text-align: center;" class="fadeIn"/>');
+                notification.innerHTML = message;
+                root.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.classList.remove('fadeIn');
+                    setTimeout(function(){
+                        notification.classList.add('fadeOut');
+                        setTimeout(() => {
+                            root.removeChild(notification);
+                            if (root.classList.contains('tmp')) root.remove();
+                        }, 750);
+                    }, 1000);
+
+
+                }, 700);
+            }
+        }
+
+        static get root(){
+            let root = doc.querySelector('#toast-wrapper');
+            if (root === null) {
+                root = html2element('<div id="toast-wrapper" class="tmp"/>');
+                doc.body.appendChild(root);
+            }
+            return root;
+        }
+
+    }
+
+    class Episode {
+
+        get number(){
+            let number = 0;
+            let epn = this.root.querySelector('#episodes .episodes a.active');
+            if (epn !== null) {
+                if (/^\d+$/.test(epn.innerText.trim())) ;
+                number = parseInt(epn.innerText.trim());
+            }
+            return number;
+
+        }
+
+        get title(){
+            let title = "", sel;
+            if ((sel = this.root.querySelector('.navbc h2[data-jtitle]')) !== null) {
+                title = sel.data('jtitle');
+                if (typeof title !== s || title.length === 0) title = sel.innerText.trim();
+            }
+            title = title.replace(' (Dub)', '');
+            return title;
+        }
+
+        get filename(){
+
+            let filename = this.title, number = this.number;
+            if(filename.length >0){
+                if (number > 0) {
+                    filename += ".E";
+                    if (number < 10) filename += "0";
+                    filename += number;
+                }
+                filename += ".mp4";
+            }
+
+            return filename;
+
+
+        }
+
+
+        constructor(root){
+            this.root = root || doc.body;
+
+
+        }
+    }
+    new gmStyles();
+    addstyle(`
+        .player-wrapper #controls > a { padding: 0 8px; display: inline-block; cursor: pointer;
+            color: #ababab; height: 38px; line-height: 38px; -webkit-transition: all .15s;
+            -moz-transition: all .15s; transition: all .15s; }
+        .player-wrapper #controls > a:hover { background: #141414; color: #eee; }
+        .report{float: right;}
+
+
+        [hidden], [hidden] *, .hidden, .hidden *,
+        section.sda, section.sda *, [style*="position: fixed;"], [style*="position: fixed;"] *,
+        :not(#player) > iframe:not([title="recaptcha challenge"])
+        
+        {
+            position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+            height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+            display: inline !important;z-index: -1 !important;
+        }
+    `);
+
+
+    on.body(() => {
+        //waf-verify
+        if (doc.querySelector('form[action*="/waf-verify"]') !== null) {
+            return;
+        }
+
+        const
+                listeners = new Events(doc.body),
+                ep = new Episode();
+        listeners.on('vidloaded', (e) => {
+            
+            let
+                    url = new URL(e.data.iframe.src),
+                    title = ep.filename, first = true,
+                    link = html2element(`<a class="report user-extlink" target="_blank" href="${url.href}"><i class="fas fa-external-link-alt"></i><span> Video Link</span></a>`);
+
+            if (title.length > 0) {
+                url.searchParams.set('jdtitle', title);
+            }
+
+            let clip = html2element(`<a class="report user-clipboard" href="${url.href}"><i class="far fa-clipboard"></i><span> Copy Link</span></a>`);
+
+
+
+
+
+            doc.querySelectorAll('#controls .report').forEach((node) => {
+                if (first === true) {
+                    first = false;
+                    node.parentElement.insertBefore(link, node);
+                    node.parentElement.insertBefore(clip, node);
+
+                }
+                node.remove();
+
+            });
+        });
+
+        listeners.on('click', (e) => {
+            let target = e.target.closest('.user-clipboard');
+            if (target instanceof Element) {
+                e.preventDefault();
+                if (copyToClipboard(target.href)) {
+                    Toast.notify("Link Copied to Clipboard.");
+                }
+                return;
+            }
+        });
+        
+        NodeFinder.find('#player > iframe', iframe=>{
+            const player=iframe.parentElement;
+            Events(player).trigger('vidloaded', {iframe: iframe});
+        });
+
+        //setting main page tab to subbed
+        NodeFinder.findOne('.main .tabs > span[data-name="updated_sub"]', node => {
+            node.click();
+        });
+        if ((el = document.querySelectorAll('.main .tabs > span[data-name]')) && el.length) {
+            let t = el[0].parentNode.dataset.target;
+            for (let e of el) {
+                e.classList.remove('active');
+                if (e.dataset.name === "updated_sub") {
+                    // e.classList.add('active');
+                    e.click();
+                }
+            }
+        }
+
+
+
+
+
+
+
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+})(document);
