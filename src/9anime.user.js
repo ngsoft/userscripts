@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         9Anime
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      3.0
+// @version      3.0.1
 // @description  UI Remaster
 // @author       daedelus
 //
@@ -92,10 +92,29 @@
             }
 
             return filename;
-
-
         }
+        get normalized_title(){
+            let title = "", sel;
+            if ((sel = this.root.querySelector('.navbc h2[data-jtitle]')) !== null) {
+                title = sel.innerText.trim();
+            }
+            title = title.replace(' (Dub)', '');
+            return title;
+        }
+        get normalized_filename(){
 
+            let filename = this.normalized_title, number = this.number;
+            if (filename.length > 0) {
+                if (number > 0) {
+                    filename += ".E";
+                    if (number < 10) filename += "0";
+                    filename += number;
+                }
+                filename += ".mp4";
+            }
+
+            return filename;
+        }
 
         constructor(root){
             this.root = root || doc.body;
@@ -137,24 +156,26 @@
             
             let
                     url = new URL(e.data.iframe.src),
-                    title = ep.filename, first = true,
-                    link = html2element(`<a class="report user-extlink" target="_blank" href="${url.href}"><i class="fas fa-external-link-alt"></i><span> Video Link</span></a>`);
+                    title = ep.filename, ntitle = ep.normalized_filename, first = true,
+                    link = html2element(`<a class="report user-extlink" target="_blank" href="${url.href}"><i class="fas fa-external-link-alt"></i><span> Video Link</span></a>`),
+                    clip, nclip;
 
             if (title.length > 0) {
                 url.searchParams.set('jdtitle', title);
+                clip = html2element(`<a class="report user-clipboard" href="${url.href}"><i class="far fa-clipboard"></i><span> Copy Link</span></a>`);
             }
-
-            let clip = html2element(`<a class="report user-clipboard" href="${url.href}"><i class="far fa-clipboard"></i><span> Copy Link</span></a>`);
-
-
-
+            if (ntitle.length > 0) {
+                url.searchParams.set('jdtitle', ntitle);
+                nclip = html2element(`<a class="report user-clipboard" href="${url.href}"><i class="far fa-clipboard"></i><span> Copy Link (normalized)</span></a>`);
+            }
 
 
             doc.querySelectorAll('#controls .report').forEach((node) => {
                 if (first === true) {
                     first = false;
                     node.parentElement.insertBefore(link, node);
-                    node.parentElement.insertBefore(clip, node);
+                    if (clip instanceof Element) node.parentElement.insertBefore(clip, node);
+                    if (nclip instanceof Element) node.parentElement.insertBefore(nclip, node);
 
                 }
                 node.remove();
@@ -182,45 +203,12 @@
         NodeFinder.findOne('.main .tabs > span[data-name="updated_sub"]', node => {
             node.click();
         });
-        if ((el = document.querySelectorAll('.main .tabs > span[data-name]')) && el.length) {
-            let t = el[0].parentNode.dataset.target;
-            for (let e of el) {
-                e.classList.remove('active');
-                if (e.dataset.name === "updated_sub") {
-                    // e.classList.add('active');
-                    e.click();
-                }
-            }
-        }
-
-
-
-
-
-
+        //remove overlays
+        NodeFinder.find('div[style*="position: fixed;"], div[style*="position: fixed;"], div[style*="z-index: 2147483647;"], div[style*="z-index: 2000000000;"]', x => {
+            x.classList.add('hidden');
+            x.remove;
+        });
 
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 })(document);
