@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         9Anime
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      3.0.1
+// @version      3.0.2
 // @description  UI Remaster
 // @author       daedelus
 //
@@ -197,6 +197,11 @@
         NodeFinder.find('#player > iframe', iframe=>{
             const player=iframe.parentElement;
             Events(player).trigger('vidloaded', {iframe: iframe});
+            if (/streamtape/.test(iframe.src)) {
+                const url = new URL(iframe.src);
+                url.searchParams.set('jdtitle', ep.filename);
+                iframe.src = url.href;
+            }
         });
 
         //setting main page tab to subbed
