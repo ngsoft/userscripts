@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         9Anime
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      3.0.2
+// @version      3.0.3
 // @description  UI Remaster
 // @author       daedelus
 //
@@ -184,8 +184,8 @@
         });
 
         listeners.on('click', (e) => {
-            let target = e.target.closest('.user-clipboard');
-            if (target instanceof Element) {
+            let target;
+            if ((target = e.target.closest('.user-clipboard')) instanceof Element) {
                 e.preventDefault();
                 if (copyToClipboard(target.href)) {
                     Toast.notify("Link Copied to Clipboard.");
@@ -196,12 +196,13 @@
         
         NodeFinder.find('#player > iframe', iframe=>{
             const player=iframe.parentElement;
-            Events(player).trigger('vidloaded', {iframe: iframe});
+
             if (/streamtape/.test(iframe.src)) {
                 const url = new URL(iframe.src);
                 url.searchParams.set('jdtitle', ep.filename);
                 iframe.src = url.href;
             }
+            Events(player).trigger('vidloaded', {iframe: iframe});
         });
 
         //setting main page tab to subbed
