@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Embed
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      1.0.1
+// @version      1.0.2
 // @description  Embed Video Link
 // @author       daedelus
 //
@@ -61,8 +61,6 @@
                     display: inline !important;z-index: -1 !important;
                 }
             `;
-
-
             addstyle(css);
             this.applied = true;
 
@@ -111,23 +109,18 @@
             });
 
             ToolBar.style();
-
-
-
         }
     }
-
+    
     NodeFinder.findOne('.np_Main, .html5-video-player', container => {
         let toolbar = new ToolBar(container), player = container.closest('#player'), video = container.querySelector('video');
         if (player instanceof Element) {
-            Events(player).on('menu_did_hide', e => {
+            Events(player).on('menu_did_hide menu_did_show', e => {
                 if (player.querySelector('.np_MenuSettings') !== null) toolbar.elements.list.hidden = true;
                 else if (video.paused === false) toolbar.elements.list.hidden = true;
                 else toolbar.elements.list.hidden = null;
             });
         }
-
-
     });
 
 })(document);

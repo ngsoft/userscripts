@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name	Youtube Embed
 // @namespace	https://github.com/ngsoft/userscripts
-// @version	1.0.1
+// @version	1.0.2
 // @description	Embed Video Link
 // @author	daedelus
 // @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
