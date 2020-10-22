@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Embed
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      1.0
+// @version      1.0.1
 // @description  Embed Video Link
 // @author       daedelus
 //
@@ -49,7 +49,7 @@
                 
                 .html5-video-player .user-toolbar a:hover {color: #f00;}
                 .np_Main .user-toolbar a{
-                    line-height: 1.2; max-height: 57.6px; font-weight: 500;margin: 0;color: var(--npContrastColour);
+                    line-height: 1.2; max-height: 57.6px; font-weight: 500;margin: 0;color: #fff;
                 }
                 .np_Main .user-toolbar a:hover{
                     color: var(--npHighlightColour);
