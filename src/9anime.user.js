@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         9Anime
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      3.0.3
+// @version      3.0.4
 // @description  UI Remaster
 // @author       daedelus
 //
@@ -170,7 +170,7 @@
             }
 
 
-            doc.querySelectorAll('#controls .report').forEach((node) => {
+            doc.querySelectorAll('#controls .report').forEach(node => {
                 if (first === true) {
                     first = false;
                     node.parentElement.insertBefore(link, node);
@@ -183,7 +183,7 @@
             });
         });
 
-        listeners.on('click', (e) => {
+        listeners.on('click', e => {
             let target;
             if ((target = e.target.closest('.user-clipboard')) instanceof Element) {
                 e.preventDefault();
@@ -199,18 +199,16 @@
 
             if (/streamtape/.test(iframe.src)) {
                 const url = new URL(iframe.src);
-                url.searchParams.set('jdtitle', ep.filename);
+                url.searchParams.set('jdtitle', ep.normalized_filename);
                 iframe.src = url.href;
             }
             Events(player).trigger('vidloaded', {iframe: iframe});
         });
 
         //setting main page tab to subbed
-        NodeFinder.findOne('.main .tabs > span[data-name="updated_sub"]', node => {
-            node.click();
-        });
+        NodeFinder.findOne('.main .tabs > span[data-name="updated_sub"]', node => node.click());
         //remove overlays
-        NodeFinder.find('div[style*="position: fixed;"], div[style*="position: fixed;"], div[style*="z-index: 2147483647;"], div[style*="z-index: 2000000000;"]', x => {
+        NodeFinder.find('div[style*="position: fixed;"], div[style*="position: fixed;"], div[style*="z-index: 2147483647;"], div[style*="z-index: 200000"]', x => {
             x.classList.add('hidden');
             x.remove;
         });
