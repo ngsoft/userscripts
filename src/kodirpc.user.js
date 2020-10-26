@@ -6,6 +6,7 @@
 // @namespace   https://github.com/ngsoft
 // @icon        https://kodi.tv/favicon.ico
 //
+// @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
@@ -32,7 +33,7 @@
         if (loadResources.loading !== true) {
             loadResources.loading = true;
             [
-                "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js",
+                //"https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js",
                 "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"
             ].forEach(src => {
                 if (/\.js$/.test(src)) loadjs(src);
@@ -369,22 +370,19 @@
         }
 
         send(link, success, error){
-            const that = this;
-            return new Promise((resolve, reject) => {
-                if (typeof link === s && /^http/.test(link)) {
-                    that
-                            .queueVideo(link)
-                            .then(() => {
-                                if (typeof success === f) success.call(that, link, that);
-                                //resolve(that);
 
-                            })
-                            .catch(() => {
-                                if (typeof error === f) error.call(that, link, that);
-                                // reject(that);
-                            });
-                }
-            });
+            if (typeof link === s && /^http/.test(link)) {
+                this
+                        .queueVideo(link)
+                        .then(() => {
+                            if (typeof success === f) success.call(this, link, this);
+
+                        })
+                        .catch(() => {
+                            if (typeof error === f) error.call(this, link, this);
+                        });
+            }
+
         }
 
     }
