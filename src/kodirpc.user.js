@@ -1,11 +1,11 @@
 // ==UserScript==
 // @version     2.0
-// @name        KodiRPC
+// @name        KodiRPC 2.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
 // @namespace   https://github.com/ngsoft
 // @icon        https://kodi.tv/favicon.ico
-// 
+//
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @grant       GM_setValue
 // @grant       GM_getValue
@@ -15,9 +15,9 @@
 // @grant       GM_registerMenuCommand
 // @grant       GM_unregisterMenuCommand
 // @run-at      document-end
-// 
+//
 // @include     *
-// @exclude     /https?:\/\/(\w+\.)?(youtube|google)\.\w+\//
+// @exclude     /https?:\/\/(\w+\.)?(youtube|google|dailymotion)\.\w+\//
 // ==/UserScript==
 
 
@@ -27,6 +27,35 @@
     /* jshint -W018 */
     /* jshint -W083 */
 
+
+    function loadResources(){
+        if (loadResources.loading !== true) {
+            loadResources.loading = true;
+            [
+                "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js",
+                "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"
+            ].forEach(src => {
+                if (/\.js$/.test(src)) loadjs(src);
+                else if (/\.css$/.test(src)) loadcss(src);
+            });
+            addstyle(`
+                .iziToast-wrapper {z-index: 2147483647 !important;}
+                .iziToast-wrapper-bottomRight{top: 40% !important;bottom: auto !important;}
+            `);
+        }
+
+        return new Promise(resolve => {
+            new Timer(timer => {
+                
+                if(typeof iziToast !==u){
+                    timer.stop();
+                    resolve({iziToast: iziToast});
+                }
+
+            });
+
+        });
+    }
 
 
 
@@ -56,15 +85,23 @@
                 port: 8080,
                 pathname: '/jsonrpc',
                 user: null,
-                auth: null
+                auth: null,
+                enabled: true
             };
-            if (isPlainObject(data)) Object.assign(this.params, data);
+            if (isPlainObject(data)) Object.assign(this._params, data);
         }
 
         dirty(){
             return this._dirty === true;
         }
 
+        set enabled(flag){
+            if (typeof flag === b) {
+                this._params.enabled = flag;
+                this.dirty = true;
+            }
+
+        }
 
         set name(name){
             if (typeof name === s && name.length > 0) {
@@ -114,6 +151,9 @@
             } else if (pass === null) this.user = null;
         }
 
+        get enabled(){
+            return this._params.enabled !== false;
+        }
 
         get name(){
             return this._params.name;
@@ -137,7 +177,7 @@
         }
 
         get address(){
-            return  'http://' + this.host + ':' + this.port + this.pathname;
+            return  new URL('http://' + this.host + ':' + this.port + this.pathname);
         }
         get headers(){
             const headers = {
@@ -158,6 +198,7 @@
             return new Promise((resolve, reject) => {
                 let data = JSON.RPCRequest(method, params);
                 if (data === undef) reject();
+                console.debug('GM_xmlhttpRequest', that.address, that.headers, data);
                 GM_xmlhttpRequest({
                     method: 'POST',
                     url: that.address,
@@ -238,7 +279,7 @@
                         .then(response => {
 
                             const result = response.result;
-                            if (result == ResultData.OK) {
+                            if (result == 'OK') {
                                 return this.getActivePlayers();
                             }
                             return reject();
@@ -261,50 +302,18 @@
             });
 
         }
-
-        getPluginVersion(pluginId){
-
-            const params = {
-                addonid: pluginId,
-                "properties": ["version"]
-            };
-
-            return this.server.send("Addons.GetAddonDetails", params);
-        }
+        
 
         ping(){
             return this.server.send("JSONRPC.Ping");
         }
 
-        setSubtitles(urls){
-
-            return new Promise((resolve, reject) => {
-
-                this.getActivePlayers()
-                        .then(response => {
-
-                            const params = {
-                                playerid: 1,
-                                subtitle: "on",
-                                enable: true
-                            };
-
-                            return this.server.send("Player.SetSubtitle", params);
-                        })
-                        .then(response => {
-
-                        })
-                        .catch(err => {
-
-                        });
-            });
-        }
+        
 
 
         playVideo(file){
             return new Promise((resolve, reject) => {
 
-                console.log("play video, " + file);
 
                 // 1. Clear play list
                 // 2. Add to playlist
@@ -330,7 +339,6 @@
         queueVideo(file){
             return new Promise((resolve, reject) => {
 
-                console.log("queue file " + file);
 
                 // Player.GetActivePlayers (if empty), Playlist.Clear, Playlist.Add(file), Player.GetActivePlayers (if empty), Player.Open(playlist)
                 // Player.GetActivePlayers (if playing), Playlist.Add(file), Player.GetActivePlayers (if playing), do nothing
@@ -367,13 +375,13 @@
                     that
                             .queueVideo(link)
                             .then(() => {
-                                if (typeof success === f) success.call(self, link);
-                                resolve();
+                                if (typeof success === f) success.call(that, link, that);
+                                //resolve(that);
 
                             })
                             .catch(() => {
-                                if (typeof error === f) error.call(self, link);
-                                reject();
+                                if (typeof error === f) error.call(that, link, that);
+                                // reject(that);
                             });
                 }
             });
@@ -381,33 +389,164 @@
 
     }
 
+    // @link https://github.com/scriptish/scriptish/wiki/GM_unregisterMenuCommand
+
+    class Commands {
+
+        add(name, description, callback, accessKey){
+            if (typeof description === s && typeof name === s && typeof callback === f) {
+                let
+                        args = [description, callback],
+                        command = {
+                            name: name,
+                            description: description,
+                            callback: callback
+                        };
+                if (typeof accessKey === s) args.push(accessKey);
+                command.id = GM_registerMenuCommand(...args);
+                this._commands[name] = command;
+
+            }
+
+        }
+        remove(name){
+
+            let command = this._commands[name];
+            if (isPlainObject(command)) {
+                GM_unregisterMenuCommand(command.id);
+                delete this._commands[name];
+            }
+        }
+        has(name){
+            return typeof this._commands[name] !== u;
+        }
+
+        constructor(){
+            this._commands = {};
+        }
+
+    }
 
 
-    const
+    class KodiRPC {
+        constructor(root){
+            root = root instanceof EventTarget ? root : doc.body;
+            Object.defineProperty(root, 'KRPCM', {
+                value: this, configurable: true
+            });
+
+            Events(root)
+                    .on('kodirpc.send', e => {
+                        console.debug(e);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        let link, success, error;
+                        if (typeof e.data === o) {
+                            if (typeof e.data.success === f) success = e.data.success;
+                            if (typeof e.data.error === f) error = e.data.error;
+                            if (typeof e.data.link === s) link = e.data.link;
+                            let sendto = servers.filter(s => s.enabled);
+                            sendto.forEach(server => server.client.send(link, success, error));
+                        }
+
+
+                    })
+                    .on('kodirpc.settings', e => {
+                        console.debug(e);
+
+                    })
+                    .trigger('kodirpc.ready');
+        }
+    }
+
+    let
             gmSettings = new UserSettings({
                 servers: [],
                 blacklist: []
             }),
-            servers = gmSettings.get('servers').map(data=>new Server(data)),
-            blacklist = gmSettings.get('blacklist');
+            servers = gmSettings.get('servers').map(data => new Server(data)),
+            blacklist = gmSettings.get('blacklist'),
+            commands = new Commands(),
+            host = location.hostname;
+
+    if (blacklist.includes(host)) {
+        commands.add('blacklist', 'Whitelist ' + host, () => {
+            let host = location.hostname;
+
+            ask('Do you wish to remove ' + host + ' from blacklist', () => {
+                if (blacklist.includes(host)) {
+                    blacklist.splice(blacklist.indexOf(host), 1);
+                    gmSettings.set('blacklist', blacklist);
+                    location.replace(location.href);
+                }
+            });
+        });
+        return;
+    }else {
+        commands.add('blacklist', 'Blacklist ' + host, () => {
+            let host = location.hostname;
+
+            ask('Do you wish to add ' + host + ' to blacklist', () => {
+                if (!blacklist.includes(host)) blacklist.push(host);
+                gmSettings.set('blacklist', blacklist);
+                location.replace(location.href);
+
+            });
+        });
+    }
 
     if (servers.length === 0) servers.push(new Server());
 
 
 
+    on.loaded().then(() => {
+        if (typeof doc.body.KodiRPCModule !== u) {
+            new KodiRPC();
+            return;
+        }
 
+        let id = 0;
+        NodeFinder.find('video[data-src^="http"], video[src^="http"], video source[src^="http"]', element => {
+            if (typeof doc.body.KRPCM === u) new KodiRPC();
 
+            let src = element.data('src') || element.src,desc = "Send Source link";
 
+            if (element.tagName === "SOURCE") {
 
+                let size = element.getAttribute('size') || "";
+                if (size.length > 0) {
+                    desc += ' ';
+                    desc += size;
+                }
+            } else desc = "Send Video Link";
 
+            desc += " from " + host;
 
-
-
-
-
-
-
-
-
+            commands.add('send' + id, desc, () => {
+                Events(doc.body).trigger('kodirpc.send', {
+                    link: src,
+                    success(link, client){
+                        loadResources().then(exports => {
+                            const {iziToast} = exports;
+                            iziToast.success({
+                                title: 'OK',
+                                message: 'Link sent to ' + client.server.name
+                            });
+                        });
+                    },
+                    error(link, client){
+                        loadResources().then(exports => {
+                            const {iziToast} = exports;
+                            iziToast.error({
+                                title: 'Error',
+                                message: 'Error sending link to ' + client.server.name
+                            });
+                        });
+                    }
+                });
+            });
+            id++;
+        });
+    });
 
 })(document);
