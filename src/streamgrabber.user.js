@@ -7,10 +7,6 @@
 // @icon        https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/altvideo.png
 //
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
-// @require     https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js
-// @require     https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js
-// @require     https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js
-// @require     https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js
 // @grant       none
 // @run-at      document-body
 //
@@ -24,12 +20,47 @@
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
-    [
-        "https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap-reboot.min.css",
-        "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css",
-        "https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css",
-        "https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/default.min.css"
-    ].forEach(src => loadcss(src));
+
+    function loadResources(){
+        if (loadResources.loading !== true) {
+            loadResources.loading = true;
+            [
+                "https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js",
+                "https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js",
+                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js",
+                // @link https://izitoast.marcelodolza.com/
+                "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js",
+
+                "https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap-reboot.min.css",
+                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css",
+                "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"
+            ].forEach(src => {
+                if (/\.js$/.test(src)) loadjs(src);
+                else if (/\.css$/.test(src)) loadcss(src);
+            });
+            addstyle(`
+                .iziToast-wrapper {z-index: 2147483647 !important;}
+                .iziToast-wrapper-bottomRight{top: 40% !important;bottom: auto !important;}
+            `);
+        }
+
+        return new Promise(resolve => {
+            new Timer(timer => {
+                let
+                        vars = ["Subtitle", "Hls", "Plyr", "iziToast"],
+                        args = {};
+                vars.forEach(name => {
+                    if (typeof window[name] !== u) args[name] = window[name];
+                });
+                if (Object.keys(args).length === vars.length) {
+                    timer.stop();
+                    resolve(args);
+                }
+            });
+
+        });
+    }
+
 
 
 
@@ -319,12 +350,23 @@
 
 
 
+    /*on.loaded().then(()=>{
+         loadResources().then(function(exports){
+            console.debug(arguments);
+            const {iziToast} = exports;
+            console.debug(iziToast);
+            console.debug(video);
+            iziToast.success({
+                title: 'OK',
+                message: 'Successfully inserted record!'
+
+            });
 
 
 
 
-
-
+        });
+    });*/
 
 
 
