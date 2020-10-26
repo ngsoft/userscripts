@@ -537,7 +537,7 @@
                             const {iziToast} = exports;
                             iziToast.error({
                                 title: 'Error',
-                                message: 'Error sending link to ' + client.server.name
+                                message: 'Error ' + client.server.name
                             });
                         });
                     }
