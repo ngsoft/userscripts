@@ -368,23 +368,70 @@
             });
 
         }
+        
+        directPlay(file){
+
+            return this.server.send("Player.Open", {
+                item: {
+                    file: file
+                }
+            });
+        }
+
+        directPlayOrQueueVideo(file){
+
+            return new Promise((resolve, reject) => {
+
+                if (!file) {
+                    reject();
+                    return;
+                }
+
+                // Player.GetActivePlayers (if empty), Playlist.Clear, Playlist.Add(file), Player.GetActivePlayers (if empty), Player.Open(playlist)
+                // Player.GetActivePlayers (if playing), Playlist.Add(file), Player.GetActivePlayers (if playing), do nothing
+
+                this.getActivePlayers()
+                        .then(response => {
+                            const result = response.result;
+                            if (result && result.length <= 0) {
+                                return this.directPlay(file);
+                            }else {
+                                this.queue(file)
+                                        .then(response => {
+                                            resolve(response);
+                                        })
+                                        .catch(() => {
+                                            reject();
+                                        });
+                            }
+                        })
+                        .catch(() => {
+                            reject();
+                        });
+
+            });
+
+
+
+        }
 
         send(link, success, error){
-
             if (typeof link === s && /^http/.test(link)) {
                 this
-                        .queueVideo(link)
-                        .then(() => {
+                        .directPlayOrQueueVideo(link)
+                        .then(response => {
+                            console.debug(response);
                             if (typeof success === f) success.call(this, link, this);
+
 
                         })
                         .catch(() => {
                             if (typeof error === f) error.call(this, link, this);
+
                         });
             }
 
         }
-
     }
 
     // @link https://github.com/scriptish/scriptish/wiki/GM_unregisterMenuCommand
@@ -435,7 +482,6 @@
 
             Events(root)
                     .on('kodirpc.send', e => {
-                        console.debug(e);
                         e.preventDefault();
                         e.stopPropagation();
                         let link, success, error;
@@ -443,8 +489,14 @@
                             if (typeof e.data.success === f) success = e.data.success;
                             if (typeof e.data.error === f) error = e.data.error;
                             if (typeof e.data.link === s) link = e.data.link;
+                            servers = gmSettings.get('servers').map(data => new Server(data));
                             let sendto = servers.filter(s => s.enabled);
-                            sendto.forEach(server => server.client.send(link, success, error));
+                            try {
+                                sendto.forEach(server => server.client.send(link, success, error));
+                            } catch (e) {
+                            }
+
+
                         }
 
 
@@ -500,7 +552,6 @@
     on.loaded().then(() => {
         if (typeof doc.body.KodiRPCModule !== u) {
             new KodiRPC();
-            return;
         }
 
         let id = 0;
@@ -545,6 +596,50 @@
             });
             id++;
         });
+
+        NodeFinder.find('video.jw-video', video => {
+            if (typeof doc.body.KRPCM === u) new KodiRPC();
+            if (typeof jwplayer === f) {
+                let id = video.closest('div[id]');
+                if (id !== null) id = id.id;
+                let jw = jwplayer(id);
+                if (typeof jw.getPlaylist === f) {
+                    let playlist = jw.getPlaylist()[0];
+                    playlist.sources.forEach((source, i) => {
+                        if (/^http/.test(source.file)) {
+
+                            commands.add('sendjw' + i, 'Send JWPlayer video ' + i + ' from ' + host, () => {
+                                Events(doc.body).trigger('kodirpc.send', {
+                                    link: source.file,
+                                    success(link, client){
+                                        loadResources().then(exports => {
+                                            const {iziToast} = exports;
+                                            iziToast.success({
+                                                title: 'OK',
+                                                message: 'Link sent to ' + client.server.name
+                                            });
+                                        });
+                                    },
+                                    error(link, client){
+                                        loadResources().then(exports => {
+                                            const {iziToast} = exports;
+                                            iziToast.error({
+                                                title: 'Error',
+                                                message: 'Error ' + client.server.name
+                                            });
+                                        });
+                                    }
+                                });
+
+                            });
+                        }
+
+
+                    });
+                }
+            }
+        });
+
     });
 
 })(document);
