@@ -646,14 +646,14 @@
             if (/youtube/.test(src.host)) {
                 src.href = src.href.replace('embed/', 'watch?v=');
                 vid = src.searchParams.get('v');
-                site = "dailymotion";
+                site = "youtube";
                 plugin = 'plugin.video.youtube';
                 purl = "plugin://plugin.video.youtube/?action=play_video&videoid=%s".replace(/\%s/, vid);
 
             } else if (/dailymotion/.test(src.host)) {
                 src.href = src.href.replace('embed/', '');
                 vid = src.href.substr(src.href.lastIndexOf('/') + 1);
-                site = "youtube";
+                site = "dailymotion";
                 plugin = 'plugin.video.dailymotion_com';
                 purl = "plugin://plugin.video.dailymotion_com/?url=%s&mode=playVideo".replace(/\%s/, vid);
             }
