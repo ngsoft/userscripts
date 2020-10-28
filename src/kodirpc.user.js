@@ -403,7 +403,18 @@
                         .then(response => {
                             const result = response.result;
                             if (result && result.length <= 0) {
-                                return this.directPlay(file);
+                                this
+                                        .directPlay(file)
+                                        .then(response => {
+                                            const result = response.result;
+                                            if (response.result == 'OK') {
+                                                resolve(response);
+                                            }
+                                            reject();
+                                        })
+                                        .catch(() => {
+                                            reject();
+                                        });
                             }else {
                                 this.queue(file)
                                         .then(response => {
@@ -524,7 +535,7 @@
                         loadResources().then(exports => {
                             const {iziToast} = exports;
                             iziToast.success({
-                                title: 'OK',
+                                title: '',
                                 message: 'Link sent to ' + client.server.name
                             });
                         });
@@ -533,7 +544,7 @@
                         loadResources().then(exports => {
                             const {iziToast} = exports;
                             iziToast.error({
-                                title: 'Error',
+                                title: '',
                                 message: 'Error ' + client.server.name
                             });
                         });
