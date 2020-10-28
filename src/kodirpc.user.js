@@ -450,6 +450,12 @@
         }
     }
 
+    class Settings {
+        constructor(root){
+
+        }
+    }
+
     // @link https://github.com/scriptish/scriptish/wiki/GM_unregisterMenuCommand
 
     class Commands {
