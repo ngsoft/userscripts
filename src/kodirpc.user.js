@@ -406,7 +406,6 @@
                                 this
                                         .directPlay(file)
                                         .then(response => {
-                                            const result = response.result;
                                             if (response.result == 'OK') {
                                                 resolve(response);
                                             }
