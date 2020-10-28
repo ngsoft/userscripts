@@ -645,7 +645,7 @@
             src.search = "";
             if (/youtube/.test(src.host)) {
                 src.href = src.href.replace('embed/', 'watch?v=');
-                vid=src.searchParams.get('v')
+                vid = src.searchParams.get('v');
                 site = "dailymotion";
                 plugin = 'plugin.video.youtube';
                 purl = "plugin://plugin.video.youtube/?action=play_video&videoid=%s".replace(/\%s/, vid);
