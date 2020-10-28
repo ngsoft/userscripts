@@ -199,7 +199,6 @@
             return new Promise((resolve, reject) => {
                 let data = JSON.RPCRequest(method, params);
                 if (data === undef) reject();
-                console.debug('GM_xmlhttpRequest', that.address, that.headers, data);
                 GM_xmlhttpRequest({
                     method: 'POST',
                     url: that.address,
@@ -265,6 +264,16 @@
         getActivePlayers(){
             const params = {};
             return this.server.send("Player.GetActivePlayers", params);
+        }
+
+        getPluginVersion(pluginId){
+
+            const params = {
+                addonid: pluginId,
+                "properties": ["version"]
+            };
+
+            return this.server.send("Addons.GetAddonDetails", params);
         }
 
         queue(file){
@@ -416,14 +425,11 @@
         }
 
         send(link, success, error){
-            if (typeof link === s && /^http/.test(link)) {
+            if (typeof link === s) {
                 this
                         .directPlayOrQueueVideo(link)
                         .then(response => {
-                            console.debug(response);
                             if (typeof success === f) success.call(this, link, this);
-
-
                         })
                         .catch(() => {
                             if (typeof error === f) error.call(this, link, this);
@@ -440,6 +446,7 @@
 
         add(name, description, callback, accessKey){
             if (typeof description === s && typeof name === s && typeof callback === f) {
+                if (this.has(name)) return;
                 let
                         args = [description, callback],
                         command = {
@@ -506,8 +513,40 @@
 
                     })
                     .trigger('kodirpc.ready');
+            console.debug("KodiRPC Module version", GMinfo.script.version, "started");
         }
+
+        static action(src){
+            return function(){
+                Events(doc.body).trigger('kodirpc.send', {
+                    link: src,
+                    success(link, client){
+                        loadResources().then(exports => {
+                            const {iziToast} = exports;
+                            iziToast.success({
+                                title: 'OK',
+                                message: 'Link sent to ' + client.server.name
+                            });
+                        });
+                    },
+                    error(link, client){
+                        loadResources().then(exports => {
+                            const {iziToast} = exports;
+                            iziToast.error({
+                                title: 'Error',
+                                message: 'Error ' + client.server.name
+                            });
+                        });
+                    }
+                });
+
+            };
+        }
+
+
     }
+
+
 
     let
             gmSettings = new UserSettings({
@@ -548,7 +587,6 @@
     if (servers.length === 0) servers.push(new Server());
 
 
-
     on.loaded().then(() => {
         if (typeof doc.body.KodiRPCModule !== u) {
             new KodiRPC();
@@ -571,29 +609,7 @@
 
             desc += " from " + host;
 
-            commands.add('send' + id, desc, () => {
-                Events(doc.body).trigger('kodirpc.send', {
-                    link: src,
-                    success(link, client){
-                        loadResources().then(exports => {
-                            const {iziToast} = exports;
-                            iziToast.success({
-                                title: 'OK',
-                                message: 'Link sent to ' + client.server.name
-                            });
-                        });
-                    },
-                    error(link, client){
-                        loadResources().then(exports => {
-                            const {iziToast} = exports;
-                            iziToast.error({
-                                title: 'Error',
-                                message: 'Error ' + client.server.name
-                            });
-                        });
-                    }
-                });
-            });
+            commands.add('send' + id, desc, KodiRPC.action(src));
             id++;
         });
 
@@ -606,38 +622,43 @@
                 if (typeof jw.getPlaylist === f) {
                     let playlist = jw.getPlaylist()[0];
                     playlist.sources.forEach((source, i) => {
-                        if (/^http/.test(source.file)) {
-
-                            commands.add('sendjw' + i, 'Send JWPlayer video ' + i + ' from ' + host, () => {
-                                Events(doc.body).trigger('kodirpc.send', {
-                                    link: source.file,
-                                    success(link, client){
-                                        loadResources().then(exports => {
-                                            const {iziToast} = exports;
-                                            iziToast.success({
-                                                title: 'OK',
-                                                message: 'Link sent to ' + client.server.name
-                                            });
-                                        });
-                                    },
-                                    error(link, client){
-                                        loadResources().then(exports => {
-                                            const {iziToast} = exports;
-                                            iziToast.error({
-                                                title: 'Error',
-                                                message: 'Error ' + client.server.name
-                                            });
-                                        });
-                                    }
-                                });
-
-                            });
-                        }
-
-
+                        if (/^http/.test(source.file)) commands.add('sendjw' + i, 'Send JWPlayer video ' + i + ' from ' + host, KodiRPC.action(src));
                     });
                 }
             }
+        });
+
+
+
+        NodeFinder.find('iframe[src*="dailymotion.com/embed/"], iframe[src*="youtube.com/embed/"]', iframe => {
+            let link = new URL(getURL(iframe.src)), src = new URL(link), plugin, purl, site, vid;
+            src.search = "";
+            if (/youtube/.test(src.host)) {
+                src.href = src.href.replace('embed/', 'watch?v=');
+                vid=src.searchParams.get('v')
+                site = "dailymotion";
+                plugin = 'plugin.video.youtube';
+                purl = "plugin://plugin.video.youtube/?action=play_video&videoid=%s".replace(/\%s/, vid);
+
+            } else if (/dailymotion/.test(src.host)) {
+                src.href = src.href.replace('embed/', '');
+                vid = src.href.substr(src.href.lastIndexOf('/') + 1);
+                site = "youtube";
+                plugin = 'plugin.video.dailymotion_com';
+                purl = "plugin://plugin.video.dailymotion_com/?url=%s&mode=playVideo".replace(/\%s/, vid);
+            }
+            let success = false;
+            servers.forEach(server => {
+                server.client.getPluginVersion(plugin)
+                        .then(response => {
+                            if (!response.error) {
+                                if (typeof doc.body.KRPCM === u) new KodiRPC();
+                                commands.add(site + vid, 'Send ' + site + ' Video ' + vid, KodiRPC.action(purl));
+                            }
+                        })
+                        .catch(e => e);
+            });
+
         });
 
     });
