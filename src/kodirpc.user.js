@@ -87,6 +87,7 @@
                 pathname: '/jsonrpc',
                 user: null,
                 auth: null,
+                id: uniqid(),
                 enabled: true
             };
             if (isPlainObject(data)) Object.assign(this._params, data);
@@ -176,7 +177,9 @@
         get auth(){
             return this._params.auth;
         }
-
+        get id(){
+            return this._params.id;
+        }
         get address(){
             return  new URL('http://' + this.host + ':' + this.port + this.pathname);
         }
@@ -450,8 +453,118 @@
         }
     }
 
-    class Settings {
+    class Settings extends gmDialog {
         constructor(root){
+            root = root instanceof Element ? root : doc.body;
+
+            super(root, {
+                title: GMinfo.script.name + " Settings",
+                buttons: {
+                    yes: "Save",
+                    no: "Cancel"
+                },
+                events: {
+                    confirm(e){
+                        console.debug(e);
+                        let saveto = that.servers.map(x => x._params);
+                        gmSettings.set('servers', saveto);
+
+                    },
+                    cancel(e){
+                        console.debug(e);
+                    }
+                }
+            });
+            const that = this;
+            this.body = `<form class="KodiRPC-Settings">
+                            <fieldset>
+                                <legend>Select Server</legend>
+                                <select name="server-selector"></select>
+                                <span class="switch" style="float: right;">
+                                    <input title="Enabled" type="checkbox" name="server-enabled" style="position: absolute;top: 0;right: 0;left: 0;bottom: 0;display: block;padding: 0;margin: 0;"/>
+                                    <span class="slider"></span>
+                                </span>
+                            </fieldset>
+                            <fieldset>
+                                <legend>Configure Server</legend>
+                                <label>Name:</label>
+                                <input type="text" placeholder="Name", value="" name="server-name" required/>
+                                <label>Host:</label>
+                                <input type="text" placeholder="Host", value="" name="server-host" required/>
+                                <label>Port:</label>
+                                <input type="number" name="server-port" value="" placeholder="Port" min="1" max="65535" required>
+                                <label>User:</label>
+                                <input type="text" placeholder="Username", value="" name="server-user"/>
+                                <label>Name:</label>
+                                <input type="password" placeholder="Password", value="" name="server-auth"/>
+                                
+                                <input type="hidden" value="" name="server-id"/>
+            
+                            </fieldset>
+                        </form>`;
+
+            this.elements.buttons.yes.disabled = true;
+            this.form = this.elements.body.querySelector('form.KodiRPC-Settings');
+            console.debug(this.form);
+            Events(this.form).on('change submit', e => {
+                if (e.type === "submit") e.preventDefault();
+                else {
+                    let target = e.target.closest('input, select'), name, value;
+                    if (target !== null) {
+                        name = target.name.replace(/^server\-/, '');
+                        try {
+                            if (target.type === "checkbox") value = target.checked;
+                            else value = JSON.parse(target.value);
+                        } catch (err) {
+                            value = target.value;
+                        }
+
+                        if (name === "selector") {
+                            this.server = null;
+                            let server;
+                            this.servers.forEach(s => {
+                                if (s.id === value) server = s;
+                            });
+                            if (server instanceof Server) {
+                                this.server = server;
+                                ['id', 'name', 'host', 'port', 'user', 'enabled'].forEach(n => {
+                                    let el = this.form.elements["server-" + n];
+                                    if (el instanceof Element) {
+                                        if (el.type === "checkbox") el.checked = server[n];
+                                        else el.value = server[n];
+                                    }
+                                });
+
+
+                            }
+
+
+                        } else {
+                            this.elements.buttons.yes.disabled = null;
+                            this.server[name] = value;
+
+
+                        }
+
+                        console.debug(name, value);
+
+                    }
+
+                }
+
+                console.debug(e);
+            });
+            this.servers = gmSettings.get('servers').map(s => new Server(s));
+            this.servers.forEach(server => {
+                let opt = doc.createElement('option');
+                opt.value = server.id;
+                opt.innerHTML = server.name;
+                this.form.elements["server-selector"].appendChild(opt);
+            });
+            this.form.elements["server-selector"].selectedIndex = 0;
+            Events(this.form.elements["server-selector"]).trigger('change');
+
+            //here
 
         }
     }
@@ -524,11 +637,8 @@
 
 
                     })
-                    .on('kodirpc.settings', e => {
-                        console.debug(e);
-
-                    })
                     .trigger('kodirpc.ready');
+
             console.debug("KodiRPC Module version", GMinfo.script.version, "started");
         }
 
@@ -572,7 +682,8 @@
             servers = gmSettings.get('servers').map(data => new Server(data)),
             blacklist = gmSettings.get('blacklist'),
             commands = new Commands(),
-            host = location.hostname;
+            host = location.hostname,
+            settings;
 
     if (blacklist.includes(host)) {
         commands.add('blacklist', 'Whitelist ' + host, () => {
@@ -601,6 +712,18 @@
     }
 
     if (servers.length === 0) servers.push(new Server());
+
+    if (window === window.parent) {
+        Events(doc.body).on('kodirpc.settings', () => {
+            settings = settings || new Settings();
+            if (settings.isClosed) settings.open();
+        });
+
+        commands.add('configure', 'Configure' + GMinfo.script.name, () => {
+            Events(doc.body).trigger('kodirpc.settings');
+
+        });
+    }
 
 
     on.loaded().then(() => {
@@ -679,5 +802,7 @@
         });
 
     });
+    
+
 
 })(document);
