@@ -638,7 +638,8 @@
                 if (typeof jw.getPlaylist === f) {
                     let playlist = jw.getPlaylist()[0];
                     playlist.sources.forEach((source, i) => {
-                        if (/^http/.test(source.file)) commands.add('sendjw' + i, 'Send JWPlayer video ' + i + ' from ' + host, KodiRPC.action(src));
+                        if (/^http/.test(source.file))
+                            commands.add('sendjw' + i, 'Send JWPlayer video ' + i + ' from ' + host, KodiRPC.action(source.file));
                     });
                 }
             }
