@@ -488,15 +488,15 @@
                             <fieldset>
                                 <legend>Configure Server</legend>
                                 <label>Name:</label>
-                                <input type="text" placeholder="Name", value="" name="server-name" required/>
+                                <input type="text" placeholder="Name" value="" name="server-name" required/>
                                 <label>Host:</label>
-                                <input type="text" placeholder="Host", value="" name="server-host" required/>
+                                <input type="text" placeholder="Host" value="" name="server-host" required/>
                                 <label>Port:</label>
                                 <input type="number" name="server-port" value="" placeholder="Port" min="1" max="65535" required>
                                 <label>User:</label>
-                                <input type="text" placeholder="Username", value="" name="server-user"/>
+                                <input type="text" placeholder="Username" value="" name="server-user"/>
                                 <label>Name:</label>
-                                <input type="password" placeholder="Password", value="" name="server-auth"/>
+                                <input type="password" placeholder="Password" value="" name="server-auth"/>
                                 
                                 <input type="hidden" value="" name="server-id"/>
             
