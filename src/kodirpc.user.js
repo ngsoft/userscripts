@@ -141,7 +141,7 @@
         }
         set port(port){
             if (typeof port !== n) return;
-            if ((p > 0) && (p < 65536)) {
+            if ((port > 0) && (port < 65536)) {
                 this._params.port = port;
                 this._dirty = true;
             }
