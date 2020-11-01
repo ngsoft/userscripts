@@ -205,26 +205,28 @@
             x.classList.add('hidden');
             x.remove();
         });
+        
+        addstyle(`
+            .player-wrapper #controls > a { padding: 0 8px; display: inline-block; cursor: pointer;
+                color: #ababab; height: 38px; line-height: 38px; -webkit-transition: all .15s;
+                -moz-transition: all .15s; transition: all .15s; }
+            .player-wrapper #controls > a:hover { background: #141414; color: #eee; }
+            .report{float: right;}
+
+
+            [hidden], [hidden] *, .hidden, .hidden *,
+            section.sda, section.sda *, [style*="position: fixed;"], [style*="position: fixed;"] *,
+            :not(#player) > iframe:not([title="recaptcha challenge"])
+
+            {
+                position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+                height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+                display: inline !important;z-index: -1 !important;
+            }
+        `);
 
     });
 
-    addstyle(`
-        .player-wrapper #controls > a { padding: 0 8px; display: inline-block; cursor: pointer;
-            color: #ababab; height: 38px; line-height: 38px; -webkit-transition: all .15s;
-            -moz-transition: all .15s; transition: all .15s; }
-        .player-wrapper #controls > a:hover { background: #141414; color: #eee; }
-        .report{float: right;}
 
-
-        [hidden], [hidden] *, .hidden, .hidden *,
-        section.sda, section.sda *, [style*="position: fixed;"], [style*="position: fixed;"] *,
-        :not(#player) > iframe:not([title="recaptcha challenge"])
-
-        {
-            position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-            height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-            display: inline !important;z-index: -1 !important;
-        }
-    `);
 
 })(document);
