@@ -21,7 +21,15 @@
     /* jshint -W018 */
     /* jshint -W083 */
 
+    if (/watchasian/.test(location.host)) {
+        let url = new URL(location.href);
+        url.host = "dramacool.so";
+        location.replace(url.href);
+    }
+
+
     class Dramacool extends xStore {
+
 
         constructor(){
             super(sessionStorage);
