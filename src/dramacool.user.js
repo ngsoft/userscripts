@@ -167,7 +167,7 @@
                                         target.data('ready', true);
                                     })
                                     .catch(x => x);
-                        }
+                        } else target.data('ready', true);
 
                     })
                     .on('mousedown', e => {
