@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         9Anime
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      3.0.4
+// @version      3.1
 // @description  UI Remaster
 // @author       daedelus
 //
@@ -22,27 +22,31 @@
 
     class Toast {
 
-        static notify(message){
-            if (typeof message === "string") {
-                let
-                        root = this.root,
-                        notification = html2element('<div style="min-width: 392px; text-align: center;" class="fadeIn"/>');
-                notification.innerHTML = message;
-                root.appendChild(notification);
+        static notify(message, timeout){
+            return new Promise(resolve=>{
+                if (typeof message === "string") {
+                    (new gmStyles());
+                    let
+                            root = this.root,
+                            notification = html2element('<div style="min-width: 392px; text-align: center;" class="fadeIn" hidden/>');
+                    notification.innerHTML = message;
+                    root.appendChild(notification);
+                    notification.hidden = null;
+                    timeout = typeof timeout === n ? timeout : 1000;
+                    setTimeout(() => {
+                        notification.classList.remove('fadeIn');
+                        setTimeout(function(){
+                            notification.classList.add('fadeOut');
+                            setTimeout(() => {
+                                resolve(notification);
+                                root.removeChild(notification);
+                                if (root.classList.contains('tmp')) root.remove();
+                            }, 750);
+                        }, timeout);
+                    }, 750);
+                }
+            });
 
-                setTimeout(() => {
-                    notification.classList.remove('fadeIn');
-                    setTimeout(function(){
-                        notification.classList.add('fadeOut');
-                        setTimeout(() => {
-                            root.removeChild(notification);
-                            if (root.classList.contains('tmp')) root.remove();
-                        }, 750);
-                    }, 1000);
-
-
-                }, 700);
-            }
         }
 
         static get root(){
@@ -118,32 +122,12 @@
 
         constructor(root){
             this.root = root || doc.body;
-
-
         }
     }
-    new gmStyles();
-    addstyle(`
-        .player-wrapper #controls > a { padding: 0 8px; display: inline-block; cursor: pointer;
-            color: #ababab; height: 38px; line-height: 38px; -webkit-transition: all .15s;
-            -moz-transition: all .15s; transition: all .15s; }
-        .player-wrapper #controls > a:hover { background: #141414; color: #eee; }
-        .report{float: right;}
 
 
-        [hidden], [hidden] *, .hidden, .hidden *,
-        section.sda, section.sda *, [style*="position: fixed;"], [style*="position: fixed;"] *,
-        :not(#player) > iframe:not([title="recaptcha challenge"])
-        
-        {
-            position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-            height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-            display: inline !important;z-index: -1 !important;
-        }
-    `);
 
-
-    on.body(() => {
+    on.load().then(() => {
         //waf-verify
         if (doc.querySelector('form[action*="/waf-verify"]') !== null) {
             return;
@@ -152,7 +136,8 @@
         const
                 listeners = new Events(doc.body),
                 ep = new Episode();
-        listeners.on('vidloaded', (e) => {
+                
+        listeners.on('vidloaded', e => {
             
             let
                     url = new URL(e.data.iframe.src),
@@ -194,25 +179,52 @@
             }
         });
         
-        NodeFinder.find('#player > iframe', iframe=>{
-            const player=iframe.parentElement;
+        let player;
+        if ((player = doc.querySelector('#player')) !== null) {
+            NodeFinder(player).find('iframe', iframe => {
+                if (/streamtape/.test(iframe.src)) {
+                    const url = new URL(iframe.src);
+                    url.searchParams.set('jdtitle', ep.normalized_filename);
+                    iframe.src = url.href;
+                }
+                Events(player).trigger('vidloaded', {iframe: iframe, player: player});
+            });
+        }
+        
 
-            if (/streamtape/.test(iframe.src)) {
-                const url = new URL(iframe.src);
-                url.searchParams.set('jdtitle', ep.normalized_filename);
-                iframe.src = url.href;
-            }
-            Events(player).trigger('vidloaded', {iframe: iframe});
-        });
 
         //setting main page tab to subbed
         NodeFinder.findOne('.main .tabs > span[data-name="updated_sub"]', node => node.click());
         //remove overlays
-        NodeFinder.find('div[style*="position: fixed;"], div[style*="position: fixed;"], div[style*="z-index: 2147483647;"], div[style*="z-index: 200000"]', x => {
+        let overlays=[
+            'div[style*="position: fixed"]',
+            'div[style*="z-index: 2147483647;"]',
+            'div[style*="z-index"][style*="position"]'
+        ];
+        NodeFinder.find(overlays.join(', '), x => {
             x.classList.add('hidden');
-            x.remove;
+            x.remove();
         });
 
     });
+
+    addstyle(`
+        .player-wrapper #controls > a { padding: 0 8px; display: inline-block; cursor: pointer;
+            color: #ababab; height: 38px; line-height: 38px; -webkit-transition: all .15s;
+            -moz-transition: all .15s; transition: all .15s; }
+        .player-wrapper #controls > a:hover { background: #141414; color: #eee; }
+        .report{float: right;}
+
+
+        [hidden], [hidden] *, .hidden, .hidden *,
+        section.sda, section.sda *, [style*="position: fixed;"], [style*="position: fixed;"] *,
+        :not(#player) > iframe:not([title="recaptcha challenge"])
+
+        {
+            position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+            height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+            display: inline !important;z-index: -1 !important;
+        }
+    `);
 
 })(document);
