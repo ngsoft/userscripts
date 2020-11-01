@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name	DramaCool 3.0
+// @name	DramaCool
 // @namespace	https://github.com/ngsoft/userscripts
-// @version	3.1.5
+// @version	3.2
 // @description	Dramacool site remaster
 // @author	daedelus
-// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2/dist/gmutils.min.js
+// @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
 // @noframes
 // @grant	none
 // @run-at	document-body
