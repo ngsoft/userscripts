@@ -503,9 +503,8 @@
                             </fieldset>
                         </form>`;
 
-            this.elements.buttons.yes.disabled = true;
             this.form = this.elements.body.querySelector('form.KodiRPC-Settings');
-            console.debug(this.form);
+
             Events(this.form).on('change submit', e => {
                 if (e.type === "submit") e.preventDefault();
                 else {
@@ -545,24 +544,26 @@
 
 
                         }
-
-                        console.debug(name, value);
-
                     }
 
                 }
 
-                console.debug(e);
             });
-            this.servers = gmSettings.get('servers').map(s => new Server(s));
-            this.servers.forEach(server => {
-                let opt = doc.createElement('option');
-                opt.value = server.id;
-                opt.innerHTML = server.name;
-                this.form.elements["server-selector"].appendChild(opt);
+            this.on('open', () => {
+                this.elements.buttons.yes.disabled = true;
+                this.servers = gmSettings.get('servers').map(s => new Server(s));
+                this.server = null;
+                this.form.elements["server-selector"].querySelectorAll('option').forEach(x => x.remove());
+                this.servers.forEach(server => {
+                    let opt = doc.createElement('option');
+                    opt.value = server.id;
+                    opt.innerHTML = server.name;
+                    this.form.elements["server-selector"].appendChild(opt);
+                });
+                this.form.elements["server-selector"].selectedIndex = 0;
+                Events(this.form.elements["server-selector"]).trigger('change');
             });
-            this.form.elements["server-selector"].selectedIndex = 0;
-            Events(this.form.elements["server-selector"]).trigger('change');
+
 
             //here
 
@@ -615,7 +616,16 @@
             Object.defineProperty(root, 'KRPCM', {
                 value: this, configurable: true
             });
+            let host = location.hostname;
+            commands.add('blacklist', 'Blacklist ' + host, () => {
+                ask('Do you wish to add ' + host + ' to blacklist', () => {
+                    if (!blacklist.includes(host)) blacklist.push(host);
+                    gmSettings.set('blacklist', blacklist);
+                    location.replace(location.href);
 
+                });
+            });
+            
             Events(root)
                     .on('kodirpc.send', e => {
                         e.preventDefault();
@@ -685,31 +695,11 @@
             host = location.hostname,
             settings;
 
-    if (blacklist.includes(host)) {
-        commands.add('blacklist', 'Whitelist ' + host, () => {
-            let host = location.hostname;
 
-            ask('Do you wish to remove ' + host + ' from blacklist', () => {
-                if (blacklist.includes(host)) {
-                    blacklist.splice(blacklist.indexOf(host), 1);
-                    gmSettings.set('blacklist', blacklist);
-                    location.replace(location.href);
-                }
-            });
-        });
-        return;
-    }else {
-        commands.add('blacklist', 'Blacklist ' + host, () => {
-            let host = location.hostname;
 
-            ask('Do you wish to add ' + host + ' to blacklist', () => {
-                if (!blacklist.includes(host)) blacklist.push(host);
-                gmSettings.set('blacklist', blacklist);
-                location.replace(location.href);
 
-            });
-        });
-    }
+    if (blacklist.includes(host)) return;
+
 
     if (servers.length === 0) servers.push(new Server());
 
@@ -800,6 +790,30 @@
             });
 
         });
+
+        if (/crunchyroll/.test(location.host) && /\d+$/.test(location.pathname)) {
+
+            let
+                    plugin = "plugin.video.crunchyroll",
+                    id = location.pathname.split("-").pop(),
+                    purl = "plugin://plugin.video.crunchyroll/?mode=videoplay&episode_id=%s".replace(/\%s/, id);
+                    site = "Crunchyroll";
+
+
+            servers.forEach(server => {
+                server.client.getPluginVersion(plugin)
+                        .then(response => {
+                            console.debug(response);
+                            if (!response.error) {
+                                if (typeof doc.body.KRPCM === u) new KodiRPC();
+                                commands.add(site + id, 'Send ' + site + ' Video', KodiRPC.action(purl));
+                            }
+                        })
+                        .catch(e => e);
+            });
+
+
+        }
 
     });
     
