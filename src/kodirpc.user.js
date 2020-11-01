@@ -792,6 +792,7 @@
         });
 
         if (/crunchyroll/.test(location.host) && /\d+$/.test(location.pathname)) {
+            if (typeof doc.body.KRPCM === u) new KodiRPC();
 
             let
                     plugin = "plugin.video.crunchyroll",
