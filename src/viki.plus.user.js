@@ -25,17 +25,6 @@
 
     sessionStorage.setItem(UUID + "session", +new Date());
 
-    const rload = new rloader(UUID, week);
-
-    //clear cache on upgrade
-    (() => {
-        let last = localStorage.getItem(UUID);
-        if (last !== GMinfo.script.version) rload.clear();
-        localStorage.setItem(UUID, GMinfo.script.version);
-    })();
-
-
-
     class Settings {
         static get prefix(){
             return GMinfo.script.name.replace(/\s+/, "") + ":";
@@ -43,9 +32,7 @@
         static get store(){
             if (typeof this.__store__ === u) {
                 const defaults = {
-                    locale: "",
-                    convert: false,
-                    filters: []
+                    locale: ""
                 };
                 const store = this.__store__ = new xStore(localStorage);
                 Object.keys(defaults).forEach(k => {
@@ -75,20 +62,10 @@
         }
     }
 
-
-    /**
-     * Loads Stylesheet
-     */
-    // rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/viki.plus.min.css");
-
-
-
-
-
     /**
      * Autoswitch locale
      */
-    (() => {
+    /* (() => {
 
         const locales = Array.from(doc.querySelectorAll('[data-locale], a.pad.inline-block[href*="locale="]')).map((el) => {
             let locale = el.data('locale');
@@ -137,389 +114,7 @@
 
         }
 
-    })();
-
-
-    class VikiSubs {
-
-        get target(){
-            return doc.querySelector('.viki-plus-container');
-        }
-
-        get tracks(){
-
-            if (typeof this._tracks === u) {
-                const self = this, filters = Settings.filters;
-                this._tracks = this.subtitles.map(obj => {
-                    return {
-                        iso: obj.srclang,
-                        src: obj.src,
-                        percent: obj.percentage,
-                        lang: isoCode(obj.srclang).langword
-                    };
-                }).filter(obj => {
-                    if (filters.length > 0) return filters.includes(obj.iso);
-                    return true;
-                });
-
-            }
-            return this._tracks;
-        }
-
-
-        get events(){
-            if (typeof this._events === u) {
-                const self = this;
-                this._events = {
-                    rmisoall: {
-                        click(e){
-                            this.parentElement.siblings().forEach(li => li.remove());
-                            this.closest('ul').hidden = true;
-                            Settings.filters = [];
-                            Events(self.elements.inputs.subtitles).trigger("init");
-                            Events(self.elements.inputs.isolist).trigger("reset");
-                        }
-                    },
-                    addiso: {
-                        click(){
-                            let iso, list;
-                            if ((iso = self.elements.inputs.isolist.value)) {
-                                list = Settings.filters;
-                                list.push(iso);
-                                Settings.filters = list;
-                                Events(self.elements.inputs.subtitles).trigger("init");
-                                Events(self.elements.inputs.isolist).trigger("reset");
-                                self.addIsoCode(iso);
-                                this.disabled = true;
-                            }
-
-                        }
-                    },
-                    fedit: {
-                        init(){
-                            Settings.filters.forEach(iso => self.addIsoCode(iso));
-                        }
-                    },
-                    isolist: {
-                        init(){
-
-                            //reset options
-                            this.querySelectorAll('option[value]:not([value=""])').forEach(x => x.remove());
-                            isoCode.data.forEach(iso => {
-                                let opt = doc.createElement('option');
-                                opt.innerHTML = iso.langword + ' [' + iso.codes[0] + ']';
-                                opt.value = iso.codes[0];
-                                this.appendChild(opt);
-                            });
-                        },
-                        reset(){
-                            this.selectedIndex = 0;
-                        },
-                        change(){
-                            self.elements.inputs.addiso.disabled = null;
-                            if (Settings.filters.includes(this.value)) self.elements.inputs.addiso.disabled = true;
-                        }
-                    },
-                    filters: {
-                        click(e){
-                            self.elements.fedit.hidden = self.elements.fedit.hidden === true ? null : true;
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }
-                    },
-                    subtitles: {
-                        init(e){
-                            delete(self._tracks);
-                            //reset options
-                            this.querySelectorAll('option[value]:not([value=""])').forEach(x => x.remove());
-
-                            //populate options
-                            const tracks = self.tracks;
-                            tracks.forEach((track, id) => {
-                                let opt = doc.createElement('option');
-                                opt.innerHTML = track.lang + ' (' + track.percent + ' %)';
-                                opt.value = id;
-                                this.appendChild(opt);
-                            });
-
-                            e.stopPropagation();
-
-
-                        },
-                        reset(){
-                            this.selectedIndex = 0;
-
-                        },
-                        change(e){
-                            //this.classList.remove("placeholder");
-                            let id = parseInt(this.value);
-                            if (!isNaN(id) && typeof self.tracks[id] !== u) {
-                                self.downloadTrack(self.tracks[id], () => {
-                                    Events(this).trigger("reset");
-                                });
-                            }
-                        }
-                    },
-                    convert: {
-                        init(){
-                            this.checked = Settings.convert === true;
-                            Events(this).trigger("change");
-                        },
-                        change(){
-                            Settings.convert = this.checked === true;
-                        }
-                    },
-                    root: {
-                        init(e){
-                            Object.keys(self.events).forEach(key => {
-                                if (key !== "root" && typeof self.events[key].init === f) {
-                                    let el = self.elements[key] || self.elements.inputs[key];
-                                    self.events[key].init.call(el, e);
-                                }
-                            });
-                        },
-                        click(e){
-                            let target, iso;
-                            if ((target = e.target.closest('button')) !== null) {
-                                e.preventDefault();
-                                if (target.matches('[name="rmiso"]')) {
-                                    if ((iso = target.parentElement.data("isocode"))) {
-                                        Settings.filters = Settings.filters.filter(x => x !== iso);
-                                        Events(self.elements.inputs.subtitles).trigger("init");
-                                        if (Settings.filters.length === 0) target.parentElement.parentElement.hidden = true;
-                                        target.parentElement.remove();
-                                    }
-                                    e.stopPropagation();
-                                }
-                            }
-
-
-                        }
-                    }
-                };
-            }
-            return this._events;
-        }
-
-        /**
-         * Add iso code to ul list
-         * @param {string} iso
-         */
-        addIsoCode(iso){
-
-            if (typeof iso === s && /^[\w]{2}$/.test(iso)) {
-                const ul = this.elements.fedit.querySelector('ul');
-                ul.hidden = null;
-                let entry = isoCode(iso);
-                let li = html2element(`<li data-isocode="${iso}"><strong style="float:left;">${iso.toUpperCase()}</strong><span>${entry.langword}</span><button title="Remove language" name="rmiso" class="gm-btn gm-btn-no"><i class="icon-minus"></i></button></li>`);
-                ul.insertBefore(li, ul.firstElementChild);
-            }
-
-
-        }
-
-
-
-
-
-        /**
-         * Convert VTT to SRT
-         * @param {string} vtt
-         * @param {function} callback
-         */
-        convert(vtt, callback){
-            if (typeof vtt === s && vtt.length > 0 && typeof callback === f) {
-                this.one("converter.ready", () => {
-                    callback(Subtitle.stringify(Subtitle.parse(vtt)));
-                });
-                if (typeof Subtitle === u) {
-                    new Timer(timer => {
-                        if (typeof Subtitle !== u) {
-                            timer.stop();
-                            this.trigger("converter.ready");
-                        }
-                    });
-                    rload.require("https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js");
-                } else this.trigger("converter.ready");
-            }
-        }
-
-        /**
-         * Launches Subtitle Download
-         * @param {object} track
-         * @param {function} callback
-         * @returns {unresolved}
-         */
-        downloadTrack(track, callback){
-            if (isPlainObject(track)) {
-                if (typeof callback === f) this.one("subtitle.downloaded", callback);
-                let filename = sanitizeFileName(this.json.container.titles.en, " ").replace(/\s+/g, " "), number = this.json.number, convert = Settings.convert;
-                if (this.json.type !== 'episode') {
-                    filename += "." + this.json.type;
-                } else {
-                    filename += ".E";
-                    if (number < 10) filename += 0;
-                    filename += number;
-                }
-                filename += "." + track.iso;
-                filename += convert === true ? ".srt" : ".vtt";
-                /**
-                 * @link https://hacks.mozilla.org/2016/03/referrer-and-cache-control-apis-for-fetch/
-                 */
-                fetch(track.src, {cache: "no-store", redirect: 'follow'})
-                        .then(r => {
-                            if (r.status === 200) return r.text();
-                            throw new Error("Cannot Fetch " + track.src);
-                        })
-                        .then(text => {
-                            if (convert === false) Text2File(text, filename);
-                            else this.convert(text, srt => Text2File(srt, filename));
-                            this.trigger("subtitle.downloaded");
-                        })
-                        .catch(ex => console.warn(ex));
-            }
-
-        }
-
-
-        constructor(json, subs){
-            const self = this;
-
-            const template = html2element(
-                    `<form class="viki-plus">
-                        <fieldset style="position:relative;">
-                            <legend>Download Subtitles</legend>
-                            <label>Convert to SRT
-                                <span class="switch-round-sm">
-                                        <input type="checkbox" name="convert" title="Convert to SRT" />
-                                        <span class="slider"></span>
-                                </span>
-                            </label>
-                            <button class="gm-btn gm-btn-yes" name="filters" style="position: absolute;right: 0;top: 0;">Edit filters</button>
-                        </fieldset>
-                        <fieldset class="viki-plus-fedit" hidden>
-                            <legend class="form-label">Add a language</legend>
-                            <select title="Select your language" name="isolist" style="width:calc(100% - 64px);"></select>
-                            <button class="gm-btn gm-btn-yes" title="Add a language" name="addiso" style="float:right;min-width:auto; padding:6px 16px !important;margin:3px;" disabled><i class="icon-plus"></i></button>
-                            <ul class="gm-list" hidden><li>
-                                    <strong style="float:left;">ALL</strong>
-                                    <span>Remove All</span>
-                                    <button title="Remove all languages" name="rmisoall" class="gm-btn gm-btn-no"><i class="icon-minus"></i></button>
-                            </li></ul>
-                        </fieldset>
-                        <fieldset>
-                            <legend>Subtitles</legend>
-                            <select title="Select Subtitles" name="subtitles">
-                                <option>Select Subtitles</option>
-                            </select>
-                        </fieldset>
-                    </form>`);
-
-
-            const dialog = new gmDialog(doc.body, {
-                overlayclickclose: true
-            });
-
-            dialog.body = template;
-            dialog.title = GMinfo.script.name;
-            dialog.elements.buttons.no.remove();
-            dialog.elements.buttons.yes.innerHTML = "Close";
-
-            this.json = json || {};
-            this.subtitles = subs || [];
-
-            if (typeof self.json.id !== u && self.subtitles.length > 0) {
-                self.elements = {
-                    root: template,
-                    inputs: {}
-                };
-
-                find('#playerSettings > .vjs-menu > .vjs-menu-content', 50000, (menu, obs) => {
-
-                    if (menu.parentElement !== null) obs.stop();
-
-                    menu.appendChild(html2element(`<li class="vkp-menu-item vjs-menu-item vkp-menu-separator"></li>`));
-                    let button = html2element(
-                            `<li class="vkp-menu-item vjs-menu-item">
-                                <div class="vkp-menu-label">
-                                    <div class="vkp-menu-title">Download Subtitles</div>
-                                </div>
-                                <div class="vkp-submenu-label">
-                                    <span class="vkp-submenu-title">Select</span>
-                                    <i class="vkp-menu-arrow vkp-icon-arrow-right"></i>
-                                </div>
-                                <div class="vjs-menu" role="presentation">
-                                    <ul class="vjs-menu-content" role="menu"></ul>
-                                </div>
-                            </li>`
-                            );
-
-                    menu.appendChild(button);
-
-                    Events(button).on('click', () => {
-
-                        dialog.open();
-                    });
-
-                });
-
-                find('.video-js', vjs => {
-                    dialog.parent = vjs;
-                }, 50000);
-
-
-
-                self.elements.root.querySelectorAll('[name]').forEach(input => {
-                    self.elements.inputs[input.name] = input;
-                });
-                ["fedit"].forEach(key => {
-                    self.elements[key] = self.elements.root.querySelector('.viki-plus-' + key);
-                });
-
-                Object.keys(self.events).forEach(key => {
-                    let elem = self.elements[key] || this.elements.inputs[key];
-                    if (elem instanceof EventTarget) {
-                        Object.keys(self.events[key]).forEach(evt => {
-                            Events(elem).on(evt, self.events[key][evt]);
-                        });
-                    }
-                });
-
-                //self.target.appendChild(template);
-
-
-                new Events(self.elements.root, self);
-
-                self.on('init', () => {
-                    self.elements.root.querySelectorAll('.form-input select').forEach(select => {
-                        //basic init  for placeholder
-                        select.querySelectorAll('option:not([value]), option[value=""]').forEach(el => el.remove());
-                        let placeholder = select.getAttribute("title") || "";
-                        if (placeholder.length > 0) {
-                            let opt = doc.createElement('option');
-                            opt.value = "";
-                            opt.innerHTML = placeholder;
-                            opt.disabled = opt.hidden = opt.selected = true;
-                            select.insertBefore(opt, select.firstChild);
-                            //select.classList.add("placeholder");
-                        }
-                        select.selectedIndex = 0;
-                    });
-                });
-
-                self.trigger('init');
-
-
-
-                console.debug(scriptname, "started");
-            }
-
-
-        }
-
-    }
-
-
+    })();*/
 
     function loadResources(){
         if (loadResources.loading !== true) {
@@ -529,16 +124,43 @@
                 "https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js",
                 "https://cdn.dashjs.org/latest/dash.all.min.js",
                 "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js",
-                // @link https://izitoast.marcelodolza.com/
-                //"https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js",
 
-                //"https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap-reboot.min.css",
-                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css",
-                        // "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"
+                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css"
             ].forEach(src => {
                 if (/\.js$/.test(src)) loadjs(src);
                 else if (/\.css$/.test(src)) loadcss(src);
             });
+            addstyle(`
+                .plyr video{object-fit: fill;}
+                .video-player-container{position: absolute;top: 0;right: 0;left: 0;bottom: 0;}
+                .video-player-title{
+                    position: absolute; top: 0 ; left: 0 ; right: 0;
+                    text-align: center; padding: 16px 8px;z-index: 9999;
+                    text-align: center;font-size: 24px; color:#FFF;line-height: 1.5;
+                    background-color: rgba(0, 0, 0, 0.45);text-decoration: none;cursor: pointer;
+                }
+                .video-player-title *:hover{filter: drop-shadow(4px 4px 4px #fff);}
+                .plyr__caption{
+                    -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
+                     font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
+                     background: rgba(0,0,0,.25);transform: translate(0, -60px);font-size: 24px;
+                }
+                .plyr--captions-enabled video::cue{
+                    color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
+                    display: none; text-shadow: none;
+                }
+                @media (min-width: 768px) {
+                    .altplayer  .plyr__caption{font-size: 32px;}
+                }
+                @media (min-width: 992px) {
+                    .altplayer  .plyr__caption{font-size: 40px;}
+                }
+                .hidden, .hidden *, [hidden], [hidden] *{
+                    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+                    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+                    display: inline !important;z-index: -1 !important;
+                }
+            `);
 
         }
 
@@ -560,43 +182,465 @@
     }
 
 
+    class VideoPlayer {
 
+        constructor(api, videoid){
 
+            if (!(api instanceof VikiAPI)) throw new Error('Invalid argument api');
 
+            if (typeof videoid !== s) throw new Error('Invalid argument videoid');
+            this.api = api;
 
+            const that = this;
+            this.sources = [];
+            this.quality = {};
+            this.tracks = [];
 
+            let size = 540;
+            let video = this.video = html2element(`<video controls src="" crossorigin="" preload="none" tabindex="-1" class="altvideo"/>`);
+            let root = this.root = html2element('<div class="video-player-container"/>');
+            let toolbar = this.toolbar = html2element('<div class="video-player-title"/>');
 
-
-    function apiCall(version, id){
-        return new Promise((resolve, reject) => {
-            console.debug(version, id);
-            if ((typeof version !== s) || !(/^(\d+\.){2}\d+$/.test(version))) {
-                reject('Invalid Version');
-                return;
+            this.buttons = {
+                nextvideo: html2element(`<button class="plyr__controls__item plyr__control next-video" type="button">
+                                            <svg aria-hidden="true" focusable="false"><use xlink:href="#plyr-fast-forward"></use></svg>
+                                            <span class="label--not-pressed plyr__tooltip">Next Video</span>
+                                            <span class="label--pressed plyr__tooltip">Next Video</span>
+                                        </button>`),
+                download: html2element(`<button class="plyr__controls__item plyr__control download-subtitles" type="button">
+                                            <svg aria-hidden="true" focusable="false"><use xlink:href="#plyr-download"></use></svg>
+                                            <span class="label--not-pressed plyr__tooltip">Download</span>
+                                            <span class="label--pressed plyr__tooltip">Download</span>
+                                        </button>`)
             }
-            if ((typeof id !== s) || !(/^\d+v$/.test(id))) {
-                reject('Invalid ID');
-                return;
-            }
-            let
-                    url = 'https://www.viki.com/api/videos/' + id,
-                    headers = new Headers({'x-viki-app-ver': version});
+            this.root.appendChild(video);
+            (new Events(video, this));
 
-            fetch(url, {cache: "no-store", redirect: 'follow', credentials: "same-origin", headers: headers})
-                    .then(response => {
-                        if (response.status === 200) return response.json();
-                        throw new Error("Cannot Fetch " + url);
-                    })
-                    .then(json => resolve(json))
-                    .catch(() => {
-                        reject('Cannot fetch api data.');
+
+
+            Events(root).on('click', e => {
+                if (e.target.closest('button.download-subtitles') !== null) {
+                    e.preventDefault();
+                    this.trigger('download');
+                    //e.stopImmediatePropagation();
+                } else if (e.target.closest('button.next-video') !== null) {
+                    e.preventDefault();
+                    this.trigger('next');
+                    //e.stopImmediatePropagation();
+                }
+            });
+            
+            this.loaded(() => {
+                const options = this.options = {
+                    title: video.data('title'),
+                    captions: {active: false, language: 'auto', update: true},
+                    settings: ['captions', 'quality'],
+                    keyboard: {focused: true, global: true},
+                    quality: {
+                        default: null,
+                        // The options to display in the UI, if available for the source media
+                        options: Object.keys(this.quality),
+                        forced: true,
+                        onChange: x => x
+                    },
+                    tooltips: {
+                        controls: true,
+                        seek: true,
+                    },
+                    controls: [
+                        'play-large',
+                        // 'restart',
+                        // 'rewind',
+                        'play',
+                        // 'fast-forward',
+                        'progress',
+                        'current-time',
+                        'duration',
+                        'mute',
+                        'volume',
+                        'captions',
+                        'settings',
+                        //'pip',
+                        //'airplay',
+                        //'download',
+                        'fullscreen'
+                    ]
+                };
+
+                NodeFinder.find('video[src*="blob"]:not(.altvideo)', v => {
+                    v.pause();
+                    v.src = null;
+                    v.remove();
+                    loadResources().then(exports => {
+                        const{Subtitle, Hls, Plyr, dashjs} = exports;
+                        doc.body.innerHTML = "";
+                        doc.body.appendChild(this.root);
+                        const plyr = this.plyr = new Plyr(video, options);
+
+                        this
+                                .on('qualitychange', e => {
+                                    let {quality} = e.detail,
+                                    ct = plyr.currentTime;
+                                    localStorage.videoquality = quality;
+                                    if (that.player) {
+                                        that.player.destroy();
+                                        that.player = null;
+                                    }
+                                    let source = that.quality[quality];
+                                    if (/dash/.test(source.type)) {
+
+                                        let player = that.player = dashjs.MediaPlayer().create();
+                                        player.destroy = function(){
+                                            return player.reset();
+                                        };
+                                        player.initialize();
+                                        player.on(dashjs.MediaPlayer.events.CAN_PLAY, function(){
+                                            that.trigger('languagechange');
+                                        });
+                                        player.setAutoPlay(true);
+                                        player.attachView(video);
+                                        player.attachSource(source.src);
+                                        console.debug(dashjs.MediaPlayer.events);
+
+                                    } else if (/hls/.test(source.type)) {
+                                        const hls = that.player = new Hls();
+
+                                        hls.on(Hls.Events.MANIFEST_PARSED, function(){
+                                            that.trigger('languagechange');
+                                            if (ct > 0) {
+                                                that.one('playing', () => {
+                                                    plyr.currentTime = ct;
+                                                    console.debug(plyr);
+                                                });
+                                            }
+                                            video.play();
+                                        });
+                                        hls.on(Hls.Events.MEDIA_ATTACHED, function(){
+                                            hls.loadSource(source.src);
+                                        });
+                                        hls.attachMedia(video);
+                                    }
+                                })
+                                .on('languagechange', e => {
+                                    let ct = plyr.captions.currentTrack;
+                                    if ((ct >= 0) && that.tracks[ct]) {
+                                        let
+                                                track = that.tracks[ct],
+                                                src = track.data('src') || track.src;
+                                        if (track.data('loading') === true) return;
+                                        if (!track.text) {
+                                            track.data({
+                                                src: src,
+                                                loading: true
+                                            });
+                                            fetch(src, {cache: "default", redirect: 'follow'})
+                                                    .then(r => {
+                                                        if (r.status === 200) return r.text();
+                                                        throw new Error();
+                                                    })
+                                                    .then(text => {
+                                                        Object.defineProperty(track, 'text', {
+                                                            configurable: true,
+                                                            value: text
+                                                        });
+                                                        let
+                                                                blob = new Blob([text], {type: "text/vtt"}),
+                                                                url = URL.createObjectURL(blob);
+                                                        track.src = url;
+                                                        track.data('loading', null);
+                                                    })
+                                                    .catch(console.error);
+                                        } else {
+                                            let
+                                                    blob = new Blob([track.text], {type: "text/vtt"}),
+                                                    url = URL.createObjectURL(blob);
+                                            track.src = url;
+                                        }
+                                        doc.querySelectorAll('button[data-plyr="fullscreen"]').forEach(btn => btn.parentElement.insertBefore(this.buttons.download, btn));
+                                    } else this.buttons.download.remove();
+                                })
+                                .on('ready', () => {
+                                    let
+                                            quality = localStorage.videoquality || "540",
+                                            event = new Event('qualitychange');
+                                    Object.assign(event, {
+                                        detail: {
+                                            quality: quality,
+                                            plyr: plyr
+                                        }
+                                    });
+                                    this.video.dispatchEvent(event);
+                                    this.isReady = true;
+                                    this.trigger('player.ready');
+                                })
+                                .on('next', () => {
+                                    if (this.next) location.href = getURL(this.next);
+                                })
+                                .on('download', () => {
+                                    let filename = sanitizeFileName(video.data('title'), " ").replace(/\s+/g, " ");
+                                    let ct = plyr.captions.currentTrack, track = this.tracks[ct];
+                                    if (track instanceof Element) {
+                                        let srt = Subtitle.stringify(Subtitle.parse(track.text));
+                                        filename += '.' + track.srclang + ".srt";
+                                        Text2File(srt, filename);
+                                    }
+                                })
+                                .on('play pause playing', e => {
+                                    toolbar.hidden = video.paused === true ? null : true;
+
+                                });
+                    });
+                });
+
+
+
+            });
+
+            this.ready(() => {
+                this.loadNext();
+                toolbar.innerHTML = '<span>' + video.data('title') + '</span>';
+                video.parentElement.appendChild(toolbar);
+
+                Events(doc).on('keydown keyup', e => {
+
+                    if (e.target.closest('input') !== null) return;
+
+                    let prevent = false;
+                    
+                    if ([13, 78].includes(e.keyCode)) e.preventDefault();
+                    if (e.type === "keydown") return;
+
+                    switch (e.keyCode) {
+                        case 13: //Enter
+                            let btn = doc.querySelector('button[data-plyr="fullscreen"]');
+                            if (btn !== null) btn.dispatchEvent(new MouseEvent('click'));
+                            break;
+                        case 78: //n
+                            this.trigger('next');
+                            break;
+                    }
+                });
+
+
+            });
+            
+            this.api.getVideo(videoid).then(json => {
+                this.json = json;
+                video.data({
+                    show: json.video.container.titles.en,
+                    episode: json.video.number
+                });
+                let title = video.data('show');
+                if (video.data('episode') > 0) {
+                    title += ".E";
+                    if (video.data('episode') < 10) title += "0";
+                    title += video.data('episode');
+                }
+                video.data('title', title);
+                try {
+                    video.poster = json.video.container.images.poster.url;
+                } catch (e) {
+                    video.poster = null;
+                }
+                json.subtitles.forEach((item, i) => {
+                    let el = doc.createElement('track');
+                    Object.assign(el, {
+                        src: item.src,
+                        label: item.label,
+                        srclang: item.srclang,
+                        kind: "subtitles",
+                        lang: isoCode(item.srclang).lang.split(';')[0].split(',')[0].trim(),
+                        id: 'track' + i
+                    });
+                    this.tracks.push(el);
+                    video.appendChild(el);
+                });
+                if (json.streams.dash) {
+                    let
+                            item = json.streams.dash,
+                            url = new URL(item.url),
+                            src = atob(url.searchParams.get('stream')),
+                            el = doc.createElement('source');
+                    this.quality[size] = {
+                        type: "video/dash",
+                        size: size,
+                        src: src
+                    };
+                    Object.assign(el, this.quality[size]);
+                    this.sources.push(el);
+                    video.appendChild(el);
+
+                }
+                this.loadHLS().then(() => {
+                    this.isLoaded = true;
+                    this.trigger('player.loaded');
+                });
+
+            });
+
+            console.debug(this);
+
+
+        }
+
+        ready(callback){
+            if (this.isReady !== true) {
+                this.one('player.ready', () => {
+                    callback.call(null, this);
+                });
+            } else callback.call(null, this);
+
+        }
+
+        loaded(callback){
+            if (this.isLoaded !== true) {
+                this.one('player.loaded', () => {
+                    callback.call(null, this);
+                });
+            } else callback.call(null, this);
+
+        }
+
+        loadHLS(){
+            return new Promise(resolve => {
+                const json = this.json;
+
+                if (json.streams.hls) {
+                    let
+                            item = json.streams.hls,
+                            url = new URL(item.url),
+                            src = atob(url.searchParams.get('stream'));
+                    fetch(new URL(src), {cache: "no-store", redirect: 'follow'})
+                            .then(r => {
+                                if (r.status === 200) return r.text();
+                                throw new Error('Unable to fetch hls infos.');
+
+                            })
+                            .then(text => {
+                                return text.split(/\n+/);
+                            })
+                            .then(lines => {
+                                lines.forEach(line => {
+                                    if (/^http/.test(line)) {
+                                        let
+                                                url = line.trim(),
+                                                size = /(\d+)p/.exec(url)[1],
+                                                el=doc.createElement('source');
+                                        size = parseInt(size);
+                                        this.quality[size] = {
+                                            type: "video/hls",
+                                            size: size,
+                                            src: src
+                                        };
+                                        Object.assign(el, this.quality[size]);
+                                        this.sources.push(el);
+                                        this.video.appendChild(el);
+                                        resolve(this);
+                                    }
+                                });
+                            })
+                            .catch(() => {
+                                resolve(this);
+                            });
+                } else resolve(this);
+
+            });
+        }
+
+        loadNext(){
+
+            let channel =
+                    this.json.video.container.id,
+                    id = this.json.video.id;
+            this.api.getEpisodes(channel)
+                    .then(list => {
+                        let next = list.indexOf(id);
+                        if (next !== -1) {
+                            next++;
+                            if (typeof list[next] !== u) {
+                                next = list[next];
+                                console.debug(next);
+                                this.api.getVideo(next).then(json => {
+                                    if (json.video.blocked == false) {
+                                        this.next = next;
+                                        doc.querySelectorAll('button[data-plyr="play"]:not(.plyr__control--overlaid)').forEach(btn => {
+                                            btn.parentElement.insertBefore(this.buttons.nextvideo, btn.nextElementSibling);
+                                        });
+                                    }
+                                });
+                            }
+                        }
+
                     });
 
-
-        });
+        }
     }
 
 
+    class VikiAPI {
+        constructor(appid, appversion){
+            if (typeof appid !== s) throw new Error('Invalid app id');
+            if (typeof appversion !== s) throw new Error('Invalid app version');
+            this.appid = appid;
+            this.appversion = appversion;
+        }
+
+
+        call(url, headers){
+            return new Promise((resolve, reject) => {
+
+                if (typeof url !== s || !(/^http/.test(url))) {
+                    reject('Invalid URL');
+                    return;
+                }
+                url = new URL(url);
+                url.searchParams.set('app', this.appid);
+                const options={
+                    cache: "no-store",
+                    redirect: 'follow',
+                    credentials: "same-origin"
+                };
+                if (headers instanceof Headers) options.headers = headers;
+                console.debug(url);
+                fetch(url, options)
+                        .then(r => {
+                            if (r.status === 200) return r.json();
+                            throw new Error("Cannot Fetch APi data");
+                        })
+                        .then(json => {
+                            resolve(json);
+                        })
+                        .catch(() => {
+                            reject('Cannot Fetch APi data ' + url);
+                        });
+            });
+        }
+
+        getVideo(id){
+            return new Promise(resolve => {
+                if ((typeof id !== s) || !(/^\d+v$/.test(id))) return;
+                let url = 'https://www.viki.com/api/videos/' + id;
+                this.call(url, new Headers({'x-viki-app-ver': this.appversion})).then(json => resolve(json)).catch(console.error);
+            });
+        }
+
+        getChannel(id){
+            return new Promise(resolve => {
+                if ((typeof id !== s) || !(/^\d+c$/.test(id))) return;
+                let url = 'https://api.viki.io/v4/series/' + id + '.json';
+                this.call(url).then(json => resolve(json)).catch(console.error);
+            });
+        }
+
+        getEpisodes(id){
+            return new Promise(resolve => {
+                if ((typeof id !== s) || !(/^\d+c$/.test(id))) return;
+                let url = 'https://api.viki.io/v4/containers/' + id + '/episodes.json?&direction=asc&with_upcoming=true&sort=number&blocked=true&only_ids=true';
+                this.call(url).then(json => resolve(json.response)).catch(console.error);
+            });
+        }
+
+    }
 
 
 
@@ -604,25 +648,25 @@
     /**
      * API Load data
      */
-    let matches;
-    if ((matches = /^\/videos\/(\w+)\-/.exec(location.pathname)) !== null) {
-        let id = matches[1], version;
+    let api, matches, version, appid;
+
+
+
+
+
+    if ((matches = /^\/videos\/(\d+v)/.exec(location.pathname)) !== null) {
+        let id = matches[1];
 
 
         NodeFinder.findOne('[src*="app_ver="][src*="?app_id"]', el => {
-            let
-                    url = new URL(el.src),
-                    version = url.searchParams.get('app_ver');
-            console.debug(url);
-            apiCall(version, id)
-                    .then(json => {
-                        console.debug(json);
-                        loadResources().then(exports => {
-                            console.debug(exports);
-                        });
+            let url = new URL(el.src);
 
-                    }).catch(x => console.error(x));
-            
+            version = url.searchParams.get('app_ver');
+            appid = url.searchParams.get('app_id');
+
+            api = new VikiAPI(appid, version);
+
+            const vplayer = window.vplayer = new VideoPlayer(api, id);
 
         });
 

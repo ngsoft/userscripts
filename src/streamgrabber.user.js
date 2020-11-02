@@ -234,7 +234,7 @@
             return this.element.getAttribute('type');
         }
         set type(type){
-            let supported = ["webm", "mp4", "ogg", "hls"];
+            let supported = ["webm", "mp4", "ogg", "hls", "dash"];
             if (typeof type === s) {
                 type = type.toLowerCase();
                 if (/^video\//i.test(type)) {
