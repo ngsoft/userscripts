@@ -79,7 +79,7 @@
     /**
      * Loads Stylesheet
      */
-    rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.4/dist/viki.plus.min.css");
+    // rload.require("https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/viki.plus.min.css");
 
 
 
@@ -521,26 +521,83 @@
 
 
 
-    function main(api, id, version){
-        const headers = new Headers({'x-viki-app-ver': version});
-        fetch(api, {cache: "no-store", redirect: 'follow', credentials: "same-origin", headers: headers})
-                .then((r) => {
-                    console.debug(r);
-                    if (r.status === 200) return r.json();
-                    throw new Error("Cannot Fetch", api);
-                })
-                .then((json) => {
-                    let subtitles = json.subtitles, video = json.video;
-                    new VikiSubs(video, subtitles);
-                })
-                .catch((err) => {
-                    console.warn(err);
+    function loadResources(){
+        if (loadResources.loading !== true) {
+            loadResources.loading = true;
+            [
+                "https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js",
+                "https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js",
+                "https://cdn.dashjs.org/latest/dash.all.min.js",
+                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js",
+                // @link https://izitoast.marcelodolza.com/
+                //"https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js",
+
+                //"https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap-reboot.min.css",
+                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css",
+                        // "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"
+            ].forEach(src => {
+                if (/\.js$/.test(src)) loadjs(src);
+                else if (/\.css$/.test(src)) loadcss(src);
+            });
+
+        }
+
+        return new Promise(resolve => {
+            new Timer(timer => {
+                let
+                        vars = ["Subtitle", "Hls", "Plyr", "dashjs"],
+                        args = {};
+                vars.forEach(name => {
+                    if (typeof window[name] !== u) args[name] = window[name];
                 });
-        
-        
-        
-        
+                if (Object.keys(args).length === vars.length) {
+                    timer.stop();
+                    resolve(args);
+                }
+            });
+
+        });
     }
+
+
+
+
+
+
+
+
+
+    function apiCall(version, id){
+        return new Promise((resolve, reject) => {
+            console.debug(version, id);
+            if ((typeof version !== s) || !(/^(\d+\.){2}\d+$/.test(version))) {
+                reject('Invalid Version');
+                return;
+            }
+            if ((typeof id !== s) || !(/^\d+v$/.test(id))) {
+                reject('Invalid ID');
+                return;
+            }
+            let
+                    url = 'https://www.viki.com/api/videos/' + id,
+                    headers = new Headers({'x-viki-app-ver': version});
+
+            fetch(url, {cache: "no-store", redirect: 'follow', credentials: "same-origin", headers: headers})
+                    .then(response => {
+                        if (response.status === 200) return response.json();
+                        throw new Error("Cannot Fetch " + url);
+                    })
+                    .then(json => resolve(json))
+                    .catch(() => {
+                        reject('Cannot fetch api data.');
+                    });
+
+
+        });
+    }
+
+
+
 
 
 
@@ -549,18 +606,23 @@
      */
     let matches;
     if ((matches = /^\/videos\/(\w+)\-/.exec(location.pathname)) !== null) {
-        let id = matches[1], api = 'https://www.viki.com/api/videos/' + id, version;
+        let id = matches[1], version;
 
-        NodeFinder.find('script[src*="player"]', script => {
-            let src = script.src;
 
-            if ((matches = /\-(\d+\.\d+\.\d+)\-/.exec(src)) !== null) {
-                if (version === undef) {
-                    version = matches[1];
-                    main(api, id, version)
-                }
-            }
+        NodeFinder.findOne('[src*="app_ver="][src*="?app_id"]', el => {
+            let
+                    url = new URL(el.src),
+                    version = url.searchParams.get('app_ver');
+            console.debug(url);
+            apiCall(version, id)
+                    .then(json => {
+                        console.debug(json);
+                        loadResources().then(exports => {
+                            console.debug(exports);
+                        });
 
+                    }).catch(x => console.error(x));
+            
 
         });
 
