@@ -20,14 +20,23 @@
     /* jshint -W018 */
     /* jshint -W083 */
 
+    let oldversion = localStorage.getItem(UUID + ":version");
 
-    let newsession = sessionStorage.getItem(UUID + "session") === null;
+    if (oldversion !== GMinfo.script.version) {
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem(UUID + ":version", GMinfo.script.version);
 
-    sessionStorage.setItem(UUID + "session", +new Date());
+    }
+
+
+    let newsession = sessionStorage.getItem(UUID + ":session") === null;
+    sessionStorage.setItem(UUID + ":session", +new Date());
+
 
     class Settings {
         static get prefix(){
-            return GMinfo.script.name.replace(/\s+/, "") + ":";
+            return UUID + ":";
         }
         static get store(){
             if (typeof this.__store__ === u) {
@@ -48,73 +57,118 @@
         static set locale(locale){
             if (typeof locale === s) this.store.set(this.prefix + "locale", locale);
         }
-        static get convert(){
-            return this.store.get(this.prefix + "convert") === true;
+
+    }
+
+
+    class LocaleSelector extends gmDialog {
+
+        static replaceLocale(locale){
+            let url = new URL(location.href);
+            url.searchParams.set('locale', locale);
+            location.replace(url.href);
         }
-        static set convert(flag){
-            if (typeof flag === b) this.store.set(this.prefix + "convert", flag);
+
+        static getLocales(){
+            return new Promise(resolve => {
+                let list = [];
+                if (typeof document.documentElement.lang === s && document.documentElement.lang.length > 0) list.push(document.documentElement.lang);
+                doc.querySelectorAll('link[hreflang]').forEach(el => {
+                    let u = new URL(el.href);
+                    list.push(u.searchParams.get('locale'));
+                });
+                if (list.length > 1) resolve(list);
+            });
         }
-        static get filters(){
-            return this.store.get(this.prefix + "filters") || [];
-        }
-        static set filters(arr){
-            if (isArray(arr)) this.store.set(this.prefix + "filters", arr.filter(x => /^[\w]{2}$/.test(x)).sort());
+        constructor(locales){
+            super(doc.body, {
+                buttons: {
+                    yes: "Save",
+                    no: "Cancel"
+                },
+                events: {},
+                title: GMinfo.script.name + " | Select Locale"
+            });
+            this.body = `<form class="VikiPlus-Settings">
+                                <ul class="gm-list"></ul>
+                        </form>`;
+            this.form = this.elements.body.querySelector('form');
+            this.list = this.form.querySelector('ul.gm-list');
+
+            locales.forEach(locale => {
+
+                let lang = isoCode(locale).lang.split(';')[0].split(',')[0].trim();
+
+                if (locale === "zt") lang = "繁體中文";
+                else if (locale === "zh") lang = "简体中文";
+                else if (locale === "ja") lang = "日本語";
+                else if (locale === "ko") lang = "한국어";
+                let li = html2element(`<li>
+                                        <span class="switch-rounded-sm">
+                                            <input type="checkbox" name="locale_${locale}" data-locale="${locale}" />
+                                            <span class="slider"></span>
+                                        </span>
+                                        <span class="gm-label">${lang}</span>
+                                    </li>`);
+                this.list.appendChild(li);
+            });
+            
+            Events(this.form)
+                    .on('change submit', e => {
+                        if (e.type === "submit") {
+                            e.preventDefault();
+                            return;
+                        }
+                        let target = e.target.closest('[type="checkbox"]');
+                        if (target instanceof Element) {
+                            for (let i = 0; i < this.form.elements.length; i++) {
+                                this.form.elements[i].checked = null;
+                            }
+                            target.checked = true;
+                            this.locale = target.data('locale');
+
+                        }
+                    })
+                    .on('click', e => {
+                        if (e.target.closest('[type="checkbox"]') !== null) return;
+                        let target = e.target.closest('.gm-list li');
+                        if (target instanceof Element) {
+                            let ck = target.querySelector('[type="checkbox"]');
+                            if (ck instanceof Element) Events(ck).trigger('change');
+                        }
+
+                    });
+            this
+                    .on('confirm', () => {
+                        let selected, el;
+                        for (let i = 0; i < this.form.elements.length; i++) {
+                            el = this.form.elements[i];
+                            if (el.checked === true) {
+                                selected = el;
+                                break;
+                            }
+                        }
+                        if (selected instanceof Element) {
+                            Settings.locale = this.locale = selected.data('locale');
+                        }
+
+
+                    })
+                    .on('open', () => {
+                        let
+                                current = Settings.locale.length > 0 ? Settings.locale : "en",
+                                ck = this.form.querySelector(`[type="checkbox"][data-locale="${current}"]`);
+                        if (ck instanceof Element) {
+                            Events(ck).trigger('change');
+                        }
+                    })
+                    .on('hide', () => {
+                        if (this.locale) LocaleSelector.replaceLocale(this.locale);
+                    });
+
         }
     }
 
-    /**
-     * Autoswitch locale
-     */
-    /* (() => {
-
-        const locales = Array.from(doc.querySelectorAll('[data-locale], a.pad.inline-block[href*="locale="]')).map((el) => {
-            let locale = el.data('locale');
-            if (locale === undef) {
-                let url = new URL(el.href);
-                locale = url.searchParams.get('locale');
-            }
-            return locale;
-        });
-
-        function switchLocale(locale){
-            if (typeof locale === s && locales.includes(locale)) {
-                Settings.locale = locale;
-                let url = new URL(location.href);
-                url.searchParams.set("locale", locale);
-                location.replace(url.pathname + url.search);
-            }
-        }
-
-        Events(doc.body).on('click', event => {
-            let target = event.target.closest('div[data-react-class="modalApp.ModalSiteLanguage"] a.pad.inline-block');
-            if (target instanceof Element) {
-                event.preventDefault();
-                let url = new URL(getURL(target.href)), locale = url.searchParams.get("locale");
-                switchLocale(locale);
-            } else if ((target = event.target.closest('div.language-modal a[data-locale]')) instanceof Element) {
-                event.preventDefault();
-                let locale = target.data('locale');
-                switchLocale(locale);
-            }
-
-        });
-
-
-        let locale = Settings.locale;
-        if (locale.length === 0) {
-            on.loaded(()=>{ 
-                let btn = doc.querySelector('.language-selector-toggle');
-                if (btn instanceof Element) {
-                    btn.click();
-                }
-            });
-
-        } else if (newsession === true) {
-            switchLocale(locale);
-
-        }
-
-    })();*/
 
     function loadResources(){
         if (loadResources.loading !== true) {
@@ -212,7 +266,7 @@
                                             <span class="label--not-pressed plyr__tooltip">Download</span>
                                             <span class="label--pressed plyr__tooltip">Download</span>
                                         </button>`)
-            }
+            };
             this.root.appendChild(video);
             (new Events(video, this));
 
@@ -245,7 +299,7 @@
                     },
                     tooltips: {
                         controls: true,
-                        seek: true,
+                        seek: true
                     },
                     controls: [
                         'play-large',
@@ -300,7 +354,6 @@
                                         player.setAutoPlay(true);
                                         player.attachView(video);
                                         player.attachSource(source.src);
-                                        console.debug(dashjs.MediaPlayer.events);
 
                                     } else if (/hls/.test(source.type)) {
                                         const hls = that.player = new Hls();
@@ -310,7 +363,6 @@
                                             if (ct > 0) {
                                                 that.one('playing', () => {
                                                     plyr.currentTime = ct;
-                                                    console.debug(plyr);
                                                 });
                                             }
                                             video.play();
@@ -421,6 +473,8 @@
                     }
                 });
 
+                console.debug(scriptname, 'started');
+
 
             });
             
@@ -477,10 +531,6 @@
                 });
 
             });
-
-            console.debug(this);
-
-
         }
 
         ready(callback){
@@ -559,7 +609,7 @@
                             next++;
                             if (typeof list[next] !== u) {
                                 next = list[next];
-                                console.debug(next);
+                                
                                 this.api.getVideo(next).then(json => {
                                     if (json.video.blocked == false) {
                                         this.next = next;
@@ -601,7 +651,6 @@
                     credentials: "same-origin"
                 };
                 if (headers instanceof Headers) options.headers = headers;
-                console.debug(url);
                 fetch(url, options)
                         .then(r => {
                             if (r.status === 200) return r.json();
@@ -642,36 +691,35 @@
 
     }
 
-
-
-
     /**
      * API Load data
      */
     let api, matches, version, appid;
-
-
-
-
-
     if ((matches = /^\/videos\/(\d+v)/.exec(location.pathname)) !== null) {
         let id = matches[1];
 
 
         NodeFinder.findOne('[src*="app_ver="][src*="?app_id"]', el => {
             let url = new URL(el.src);
-
             version = url.searchParams.get('app_ver');
             appid = url.searchParams.get('app_id');
-
             api = new VikiAPI(appid, version);
-
             const vplayer = window.vplayer = new VideoPlayer(api, id);
-
         });
 
 
 
+    } else {
+        on.loaded().then(() => {
+            if (Settings.locale.length === 0) {
+                LocaleSelector.getLocales().then(list => {
+                    let sel = new LocaleSelector(list);
+                    sel.open();
+                });
+            } else if (newsession === true) {
+                LocaleSelector.replaceLocale(Settings.locale);
+            }
+        });
     }
 
 
