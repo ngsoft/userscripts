@@ -285,6 +285,7 @@
 
 
             Events(root).on('click', e => {
+                let target;
                 if (e.target.closest('button.download-subtitles') !== null) {
                     e.preventDefault();
                     this.trigger('download');
@@ -293,7 +294,14 @@
                     e.preventDefault();
                     this.trigger('next');
                     //e.stopImmediatePropagation();
+                } else if ((target = e.target.closest('button[data-plyr="quality"][value]')) !== null) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    console.debug(target.value);
                 }
+
+
+
             });
             
             this.loaded(() => {
@@ -352,8 +360,12 @@
 
                     this
                             .on('qualitychange', e => {
+                                console.debug(e.detail);
                                 let {quality} = e.detail,
                                 ct = plyr.currentTime;
+
+                                if (typeof quality !== s) return;
+
                                 localStorage.videoquality = quality;
                                 let source = that.quality[quality];
 
@@ -374,10 +386,38 @@
                                     player.setAutoPlay(true);
                                     player.attachView(video);
                                     player.attachSource(source.src);
+                                    if (isPlainObject(this.drm)) {
+                                        player.setProtectionData({
+                                            "com.widevine.alpha": {
+                                                "serverURL": this.drm.dt3,
+                                                "httpRequestHeaders": {}
+                                            },
+                                            "com.microsoft.playready": {
+                                                "serverURL": this.drm.dt2,
+                                                "httpRequestHeaders": {}
+                                            }
+
+                                        });
+                                    }
+
+
 
                                 } else if (/hls/.test(source.type)) {
-                                    const hls = that.player = new Hls();
 
+                                    let options = {
+                                        enableWebVTT: false,
+                                        enableCEA708Captions: false
+                                    };
+
+                                    if (isPlainObject(this.drm)) {
+                                        Object.assign(options, {
+                                            emeEnabled: true,
+                                            widevineLicenseUrl: this.drm.dt3
+                                        });
+                                    }
+                                    
+                                    const hls = that.player = new Hls(options);
+                                    console.debug(hls);
                                     hls.on(Hls.Events.MANIFEST_PARSED, function(){
                                         that.trigger('languagechange');
                                         if (ct > 0) {
@@ -395,6 +435,7 @@
 
                             })
                             .on('languagechange', e => {
+
                                 let ct = plyr.captions.currentTrack;
                                 if ((ct >= 0) && that.tracks[ct]) {
                                     let
@@ -436,6 +477,11 @@
                                 let
                                         quality = localStorage.videoquality || "540",
                                         event = new Event('qualitychange');
+                                if (!this.quality[quality]) {
+                                    let list = Object.keys(this.quality);
+                                    if (list.length > 0) quality = list[0];
+                                    else quality = null;
+                                }
                                 Object.assign(event, {
                                     detail: {
                                         quality: quality,
@@ -510,9 +556,9 @@
                 } catch (e) {
                     this.drm = {};
                 }
-                if (!isPlainObject(this.drm)) this.drm = {};
+                if (!isPlainObject(this.drm)) delete this.drm;
 
-                if (Object.keys(this.drm).length > 0) return;
+                //if (Object.keys(this.drm).length > 0) return;
                 
                 video.data({
                     show: json.video.container.titles.en,
@@ -552,7 +598,8 @@
                     this.quality[size] = {
                         type: "video/dash",
                         size: size,
-                        src: src
+                        src: src,
+                        label: size + "p dash"
                     };
                     Object.assign(el, this.quality[size]);
                     this.sources.push(el);
@@ -587,6 +634,10 @@
 
         loadHLS(){
             return new Promise(resolve => {
+                if (isPlainObject(this.drm)) {
+                    resolve(this);
+                    return;
+                }
                 const json = this.json;
                 if (json.streams.hls) {
                     let
@@ -620,7 +671,8 @@
                                             this.quality[size] = {
                                                 type: "video/hls",
                                                 size: size,
-                                                src: src
+                                                src: src,
+                                                label: size + "p hls"
                                             };
                                             res = null;
                                             Object.assign(el, this.quality[size]);
