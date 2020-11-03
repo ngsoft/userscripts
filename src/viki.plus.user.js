@@ -1275,6 +1275,15 @@
         }
         loadStreams(json, drm){
 
+            let src, label, size, type;
+
+            if (json.dash) {
+
+
+
+
+            }
+
         }
 
 
