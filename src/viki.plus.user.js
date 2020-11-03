@@ -285,7 +285,7 @@
 
 
             Events(root).on('click', e => {
-                let target;
+
                 if (e.target.closest('button.download-subtitles') !== null) {
                     e.preventDefault();
                     this.trigger('download');
@@ -294,12 +294,7 @@
                     e.preventDefault();
                     this.trigger('next');
                     //e.stopImmediatePropagation();
-                } else if ((target = e.target.closest('button[data-plyr="quality"][value]')) !== null) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    console.debug(target.value);
                 }
-
 
 
             });
@@ -313,7 +308,7 @@
                     quality: {
                         default: null,
                         // The options to display in the UI, if available for the source media
-                        options: Object.keys(this.quality),
+                        options: Object.keys(this.quality).sort().reverse(),
                         forced: true,
                         onChange: x => x
                     },
@@ -338,7 +333,30 @@
                         //'airplay',
                         //'download',
                         'fullscreen'
-                    ]
+                    ],
+                    listeners: {
+
+                        quality(e){
+
+                            let
+                                    target = e.target.closest('button'),
+                                    evt = new Event('qualitychange', {
+                                        bubbles: true,
+                                        cancelable: true
+                                    });
+                            evt.detail = {
+                                quality: target.value,
+                                plyr: that.plyr
+                            };
+                            that.video.dispatchEvent(evt);
+
+
+                            console.debug(target.siblings('button'));
+
+                            return false;
+                        }
+                    }
+
                 };
 
 
@@ -356,6 +374,8 @@
                     const{Subtitle, Hls, Plyr, dashjs} = exports;
                     doc.body.innerHTML = "";
                     doc.body.appendChild(this.root);
+
+
                     const plyr = this.plyr = new Plyr(video, options);
 
                     this
@@ -543,6 +563,8 @@
                             break;
                     }
                 });
+                
+
 
                 console.debug(scriptname, 'started', this);
 
@@ -589,19 +611,22 @@
                     this.tracks.push(el);
                     video.appendChild(el);
                 });
+                this.loadDash();
                 if (json.streams.dash) {
                     let
                             item = json.streams.dash,
                             url = new URL(item.url),
                             src = atob(url.searchParams.get('stream')),
-                            el = doc.createElement('source');
-                    this.quality[size] = {
-                        type: "video/dash",
+                            el = doc.createElement('source'),
+                            type = "dash";
+                    let label = `${size}p ${type}`;
+                    this.quality[label] = {
+                        type: "video/" + type,
                         size: size,
                         src: src,
-                        label: size + "p dash"
+                        label: label
                     };
-                    Object.assign(el, this.quality[size]);
+                    Object.assign(el, this.quality[label]);
                     this.sources.push(el);
                     video.appendChild(el);
 
@@ -659,7 +684,9 @@
                                     if (/^http/.test(line)) {
                                         let
                                                 url = line.trim(), size,
-                                                el = doc.createElement('source');
+                                                el = doc.createElement('source'),
+                                                type = "hls",
+                                                label;
 
                                         try {
                                             size = /(\d+)p/.exec(url)[1];
@@ -668,14 +695,15 @@
                                         }
                                         if(typeof size === s){
                                             size = parseInt(size);
-                                            this.quality[size] = {
-                                                type: "video/hls",
+                                            label = `${size}p ${type}`;
+                                            this.quality[label] = {
+                                                type: "video/" + type,
                                                 size: size,
                                                 src: src,
-                                                label: size + "p hls"
+                                                label: label
                                             };
                                             res = null;
-                                            Object.assign(el, this.quality[size]);
+                                            Object.assign(el, this.quality[label]);
                                             this.sources.push(el);
                                             this.video.appendChild(el);
                                         }
@@ -689,6 +717,34 @@
                 } else resolve(this);
 
             });
+        }
+
+        loadDash(){
+            const json = this.json;
+            let
+                    item = json.streams.dash,
+                    url = new URL(item.url),
+                    src = atob(url.searchParams.get('stream'));
+            fetch(new URL(src), {cache: "no-store", redirect: 'follow'})
+                    .then(r => {
+
+                        if (r.status === 200) return r.text();
+
+                        throw new Error('Invalid status code.');
+                    })
+                    .then(text => {
+                        let
+                                p = new DOMParser(),
+                                xmlDoc = p.parseFromString(text, "text/xml");
+                        console.debug(xmlDoc);
+
+                    })
+                    .catch(x => x);
+
+
+
+
+
         }
 
         loadNext(){
@@ -791,7 +847,7 @@
     /**
      * API Load data
      */
-    let api, matches, version, appid;
+    let api, matches, app_ver, app_id;
 
     Events(doc).on(UUID + '.replacestate', e => {
         if ((matches = /^\/videos\/(\d+v)/.exec(location.pathname)) !== null) {
@@ -800,9 +856,9 @@
 
             NodeFinder.findOne('[src*="app_ver="][src*="?app_id"]', el => {
                 let url = new URL(el.src);
-                version = url.searchParams.get('app_ver');
-                appid = url.searchParams.get('app_id');
-                api = new VikiAPI(appid, version);
+                app_ver = url.searchParams.get('app_ver');
+                app_id = url.searchParams.get('app_id');
+                api = new VikiAPI(app_id, app_ver);
                 const vplayer = window.vplayer = new VideoPlayer(api, id);
             });
 
