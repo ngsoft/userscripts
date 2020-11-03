@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version	2.4.1
+// @version	3.0
 // @name	ViKi+
 // @description	Download Subtitles on Viki
 // @namespace	https://github.com/ngsoft/userscripts
