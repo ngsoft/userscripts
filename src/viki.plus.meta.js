@@ -1,7 +1,7 @@
 // ==UserScript==
-// @version	3.0
+// @version	3.1
 // @name	ViKi+
-// @description	Download Subtitles on Viki
+// @description	Download Subtitles on Viki + Watch Videos
 // @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
 // @require	https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js

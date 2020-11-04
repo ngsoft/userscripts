@@ -1,7 +1,7 @@
 // ==UserScript==
-// @version     3.0
+// @version     3.1
 // @name        ViKi+
-// @description Download Subtitles on Viki
+// @description Download Subtitles on Viki + Watch Videos
 // @namespace   https://github.com/ngsoft/userscripts
 // @author      daedelus
 //
@@ -33,18 +33,6 @@
             };
         })();
     });
-
-    history.replaceState = (function(){
-        const old = history.replaceState;
-        return function(state, title, url){
-            trigger(doc.body, UUID + '.replacestate', {
-                state: state,
-                title: title,
-                url: url
-            });
-            return old.call(history, state, title, url);
-        };
-    })();
 
     let oldversion = localStorage.getItem(UUID + ":version");
 
@@ -275,7 +263,7 @@
                     text-align: center;font-size: 16px; color:#FFF;line-height: 1.5;text-decoration: none;cursor: pointer;
                     background: linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));transition: opacity .4s ease-in-out,transform .4s ease-in-out;
                 }
-                .plyr-toolbar *:hover{filter: drop-shadow(4px 4px 4px #fff);}
+                .plyr-toolbar > *:hover{filter: drop-shadow(4px 4px 4px #fff);}
                 .plyr__poster {background-size: cover;}
                 .plyr__caption{
                     -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
@@ -297,8 +285,9 @@
                     position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
                     height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
                     display: inline !important;z-index: -1 !important;
-                } 
+                }
                 .plyr-player [hidden], .plyr-player button[data-plyr="quality"][disabled]{display: none;}
+                .no-select, .plyr-toolbar{-webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;}
             `);
 
         }
@@ -549,9 +538,6 @@
                         video.play();
                     }
                     delete $this._pos;
-                },
-                ended(e){
-                    console.debug(e);
                 },
                 controlshidden(){
                     $this.elements.toolbar.hidden = true;
@@ -835,52 +821,51 @@
             if (this.styles === true) return;
             this.styles = true;
             addstyle(`
-                .plyr-player video{object-fit: fill;}
-                .plyr-player{position: absolute;top: 0;right: 0;left: 0;bottom: 0;}
+
                 .plyr-toolbar{
-                    position: absolute; top: 0 ; left: 0 ; right: 0;
-                    text-align: center; padding: 16px 8px;z-index: 9999;
-                    text-align: center;font-size: 16px; color:#FFF;line-height: 1.5;text-decoration: none;cursor: pointer;
-                    background: linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));transition: opacity .4s ease-in-out,transform .4s ease-in-out;
+                    font-family: "Noto Sans", Arial, Helvetica, sans-serif;
+                    text-align: left; padding:0;cursor: inherit;
                 }
-                .plyr-toolbar *:hover{filter: drop-shadow(4px 4px 4px #fff);}
-                .plyr__poster {background-size: cover;}
-                .plyr__caption{
-                    -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
-                     font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
-                     background: rgba(0,0,0,.1);transform: translate(0, 10%);font-size: 16px;
+                .plyr-toolbar > * {
+                    transition: all 0.2s ease-out 0s;box-sizing: border-box;text-align: center;
+                    font-weight: 700;line-height: 1; text-rendering: optimizeLegibility;
+                    padding: 3vw 2vw 0;font-size: 2vw;cursor: pointer;
                 }
-               .plyr--captions-enabled video::cue{
-                    color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
-                    display: none; text-shadow: none;
-                }
-                @media (min-width: 768px) {
-                    .plyr__caption, .plyr-toolbar{font-size: 24px;}
-                }
-                @media (min-width: 992px) {
-                    .plyr__caption{font-size: 32px;}
-                }
-                .plyr-player [disabled], .plyr-player .disabled{pointer-events: none !important;}
-                .plyr-player .hidden, .plyr-player .hidden *{
-                    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-                    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-                    display: inline !important;z-index: -1 !important;
-                }
-                .plyr-player [hidden], .plyr-player button[data-plyr="quality"][disabled]{display: none;}
+                .plyr-toolbar .plyr-prev{margin-left: 1vw;float: left;}
+                .plyr-toolbar .plyr-next{margin-right: 1vw;float: right;}
+                .plyr-toolbar i[class*="icon-"]{margin: 0 1vw;}
+                .plyr-toolbar > *:hover {filter: none; transform: scale(1.1);}
+
             `);
+
+        }
+
+        get next(){
+            return this._next || null;
+
+        }
+
+        set next(id){
+            if (typeof id === s && /^\d+v$/.test(id)) {
+                this._next = id;
+                this.player.elements.next.hidden = null;
+
+            }
 
         }
 
 
 
         constructor(api, id){
-            let container = doc.querySelector('#__next >.page-wrapper');
+            let container = doc.querySelector('#__next >.page-wrapper main');
             container = container instanceof HTMLElement ? container : doc.body;
 
             if (!(api instanceof VikiAPI)) {
                 console.error('Viki API not loaded.');
                 return;
             }
+
+            const $this = this;
 
             this.api = api;
             this.json = {};
@@ -910,7 +895,21 @@
 
             let listeners = {
                 next(){
-
+                    let id = $this.next;
+                    if (typeof id === s) {
+                        $this._next = null;
+                        let uri = (new URL(getURL(id))).pathname;
+                        let obj = {
+                            __N: true,
+                            as: uri,
+                            url: "/videos/[vid]?vid=" + uri,
+                            options: {}
+                        };
+                        history.replaceState(obj, "", uri);
+                    }
+                },
+                prev(){
+                    history.go(-1);
                 },
                 loadedmetadata(){
                     video.play();
@@ -933,15 +932,36 @@
 
             });
 
+            player.elements.next = html2element(`<span class="plyr-next"><span class="plyr-next-title"></span><i class="icon-arrow-right"></i></span>`);
+            player.elements.nextTitle = player.elements.next.querySelector('.plyr-next-title');
+            player.elements.prev = html2element(`<span class="plyr-prev"><i class="icon-arrow-left"></i></span>`);
+
+            player.elements.prev.appendChild(player.elements.title);
+            player.elements.toolbar.appendChild(player.elements.prev);
+            player.elements.toolbar.appendChild(player.elements.next);
+
+            Events(player.elements.toolbar).on('click', e => {
+                let target = e.target.closest('.plyr-prev,.plyr-next');
+                if (target instanceof Element) {
+                    e.preventDefault();
+                    if (target.classList.contains('plyr-prev')) player.trigger('prev');
+                    else player.trigger('next');
+                }
+            });
 
 
             if (typeof id === s) this.loadVideo(id);
+
+
+
 
         }
 
         loadVideo(id){
 
             const $this = this;
+            this.player.elements.next.hidden = true;
+            this.player.elements.nextTitle.innerHTML = "";
 
             this.api.getVideo(id).then(json => {
 
@@ -979,15 +999,16 @@
                 this.loadSubs(json.subtitles);
                 this.loadStreams(json.streams, drm)
                         .then(() => {
-                            console.debug(this);
                             player.ready().then(player => {
-                                VikiPlayer.loadStyles()
+                                VikiPlayer.setStyles();
+                                console.debug(scriptname, 'started.', id);
                             });
-
-                            let container = doc.querySelector('#__next >.page-wrapper');
+                            let container = doc.querySelector('#__next >.page-wrapper main');
                             if (player.container !== container) player.start(container);
                             else player.start();
+
                         });
+                this.loadNext(json);
             });
 
         }
@@ -1078,6 +1099,34 @@
 
         }
 
+        loadNext(json){
+
+            let
+                    channel = json.video.container.id,
+                    id = json.video.id;
+
+            this.api.getEpisodes(channel)
+                    .then(list => {
+                        let next = list.indexOf(id);
+                        if (next !== -1) {
+                            next++;
+                            if (typeof list[next] !== u) {
+                                next = list[next];
+
+                                this.api.getVideo(next).then(json => {
+                                    if (json.video.blocked == false) {
+                                        this.next = next;
+                                        let num = json.video.number;
+                                        if (num > 0) this.player.elements.nextTitle.innerHTML = "Episode " + num;
+                                    }
+                                });
+                            }
+                        }
+
+                    });
+
+        }
+
 
     }
 
@@ -1132,7 +1181,7 @@
         getChannel(id){
             return new Promise(resolve => {
                 if ((typeof id !== s) || !(/^\d+c$/.test(id))) return;
-                let url = 'https://api.viki.io/v4/series/' + id + '.json';
+                let url = 'https://api.viki.io/v4/containers/' + id + '.json';
                 this.call(url).then(json => resolve(json)).catch(console.error);
             });
         }
@@ -1199,26 +1248,6 @@
         }
 
     });
-
-    /* states
-     [
-     {
-     __N: true,
-     as: "/videos/1128053v",
-     url: "/videos/[vid]?vid=1128053v", replaceState(pushstate without var)
-     options:{}
-
-     },
-     "",
-     "/videos/1128053v"
-
-     ];*/
-
-    /*   if(/^\/videos\/(\d+v)/.test(location.pathname)){
-     Events(doc).trigger(UUID + '.pagechange',{
-     mode: "init",
-     args:[null,null,location.pathname]
-     });
-     }*/
+    
 
 })(document);
