@@ -195,605 +195,6 @@
         }
     }
 
-
-    function loadResources(){
-        if (loadResources.loading !== true) {
-            loadResources.loading = true;
-            [
-                "https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js",
-                "https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js",
-                "https://cdn.dashjs.org/latest/dash.all.min.js",
-                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js",
-
-                "https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css"
-            ].forEach(src => {
-                if (/\.js$/.test(src)) loadjs(src);
-                else if (/\.css$/.test(src)) loadcss(src);
-            });
-            addstyle(`
-                .plyr video{object-fit: fill;}
-                .video-player-container{position: absolute;top: 0;right: 0;left: 0;bottom: 0;}
-                .video-player-title{
-                    position: absolute; top: 0 ; left: 0 ; right: 0;
-                    text-align: center; padding: 16px 8px;z-index: 9999;
-                    text-align: center;font-size: 24px; color:#FFF;line-height: 1.5;
-                    background-color: rgba(0, 0, 0, 0.45);text-decoration: none;cursor: pointer;
-                }
-                .video-player-title *:hover{filter: drop-shadow(4px 4px 4px #fff);}
-                .plyr__caption{
-                    -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
-                     font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
-                     background: rgba(0,0,0,.25);transform: translate(0, -60px);font-size: 24px;
-                }
-                .plyr--captions-enabled video::cue{
-                    color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
-                    display: none; text-shadow: none;
-                }
-                @media (min-width: 768px) {
-                    .video-player-container  .plyr__caption{font-size: 32px;}
-                }
-                @media (min-width: 992px) {
-                    .video-player-container  .plyr__caption{font-size: 40px;}
-                }
-                .hidden, .hidden *, [hidden], [hidden] *{
-                    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-                    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-                    display: inline !important;z-index: -1 !important;
-                }
-            `);
-
-        }
-
-        return new Promise(resolve => {
-            new Timer(timer => {
-                let
-                        vars = ["Subtitle", "Hls", "Plyr", "dashjs"],
-                        args = {};
-                vars.forEach(name => {
-                    if (typeof self[name] !== u) args[name] = self[name];
-                });
-                if (Object.keys(args).length === vars.length) {
-                    timer.stop();
-                    resolve(args);
-                }
-            });
-
-        });
-    }
-
-
-    class VideoPlayer {
-
-        constructor(api, videoid){
-
-            if (!(api instanceof VikiAPI)) throw new Error('Invalid argument api');
-
-            if (typeof videoid !== s) throw new Error('Invalid argument videoid');
-            this.api = api;
-
-            const that = this;
-            this.sources = [];
-            this.quality = {};
-            this.tracks = [];
-
-            let size = 540;
-            let video = this.video = html2element(`<video controls src="" crossorigin="" preload="none" tabindex="-1" class="altvideo"/>`);
-            let root = this.root = html2element('<div class="video-player-container"/>');
-            let toolbar = this.toolbar = html2element('<div class="video-player-title"/>');
-
-            this.buttons = {
-                nextvideo: html2element(`<button class="plyr__controls__item plyr__control next-video" type="button">
-                                            <svg aria-hidden="true" focusable="false"><use xlink:href="#plyr-fast-forward"></use></svg>
-                                            <span class="label--not-pressed plyr__tooltip">Next Video</span>
-                                            <span class="label--pressed plyr__tooltip">Next Video</span>
-                                        </button>`),
-                download: html2element(`<button class="plyr__controls__item plyr__control download-subtitles" type="button">
-                                            <svg aria-hidden="true" focusable="false"><use xlink:href="#plyr-download"></use></svg>
-                                            <span class="label--not-pressed plyr__tooltip">Download</span>
-                                            <span class="label--pressed plyr__tooltip">Download</span>
-                                        </button>`)
-            };
-            this.root.appendChild(video);
-            (new Events(video, this));
-
-
-
-            Events(root).on('click', e => {
-
-                if (e.target.closest('button.download-subtitles') !== null) {
-                    e.preventDefault();
-                    this.trigger('download');
-                    //e.stopImmediatePropagation();
-                } else if (e.target.closest('button.next-video') !== null) {
-                    e.preventDefault();
-                    this.trigger('next');
-                    //e.stopImmediatePropagation();
-                }
-
-
-            });
-            
-            this.loaded(() => {
-                const options = this.options = {
-                    title: video.data('title'),
-                    captions: {active: false, language: 'auto', update: true},
-                    settings: ['captions', 'quality'],
-                    keyboard: {focused: true, global: true},
-                    quality: {
-                        default: null,
-                        // The options to display in the UI, if available for the source media
-                        options: Object.keys(this.quality).sort().reverse(),
-                        forced: true,
-                        onChange: x => x
-                    },
-                    tooltips: {
-                        controls: true,
-                        seek: true
-                    },
-                    controls: [
-                        'play-large',
-                        // 'restart',
-                        // 'rewind',
-                        'play',
-                        // 'fast-forward',
-                        'progress',
-                        'current-time',
-                        'duration',
-                        'mute',
-                        'volume',
-                        'captions',
-                        'settings',
-                        //'pip',
-                        //'airplay',
-                        //'download',
-                        'fullscreen'
-                    ],
-                    listeners: {
-
-                        quality(e){
-
-                            let
-                                    target = e.target.closest('button'),
-                                    evt = new Event('qualitychange', {
-                                        bubbles: true,
-                                        cancelable: true
-                                    });
-                            evt.detail = {
-                                quality: target.value,
-                                plyr: that.plyr
-                            };
-                            that.video.dispatchEvent(evt);
-
-
-                            console.debug(target.siblings('button'));
-
-                            return false;
-                        }
-                    }
-
-                };
-
-
-                NodeFinder.find('video:not(.altvideo)', v => {
-                    v.pause();
-                    v.remove();
-                });
-
-                if(window.player && window.player.videoElement){
-                    let v = window.player.videoElement;
-                    v.pause();
-                    v.remove();
-                }
-                loadResources().then(exports => {
-                    const{Subtitle, Hls, Plyr, dashjs} = exports;
-
-                    const container = doc.querySelector('#__next >.page-wrapper');
-
-                    container.innerHTML = "";
-                    container.appendChild(this.root);
-
-
-                    const plyr = this.plyr = new Plyr(video, options);
-
-                    this
-                            .on('qualitychange', e => {
-                                console.debug(e.detail);
-                                let {quality} = e.detail,
-                                ct = plyr.currentTime;
-
-                                if (typeof quality !== s) return;
-
-                                localStorage.videoquality = quality;
-                                let source = that.quality[quality];
-
-                                if (that.player) {
-                                    that.player.destroy();
-                                    that.player = null;
-                                }
-                                if (/dash/.test(source.type)) {
-
-                                    let player = that.player = dashjs.MediaPlayer().create();
-                                    player.destroy = function(){
-                                        return player.reset();
-                                    };
-                                    player.initialize();
-                                    player.on(dashjs.MediaPlayer.events.CAN_PLAY, function(){
-                                        that.trigger('languagechange');
-                                    });
-                                    player.setAutoPlay(true);
-                                    player.attachView(video);
-                                    player.attachSource(source.src);
-                                    if (isPlainObject(this.drm)) {
-                                        player.setProtectionData({
-                                            "com.widevine.alpha": {
-                                                "serverURL": this.drm.dt3,
-                                                "httpRequestHeaders": {}
-                                            },
-                                            "com.microsoft.playready": {
-                                                "serverURL": this.drm.dt2,
-                                                "httpRequestHeaders": {}
-                                            }
-
-                                        });
-                                    }
-
-
-
-                                } else if (/hls/.test(source.type)) {
-
-                                    let options = {
-                                        enableWebVTT: false,
-                                        enableCEA708Captions: false
-                                    };
-
-                                    if (isPlainObject(this.drm)) {
-                                        Object.assign(options, {
-                                            emeEnabled: true,
-                                            widevineLicenseUrl: this.drm.dt3
-                                        });
-                                    }
-                                    
-                                    const hls = that.player = new Hls(options);
-                                    console.debug(hls);
-                                    hls.on(Hls.Events.MANIFEST_PARSED, function(){
-                                        that.trigger('languagechange');
-                                        if (ct > 0) {
-                                            that.one('playing', () => {
-                                                plyr.currentTime = ct;
-                                            });
-                                        }
-                                        video.play();
-                                    });
-                                    hls.on(Hls.Events.MEDIA_ATTACHED, function(){
-                                        hls.loadSource(source.src);
-                                    });
-                                    hls.attachMedia(video);
-                                } else video.src = source.src;
-
-                            })
-                            .on('languagechange', e => {
-
-                                let ct = plyr.captions.currentTrack;
-                                if ((ct >= 0) && that.tracks[ct]) {
-                                    let
-                                            track = that.tracks[ct],
-                                            src = track.data('src') || track.src;
-                                    if (track.data('loading') === true) return;
-                                    if (!track.text) {
-                                        track.data({
-                                            src: src,
-                                            loading: true
-                                        });
-                                        fetch(src, {cache: "default", redirect: 'follow'})
-                                                .then(r => {
-                                                    if (r.status === 200) return r.text();
-                                                    throw new Error();
-                                                })
-                                                .then(text => {
-                                                    Object.defineProperty(track, 'text', {
-                                                        configurable: true,
-                                                        value: text
-                                                    });
-                                                    let
-                                                            blob = new Blob([text], {type: "text/vtt"}),
-                                                            url = URL.createObjectURL(blob);
-                                                    track.src = url;
-                                                    track.data('loading', null);
-                                                })
-                                                .catch(console.error);
-                                    } else {
-                                        let
-                                                blob = new Blob([track.text], {type: "text/vtt"}),
-                                                url = URL.createObjectURL(blob);
-                                        track.src = url;
-                                    }
-                                    doc.querySelectorAll('button[data-plyr="fullscreen"]').forEach(btn => btn.parentElement.insertBefore(this.buttons.download, btn));
-                                } else this.buttons.download.remove();
-                            })
-                            .on('ready', () => {
-                                let
-                                        quality = localStorage.videoquality || "540",
-                                        event = new Event('qualitychange');
-                                if (!this.quality[quality]) {
-                                    let list = Object.keys(this.quality);
-                                    if (list.length > 0) quality = list[0];
-                                    else quality = null;
-                                }
-                                Object.assign(event, {
-                                    detail: {
-                                        quality: quality,
-                                        plyr: plyr
-                                    }
-                                });
-                                this.video.dispatchEvent(event);
-                                this.isReady = true;
-                                this.trigger('player.ready');
-                            })
-                            .on('next', () => {
-                                if (this.next) location.href = getURL(this.next);
-                            })
-                            .on('download', () => {
-                                let filename = sanitizeFileName(video.data('title'), " ").replace(/\s+/g, " ");
-                                let ct = plyr.captions.currentTrack, track = this.tracks[ct];
-                                if (track instanceof Element) {
-                                    let srt = Subtitle.stringify(Subtitle.parse(track.text));
-                                    filename += '.' + track.srclang + ".srt";
-                                    Text2File(srt, filename);
-                                }
-                            })
-                            .on('play pause playing', e => {
-                                toolbar.hidden = video.paused === true ? null : true;
-
-                            });
-                });
-
-
-               
-
-                
-
-
-
-            });
-
-            this.ready(() => {
-                this.loadNext();
-                toolbar.innerHTML = '<span>' + video.data('title') + '</span>';
-                video.parentElement.appendChild(toolbar);
-
-                Events(doc).on('keydown keyup', e => {
-
-                    if (e.target.closest('input') !== null) return;
-
-                    let prevent = false;
-                    
-                    if ([13, 78].includes(e.keyCode)) e.preventDefault();
-                    if (e.type === "keydown") return;
-
-                    switch (e.keyCode) {
-                        case 13: //Enter
-                            let btn = doc.querySelector('button[data-plyr="fullscreen"]');
-                            if (btn !== null) btn.dispatchEvent(new MouseEvent('click'));
-                            break;
-                        case 78: //n
-                            this.trigger('next');
-                            break;
-                    }
-                });
-                
-
-
-                console.debug(scriptname, 'started', this);
-
-
-            });
-            
-            this.api.getVideo(videoid).then(json => {
-                this.json = json;
-                try {
-                    this.drm = JSON.parse(atob(json.drm));
-                } catch (e) {
-                    this.drm = {};
-                }
-                if (!isPlainObject(this.drm)) delete this.drm;
-
-                //if (Object.keys(this.drm).length > 0) return;
-                
-                video.data({
-                    show: json.video.container.titles.en,
-                    episode: json.video.number
-                });
-                let title = video.data('show');
-                if (video.data('episode') > 0) {
-                    title += ".E";
-                    if (video.data('episode') < 10) title += "0";
-                    title += video.data('episode');
-                }
-                video.data('title', title);
-                try {
-                    video.poster = json.video.container.images.poster.url;
-                } catch (e) {
-                    video.poster = null;
-                }
-                json.subtitles.forEach((item, i) => {
-                    let el = doc.createElement('track');
-                    Object.assign(el, {
-                        src: item.src,
-                        label: item.label,
-                        srclang: item.srclang,
-                        kind: "subtitles",
-                        lang: isoCode(item.srclang).lang.split(';')[0].split(',')[0].trim(),
-                        id: 'track' + i
-                    });
-                    this.tracks.push(el);
-                    video.appendChild(el);
-                });
-                this.loadDash();
-                if (json.streams.dash) {
-                    let
-                            item = json.streams.dash,
-                            url = new URL(item.url),
-                            src = atob(url.searchParams.get('stream')),
-                            el = doc.createElement('source'),
-                            type = "dash";
-                    let label = `${size}p ${type}`;
-                    this.quality[label] = {
-                        type: "video/" + type,
-                        size: size,
-                        src: src,
-                        label: label
-                    };
-                    Object.assign(el, this.quality[label]);
-                    this.sources.push(el);
-                    video.appendChild(el);
-
-                }
-                this.loadHLS().then(() => {
-                    this.isLoaded = true;
-                    this.trigger('player.loaded');
-                });
-
-            });
-        }
-
-        ready(callback){
-            if (this.isReady !== true) {
-                this.one('player.ready', () => {
-                    callback.call(null, this);
-                });
-            } else callback.call(null, this);
-
-        }
-
-        loaded(callback){
-            if (this.isLoaded !== true) {
-                this.one('player.loaded', () => {
-                    callback.call(null, this);
-                });
-            } else callback.call(null, this);
-
-        }
-
-        loadHLS(){
-            return new Promise(resolve => {
-                if (isPlainObject(this.drm)) {
-                    resolve(this);
-                    return;
-                }
-                const json = this.json;
-                if (json.streams.hls) {
-                    let
-                            item = json.streams.hls,
-                            url = new URL(item.url),
-                            src = atob(url.searchParams.get('stream'));
-                    fetch(new URL(src), {cache: "no-store", redirect: 'follow'})
-                            .then(r => {
-                                if (r.status === 200) return r.text();
-                                throw new Error('Unable to fetch hls infos.');
-
-                            })
-                            .then(text => {
-                                return text.split(/\n+/);
-                            })
-                            .then(lines => {
-                                let res, matches;
-                                lines.forEach(line => {
-                                    if (/^http/.test(line)) {
-                                        let
-                                                url = line.trim(), size,
-                                                el = doc.createElement('source'),
-                                                type = "hls",
-                                                label;
-
-                                        try {
-                                            size = /(\d+)p/.exec(url)[1];
-                                        } catch (e) {
-                                            size = res;
-                                        }
-                                        if(typeof size === s){
-                                            size = parseInt(size);
-                                            label = `${size}p ${type}`;
-                                            this.quality[label] = {
-                                                type: "video/" + type,
-                                                size: size,
-                                                src: src,
-                                                label: label
-                                            };
-                                            res = null;
-                                            Object.assign(el, this.quality[label]);
-                                            this.sources.push(el);
-                                            this.video.appendChild(el);
-                                        }
-                                    } else if ((matches = /x(\d+),/.exec(line)) !== null) res = matches[1];
-                                });
-                                resolve(this);
-                            })
-                            .catch(() => {
-                                resolve(this);
-                            });
-                } else resolve(this);
-
-            });
-        }
-
-        loadDash(){
-            const json = this.json;
-            let
-                    item = json.streams.dash,
-                    url = new URL(item.url),
-                    src = atob(url.searchParams.get('stream'));
-            fetch(new URL(src), {cache: "no-store", redirect: 'follow'})
-                    .then(r => {
-
-                        if (r.status === 200) return r.text();
-
-                        throw new Error('Invalid status code.');
-                    })
-                    .then(text => {
-                        let
-                                p = new DOMParser(),
-                                xmlDoc = p.parseFromString(text, "text/xml");
-                        console.debug(xmlDoc);
-
-                    })
-                    .catch(x => x);
-
-
-
-
-
-        }
-
-        loadNext(){
-
-            let channel =
-                    this.json.video.container.id,
-                    id = this.json.video.id;
-            this.api.getEpisodes(channel)
-                    .then(list => {
-                        let next = list.indexOf(id);
-                        if (next !== -1) {
-                            next++;
-                            if (typeof list[next] !== u) {
-                                next = list[next];
-                                
-                                this.api.getVideo(next).then(json => {
-                                    if (json.video.blocked == false) {
-                                        this.next = next;
-                                        doc.querySelectorAll('button[data-plyr="play"]:not(.plyr__control--overlaid)').forEach(btn => {
-                                            btn.parentElement.insertBefore(this.buttons.nextvideo, btn.nextElementSibling);
-                                        });
-                                    }
-                                });
-                            }
-                        }
-
-                    });
-
-        }
-    }
-
-
     function require(...variables){
         return new Promise(resolve => {
             let sources = require._sources;
@@ -868,33 +269,36 @@
             addstyle(`
                 .plyr-player video{object-fit: fill;}
                 .plyr-player{position: absolute;top: 0;right: 0;left: 0;bottom: 0;}
-                .plyr-player .video-toolbar{
+                .plyr-toolbar{
                     position: absolute; top: 0 ; left: 0 ; right: 0;
                     text-align: center; padding: 16px 8px;z-index: 9999;
-                    text-align: center;font-size: 24px; color:#FFF;line-height: 1.5;
-                    background-color: rgba(0, 0, 0, 0.45);text-decoration: none;cursor: pointer;
+                    text-align: center;font-size: 16px; color:#FFF;line-height: 1.5;text-decoration: none;cursor: pointer;
+                    background: linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));transition: opacity .4s ease-in-out,transform .4s ease-in-out;
                 }
-                .plyr-player .video-toolbar *:hover{filter: drop-shadow(4px 4px 4px #fff);}
-                .plyr-player .plyr__caption{
+                .plyr-toolbar *:hover{filter: drop-shadow(4px 4px 4px #fff);}
+                .plyr__poster {background-size: cover;}
+                .plyr__caption{
                     -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
                      font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
-                     background: rgba(0,0,0,.25);transform: translate(0, -60px);font-size: 24px;
+                     background: rgba(0,0,0,.1);transform: translate(0, 10%);font-size: 16px;
                 }
-                .plyr-player.plyr--captions-enabled video::cue{
+               .plyr--captions-enabled video::cue{
                     color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
                     display: none; text-shadow: none;
                 }
                 @media (min-width: 768px) {
-                    .plyr-player  .plyr__caption{font-size: 32px;}
+                    .plyr__caption, .plyr-toolbar{font-size: 24px;}
                 }
                 @media (min-width: 992px) {
-                    .plyr-player  .plyr__caption{font-size: 40px;}
+                    .plyr__caption{font-size: 32px;}
                 }
-                .plyr-player .hidden, .plyr-player .hidden *, .plyr-player [hidden], .plyr-player [hidden] *{
+                .plyr-player [disabled], .plyr-player .disabled{pointer-events: none !important;}
+                .plyr-player .hidden, .plyr-player .hidden *{
                     position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
                     height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
                     display: inline !important;z-index: -1 !important;
-                }
+                } 
+                .plyr-player [hidden], .plyr-player button[data-plyr="quality"][disabled]{display: none;}
             `);
 
         }
@@ -924,51 +328,99 @@
         }
         
         get currentSource(){
-            return this._currentSource || -1;
+            let cs = typeof this._currentSource === n ? this._currentSource : -1;
+            if (!this.sources[cs]) cs = -1;
+            return  cs;
         }
         
         set currentSource(index){
-            let current = this._currentSource || -1;
+            let current = typeof this._currentSource === n ? this._currentSource : -1;
             if (typeof index === n && this.sources[index]) {
-                let 
-                        newsource = this.sources[index],
-                        $this = this,
-                        action = function(){
-                            Events(newsource.element).trigger('source.load', {
-                                source: newsource,
-                                plyr: $this.plyr
-                            });
-                            $this._currentSource = index;
-                        };
+                if (current === index) return;
+                let newsource = this.sources[index];
                 
                 if (current !== -1) {
                     let source = this.sources[current];
-                    Events(source.element)
-                            .one('source.unload', action)
-                            .trigger('source.unload', {
-                                source: source,
-                                plyr: this.plyr
-                            });
-                } else action();
-
+                    source.unload(source);
+                }
+                newsource.load(newsource);
+                let storage = this.plyr.storage.get();
+                storage.quality = newsource.label;
+                this.plyr.storage.set(storage);
+                this._currentSource = index;
             }
 
         }
 
+        get quality(){
+            let cs = this.currentSource;
+            if (cs === -1) return null;
+            return this.sources[cs].label;
+        }
+
+
+        set quality(label){
+            if (typeof label === s) {
+                let index = this.sources.map(x => x.label).indexOf(label);
+                if (index !== -1) this.currentSource = index;
+
+            }
+        }
+
+        set title(title){
+            if (typeof title === s) {
+                this.elements.title.innerHTML = title;
+                this.video.data('title', title);
+                this.ready().then(player => {
+                    player.video.parentElement.appendChild(player.elements.toolbar);
+                });
+            } else if (title === null) {
+                this.elements.title.innerHTML = "";
+                this.video.data('title', title);
+                this.ready().then(player => {
+                    player.elements.toolbar.remove();
+                });
+            }
+
+        }
+
+        get title(){
+            return this.video.data('title') || "";
+        }
+
+        set currentTime(float){
+            if (typeof float === n) this.video.currentTime = float;
+        }
+
+        get currentTime(){
+            return  this.video.currentTime;
+        }
+
+        get currentTrack(){
+            if (this.plyr) {
+                let tn = this.plyr.captions.currentTrack, track = this.tracks[tn];
+                if (track instanceof Element) return track;
+            }
+            return null;
+        }
+
 
         constructor(container){
+            const $this = this;
             PlyrPlayer.setDeps();
 
             container = container instanceof HTMLElement ? container : doc.body;
-            const $this = this;
+            this.container = container;
             this.elements = {};
             this.sources = [];
             this.tracks = [];
             this.types = {};
-            this.currentSource = -1;
+            this._currentSource = -1;
 
             let root = this.elements.root = html2element('<div class="plyr-player"/>');
             let video = this.elements.video = html2element('<video controls crossorigin src="" preload="none" tabindex="-1" class="plyrvideo"/>');
+            this.elements.toolbar = html2element('<div class="plyr-toolbar"><span class="plyr-title"></span></div>');
+            this.elements.title = this.elements.toolbar.querySelector('.plyr-title');
 
             this.options = {
 
@@ -991,7 +443,7 @@
                     'settings',
                     //'pip',
                     //'airplay',
-                    //'download',
+                    'download',
                     'fullscreen'
                 ],
                 listeners: {
@@ -1012,6 +464,8 @@
                     // loop(e){},
                     // language(e){},
                     download(e){
+                        e.preventDefault();
+                        e.stopPropagation();
                         $this.trigger('download');
                         return false;
                     },
@@ -1021,7 +475,7 @@
                             quality: target.value,
                             plyr: $this.plyr
                         };
-                        that.video.dispatchEvent(evt);
+                        video.dispatchEvent(evt);
                         return false;
                     }
                 },
@@ -1035,25 +489,153 @@
             };
 
             (new Events(video, this));
+            const listeners = {
+                ready(){
+                    $this.isReady = true;
+                    $this.trigger('player.ready');
+                },
+                qualitychange(e){
+                    
+
+                    if (e.detail !== undef) {
+                        if ($this.currentSource === -1 && e.detail.init !== true) return;
+                        $this._pos = $this.currentTime;
+                        if (typeof e.detail.quality === s) $this.quality = e.detail.quality;
+                    }
+                },
+
+                player: {
+                    trackchange(e){
+                        let {track} = e.data;
+                        if (track.text) {
+                            track.dataset.src = track.dataset.src || track.src;
+                            track.src = URL.createObjectURL(new Blob([track.text], {type: "text/vtt"}));
+                        }
+                    }
+                },
+
+                languagechange(e){
+                    let {plyr} = e.detail,
+                    tn = plyr.captions.currentTrack, active = plyr.captions.active;
+                    plyr.elements.buttons.download.hidden = true;
+                    if (tn !== -1 && active === true) {
+                        let track = $this.tracks[tn];
+                        $this.trigger('player.trackchange', {
+                            track: track,
+                            plyr: e.detail.plyr
+                        });
+                        plyr.elements.buttons.download.hidden = null;
+                    }
+                },
+                captionsenabled(e){
+                    let {plyr} = e.detail;
+                    plyr.elements.buttons.download.hidden = true;
+                    if ($this.currentTrack instanceof  Element) plyr.elements.buttons.download.hidden = null;
+
+                },
+                captionsdisabled(e){
+                    let {plyr} = e.detail;
+                    plyr.elements.buttons.download.hidden = true;
+                },
+                loadedmetadata(){
+                    if ($this.currentTrack instanceof Element) {
+                        $this.trigger('player.trackchange', {
+                            track: $this.currentTrack
+                        });
+                    }
+
+                    if (typeof $this._pos === n && $this._pos > 0) {
+                        this.currentTime = $this._pos;
+                        video.play();
+                    }
+                    delete $this._pos;
+                },
+                ended(e){
+                    console.debug(e);
+                },
+                controlshidden(){
+                    $this.elements.toolbar.hidden = true;
+                },
+                controlsshown(){
+                    $this.elements.toolbar.hidden = null;
+                },
+                download(e){
+                    let track = this.currentTrack;
+                    if (track instanceof Element && track.text) {
+                        let filename = video.data('filename') || video.data('title') || "subtitles";
+                        filename = sanitizeFileName(filename, ' ');
+                        filename += '.' + track.srclang + '.srt';
+                        Text2File(track.text, filename);
+                    }
+
+                }
+            };
+
+            Object.keys(listeners).forEach(type => {
+                if (typeof listeners[type] === f) this.on(type, listeners[type]);
+                else if (isPlainObject(listeners[type])) {
+                    Object.keys(listeners[type]).forEach(t => {
+                        if (typeof listeners[type][t] === f) {
+                            this.on(type + '.' + t, listeners[type][t]);
+                        }
+                    });
+                }
+
+            });
 
             ["webm", "mp4", "ogg"].forEach(type => {
                 this.addSourceType(type, source => {
-                    $this.video.src = source.src;
+                    video.src = source.src;
                 });
             });
-            
-            
 
+            this.addSourceType(
+                    'hls',
+                    source => {
+                        let options = {
+                            enableWebVTT: false,
+                            enableCEA708Captions: false
+                        };
+                        
+                        require('Hls').then(exports => {
+                            let {Hls} = exports,
+                            hls = source.hls = new Hls(options);
+                            hls.on(Hls.Events.MANIFEST_PARSED, function(){ });
+                            hls.on(Hls.Events.MEDIA_ATTACHED, function(){
+                                hls.loadSource(source.src);
+                            });
+                            hls.attachMedia(video);
+                        });
+                    },
+                    source => {
+                        if(source.hls){
+                            source.hls.destroy();
+                            delete source.hls;
+                        }
 
+                    }
+            );
 
-            const listeners = {};
+            this.addSourceType(
+                    'dash',
+                    source => {
+                        require('dashjs').then(exports => {
+                            let {dashjs} = exports,
+                            player = source.dash = dashjs.MediaPlayer().create();
+                            player.initialize();
+                            player.setAutoPlay(false);
+                            player.attachView(video);
+                            player.attachSource(source.src);
+                        });
+                    },
+                    source => {
+                        if(source.dash){
+                            source.dash.reset();
+                            delete source.dash;
+                        }
 
-            Object.keys(listeners).forEach(type => {
-                this.on(type, listeners[type]);
-            });
-
-
-
+                    }
+            );
 
         }
 
@@ -1062,7 +644,7 @@
             return new Promise(resolve => {
                 if (this.isReady === true) resolve(this);
                 else {
-                    this.on('player.ready', () => {
+                    this.one('player.ready', () => {
                         resolve(this);
                     });
                 }
@@ -1090,9 +672,9 @@
             if (typeof src === s && /^http/.test(src)) {
 
                 if (typeof size === s && /^\d+$/.test(size)) size = parseInt(size);
-                if (typeof size !== n) size = "default";
+                if (typeof size !== n && typeof size !== s) size = "default";
                 type = type || "mp4";
-                label = typeof label === s ? label : `${size}p`;
+                label = typeof label === s ? label : (typeof size === n ? `${size}p` : size);
                 if (typeof type !== s || !this.types[type]) return false;
                 onload = typeof onload === f ? onload : this.types[type].onload;
                 onunload = typeof onunload === f ? onunload : this.types[type].onunload;
@@ -1101,16 +683,16 @@
                         source = {
                             src: src,
                             type: type,
-                            label: label
+                            label: label,
+                            size: size,
+                            load: onload,
+                            unload: onunload
                         },
                         el = source.element = doc.createElement('source');
                 el.setAttribute('src', src);
                 el.setAttribute('size', size);
                 el.setAttribute('type', this.types[type].type);
                 el.setAttribute('label', label);
-                Events(el)
-                        .on('source.load', onload)
-                        .on('source.unload', onunload);
                 this.sources.push(source);
                 this.video.appendChild(el);
                 return true;
@@ -1121,7 +703,7 @@
 
             if (typeof src === s && /^http/.test(src)) {
                 srclang = typeof srclang === s ? srclang : "und";
-                lang = isoCode(srclang).lang.split(';')[0].split(',')[0].trim();
+                let lang = isoCode(srclang).lang.split(';')[0].split(',')[0].trim();
                 label = typeof label === s ? label : lang;
                 let
                         id = "track" + this.tracks.length,
@@ -1133,7 +715,7 @@
                 el.setAttribute('srclang', srclang);
                 el.setAttribute('id', id);
 
-                Events(el).on('load, error', e => {
+                el.onload = el.onerror = e => {
                     let target = e.target, src = target.src;
                     if (/^blob/.test(src)) return;
                     if (target.data('loading') === true) return;
@@ -1158,39 +740,83 @@
                                         }
                                     }
                                 });
-
                             })
                             .catch(console.warn);
 
-                });
+                };
 
                 el.setAttribute('src', src);
-
-
-
+                this.tracks.push(el);
+                this.video.appendChild(el);
+                return true;
             }
             return false;
-
-            let el = doc.createElement('track');
-            Object.assign(el, {
-                src: item.src,
-                label: item.label,
-                srclang: item.srclang,
-                kind: "subtitles",
-                lang: isoCode(item.srclang).lang.split(';')[0].split(',')[0].trim(),
-                id: 'track' + i
-            });
-            this.tracks.push(el);
-            video.appendChild(el);
-
         }
 
         reset(){
+
+            this.currentTime = 0;
+            let source = this.sources[this.currentSource];
+            if (isPlainObject(source)) source.unload();
+            this.title = null;
+            this.video.data({
+                filename: null,
+                src: null,
+                poster: null
+            });
+            this.video.poster = null;
+            this._currentSource = -1;
+            this.tracks = [];
+            this.sources = [];
+            this.video.innerHTML = "";
 
         }
 
         start(){
 
+            if (this.starting=== true) return;
+            this.starting = true;
+            
+            if (this.elements.video.parentElement === null) {
+                this.elements.root.appendChild(this.elements.video);
+            }
+            if (this.elements.root.parentElement === null) {
+                this.container.innerHTML = "";
+                this.container.appendChild(this.elements.root);
+            }
+
+            this.ready().then(player => {
+                delete this.starting;
+
+                this.root.querySelectorAll('button[data-plyr="quality"][value]').forEach(btn => {
+                    btn.disabled = true;
+                    if (this.sources.map(x => x.label).includes(btn.value)) btn.disabled = null;
+                });
+
+                let
+                        quality = this.plyr.storage.get('quality') || null,
+                        index = this.sources.map(x => x.label).indexOf(quality);
+                if (index === -1 && this.sources.length > 0) index = 0;
+
+                if (index !== -1) {
+                    let ev = new Event('qualitychange', {bubbles: true, cancelable: true});
+                    ev.detail = {
+                        quality: this.sources[index].label,
+                        plyr: this.plyr,
+                        init: true
+                    };
+                    this.video.dispatchEvent(ev);
+                }
+
+            });
+
+            if (!this.plyr) {
+                require('Plyr').then(exports => {
+                    let {Plyr} = exports;
+                    PlyrPlayer.setStyles();
+                    let plyr = this.plyr = new Plyr(this.video, this.options);
+                });
+            }
         }
         
     }
@@ -1238,51 +864,112 @@
                 });
 
                 let title = video.data('show');
+                player.title = title;
                 if (video.data('episode') > 0) {
                     title += ".E";
                     if (video.data('episode') < 10) title += "0";
                     title += video.data('episode');
                 }
-                video.data('title', title);
+                video.data('filename', title);
                 try {
                     video.poster = json.video.container.images.poster.url;
                 } catch (e) {
                     video.poster = null;
                 }
 
-                this.loadSubs(json);
+                this.loadSubs(json.subtitles);
                 this.loadStreams(json.streams, drm)
                         .then(() => {
+                            console.debug(this);
                             player.start();
                         });
-
-
-
-
             });
-
-
-
-
-
-
 
         }
 
 
         loadSubs(json){
+            if (Array.isArray(json)) {
+                json.forEach(item => this.player.addTrack(item.src, item.srclang, item.label));
+            }
 
         }
         loadStreams(json, drm){
+            return new Promise(resolve=>{
+                let src, label, size, type;
 
-            let src, label, size, type;
+                if (json.dash) {
+                    //addSource(src, size, type, label, onload, onunload)
+                    type = "dash";
+                    label = "adaptive";
+                    size = "adaptive";
+                    src = atob((new URL(json.dash.url)).searchParams.get('stream'));
+                    if (isPlainObject(drm)) {
+                        this.player.addSource(src, size, type, label, source => {
+                            require('dashjs').then(exports => {
+                                let {dashjs} = exports,
+                                player = source.dash = dashjs.MediaPlayer().create();
+                                player.initialize();
+                                player.setAutoPlay(false);
+                                player.attachView(video);
+                                player.attachSource(source.src);
+                                player.setProtectionData({
+                                    "com.widevine.alpha": {
+                                        "serverURL": drm.dt3,
+                                        "httpRequestHeaders": {}
+                                    },
+                                    "com.microsoft.playready": {
+                                        "serverURL": drm.dt2,
+                                        "httpRequestHeaders": {}
+                                    }
 
-            if (json.dash) {
+                                });
+                            });
+                        });
+                    } else this.player.addSource(src, size, type, label);
+                }
+
+                if (json.hls && !isPlainObject(drm)) {
+
+                    let manifest = atob((new URL(json.hls.url)).searchParams.get('stream'));
+                    type = "hls";
+                    let sizes = [1080, 720, 480, 360, 240];
+
+                    fetch(new URL(manifest), {cache: "no-store", redirect: 'follow'})
+                            .then(r => {
+                                if (r.status === 200) return r.text();
+                                throw new Error('Unable to fetch hls infos.');
+
+                            })
+                            .then(text => {
+                                return text.split(/\n+/);
+                            })
+                            .then(lines => {
+                                let res, matches;
+                                lines.forEach(line => {
+                                    if (/^http/.test(line)) {
+                                        src = line.trim();
+                                        size = null;
+                                        if (typeof res !== n) return;
+                                        sizes.forEach(num => {
+                                            if (num >= res) size = num;
+                                        });
+                                        
+                                        if (typeof size === n) this.player.addSource(src, size, type);
+
+                                    } else if ((matches = /x(\d+),/.exec(line)) !== null) res = parseInt(matches[1]);
+                                });
+                                resolve(this.player);
+                            })
+                            .catch(() => {
+                                resolve(this.player);
+                            });
+
+                } else resolve(this.player);
+
+            });
 
 
-
-
-            }
 
         }
 
@@ -1362,19 +1049,25 @@
      * API Load data
      */
     let api, matches, app_ver, app_id, vplayer;
-    
-    
+
 
     Events(doc).on(UUID + '.pagechange', e => {
 
-        
         let  uri = e.data.args[2];
-
-        
 
         if ((matches = /^\/videos\/(\d+v)/.exec(uri)) !== null) {
             let id = matches[1];
-            
+
+            new Timer(timer => {
+                if (typeof player === o && player.player) {
+                    if (player.player.isReady_) {
+                        timer.stop();
+                        player.player.dispose();
+                    }
+                }
+            }, 10, 20 * second);
+
+
             if (!(vplayer instanceof VikiPlayer) ){
                 if (!(api instanceof VikiAPI)) {
                     NodeFinder.findOne('[src*="app_ver="][src*="?app_id"]', el => {
@@ -1386,7 +1079,6 @@
                     });
                 } else vplayer = window.vplayer = new VideoPlayer(api, id);
             } else vplayer.loadVideo(id);
-            
 
         } else {
             on.loaded().then(() => {
@@ -1402,6 +1094,20 @@
         }
 
     });
+
+    /* states
+     [
+     {
+     __N: true,
+     as: "/videos/1128053v",
+     url: "/videos/[vid]?vid=1128053v", replaceState(pushstate without var)
+     options:{}
+
+     },
+     "",
+     "/videos/1128053v"
+
+     ];*/
 
     /*   if(/^\/videos\/(\d+v)/.test(location.pathname)){
      Events(doc).trigger(UUID + '.pagechange',{
