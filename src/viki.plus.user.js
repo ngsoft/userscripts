@@ -754,10 +754,11 @@
         }
 
         reset(){
-
+            this.video.pause();
             this.currentTime = 0;
+
             let source = this.sources[this.currentSource];
-            if (isPlainObject(source)) source.unload();
+            if (isPlainObject(source)) source.unload(source);
             this.title = null;
             this.video.data({
                 filename: null,
@@ -772,15 +773,21 @@
 
         }
 
-        start(){
+        start(container){
 
             if (this.starting=== true) return;
             this.starting = true;
+
+            if (container instanceof Element) {
+                this.container = container;
+                this.container.innerHTML = "";
+                this.container.appendChild(this.elements.root);
+            }
             
             if (this.elements.video.parentElement === null) {
                 this.elements.root.appendChild(this.elements.video);
             }
-            if (this.elements.root.parentElement === null) {
+            if (this.root.parentElement === null) {
                 this.container.innerHTML = "";
                 this.container.appendChild(this.elements.root);
             }
@@ -824,6 +831,48 @@
 
     class VikiPlayer {
 
+        static setStyles(){
+            if (this.styles === true) return;
+            this.styles = true;
+            addstyle(`
+                .plyr-player video{object-fit: fill;}
+                .plyr-player{position: absolute;top: 0;right: 0;left: 0;bottom: 0;}
+                .plyr-toolbar{
+                    position: absolute; top: 0 ; left: 0 ; right: 0;
+                    text-align: center; padding: 16px 8px;z-index: 9999;
+                    text-align: center;font-size: 16px; color:#FFF;line-height: 1.5;text-decoration: none;cursor: pointer;
+                    background: linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));transition: opacity .4s ease-in-out,transform .4s ease-in-out;
+                }
+                .plyr-toolbar *:hover{filter: drop-shadow(4px 4px 4px #fff);}
+                .plyr__poster {background-size: cover;}
+                .plyr__caption{
+                    -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
+                     font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
+                     background: rgba(0,0,0,.1);transform: translate(0, 10%);font-size: 16px;
+                }
+               .plyr--captions-enabled video::cue{
+                    color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
+                    display: none; text-shadow: none;
+                }
+                @media (min-width: 768px) {
+                    .plyr__caption, .plyr-toolbar{font-size: 24px;}
+                }
+                @media (min-width: 992px) {
+                    .plyr__caption{font-size: 32px;}
+                }
+                .plyr-player [disabled], .plyr-player .disabled{pointer-events: none !important;}
+                .plyr-player .hidden, .plyr-player .hidden *{
+                    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+                    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+                    display: inline !important;z-index: -1 !important;
+                }
+                .plyr-player [hidden], .plyr-player button[data-plyr="quality"][disabled]{display: none;}
+            `);
+
+        }
+
+
+
         constructor(api, id){
             let container = doc.querySelector('#__next >.page-wrapper');
             container = container instanceof HTMLElement ? container : doc.body;
@@ -835,7 +884,57 @@
 
             this.api = api;
             this.json = {};
-            this.player = new PlyrPlayer(container);
+            let player = this.player = new PlyrPlayer(container);
+            let video = player.video;
+
+            Events(doc).on('keydown keyup', e => {
+
+                if (e.target.closest('input') !== null) return;
+
+                let prevent = false;
+
+                if ([13, 78].includes(e.keyCode)) e.preventDefault();
+                if (e.type === "keydown") return;
+
+                switch (e.keyCode) {
+                    case 13: //Enter
+                        let btn = player.root.querySelector('button[data-plyr="fullscreen"]');
+                        if (btn !== null) btn.dispatchEvent(new MouseEvent('click'));
+                        break;
+                    case 78: //n
+                        player.trigger('next');
+                        break;
+                }
+            });
+
+
+            let listeners = {
+                next(){
+
+                },
+                loadedmetadata(){
+                    video.play();
+                },
+                ended(){
+                    player.trigger('next');
+
+                }
+            };
+
+            Object.keys(listeners).forEach(type => {
+                if (typeof listeners[type] === f) player.on(type, listeners[type]);
+                else if (isPlainObject(listeners[type])) {
+                    Object.keys(listeners[type]).forEach(t => {
+                        if (typeof listeners[type][t] === f) {
+                            player.on(type + '.' + t, listeners[type][t]);
+                        }
+                    });
+                }
+
+            });
+
+
+
             if (typeof id === s) this.loadVideo(id);
 
         }
@@ -881,7 +980,13 @@
                 this.loadStreams(json.streams, drm)
                         .then(() => {
                             console.debug(this);
-                            player.start();
+                            player.ready().then(player => {
+                                VikiPlayer.loadStyles()
+                            });
+
+                            let container = doc.querySelector('#__next >.page-wrapper');
+                            if (player.container !== container) player.start(container);
+                            else player.start();
                         });
             });
 
@@ -911,7 +1016,7 @@
                                 player = source.dash = dashjs.MediaPlayer().create();
                                 player.initialize();
                                 player.setAutoPlay(false);
-                                player.attachView(video);
+                                player.attachView(this.player.video);
                                 player.attachSource(source.src);
                                 player.setProtectionData({
                                     "com.widevine.alpha": {
