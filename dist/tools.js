@@ -2162,13 +2162,64 @@ var requirejs, define;
 }((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window), (typeof setTimeout === 'undefined' ? undefined : setTimeout)));
 
 
-(function(global){
+(function(){
 
 
     if (!GM_info) throw new Error('Not loaded in userscript.');
+    const
+            GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
+            scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
+            UUID = GMinfo ? GMinfo.script.uuid : "",
 
-    let  matches, root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist';
+            // Scallar types
+            s = "string",
+            b = "boolean",
+            f = "function",
+            o = "object",
+            u = "undefined",
+            n = "number",
+            //time
+            second = 1000,
+            minute = 60 * second,
+            hour = minute * 60,
+            day = hour * 24,
+            week = day * 7,
+            year = 365 * day,
+            month = Math.round(year / 12),
+            doc = document;
 
+    /**
+     * Test if given argument is a plain object
+     * @param {any} v
+     * @returns {Boolean}
+     */
+    function isPlainObject(v){
+        return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
+    }
+
+
+    /**
+     * Get the type of the current value
+     * @param {any} value
+     * @returns {string}
+     */
+    function gettype(value){
+        let type = typeof value;
+        if (type === o) {
+            if (value === null) type = "null";
+            else if (Array.isArray(value)) type = "array";
+        } else if (type === n) {
+            type = "float";
+            if (Number.isInteger(value)) type = "int";
+        }
+        return type;
+    }
+
+    let  matches, root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist', exports = {
+        s, b, f, o, u, n,
+        second, minute, hour, day, week, year, month,
+        gettype, isPlainObject, GMinfo, scriptname, UUID
+    };
 
     GM_info.script.header.split(/\n+/).forEach(line => {
         if ((matches = /@require[\s\t]+(\w+:\/\/.+)/.exec(line))) {
@@ -2178,7 +2229,6 @@ var requirejs, define;
     });
     root += '/modules/';
 
-    const exports = {};
     [
         'GM_deleteValue',
         'GM_listValues',
@@ -2190,25 +2240,72 @@ var requirejs, define;
         'GM_unregisterMenuCommand',
         'GM_xmlhttpRequest'
     ].forEach(v => exports[v] = self[v]);
-
-
-    const
-            GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
-            scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
-            UUID = GMinfo ? GMinfo.script.uuid : "";
-
-
-
-    Object.assign(exports, {GMinfo, scriptname, UUID});
+    
+    
     requirejs.config({
         baseUrl: "http://localhost:8092/dist/modules/",
         //baseUrl: root
-        config: {}
+        config: {
+            enums: exports
+        }
     });
 
 
+    const cfg = {
+        plyronline: {
+            version: '3.6.2',
+            path: 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr'
+        },
+        subtitle: {
+            version: '2.0.5', //last stable version before 3.0 (no easy converts)
+            path: 'https://cdn.jsdelivr.net/npm/subtitle@%s/dist/subtitle.bundle.min'
+        },
+        dashjs: {
+            path: 'https://cdn.dashjs.org/latest/dash.all.min'
+        },
+        hls: {
+            version: '0.14.16',
+            path: 'https://cdn.jsdelivr.net/npm/hls.js@%s/dist/hls.min',
+            config: {
+                enableWebVTT: false,
+                enableCEA708Captions: false
+            }
+        }
+    };
 
 
+    let overrides = module.config();
+    Object.keys(overrides).forEach(key => {
+        let type = gettype(overrides[key]);
+        if (gettype(cfg[key] === gettype(overrides[key]))) {
+            if (type === o) Object.assign(cfg[key], overrides[key]);
+            else cfg[key] = overrides[key];
+        } else if (gettype(cfg[key] === u)) cfg[key] = overrides[key];
+    });
+
+
+    const obj = {};
+
+
+    Object.keys(cfg).forEach(key => {
+
+        if (gettype(cfg[key]) === o) {
+            let item = cfg[key], path;
+            if (gettype(item.path) === s) {
+                if (gettype(item.version) === s) path = item.path.replace('%s', item.version);
+                else path = item.path;
+                obj[key] = path;
+            }
+        }
+    });
+
+    if (Object.keys(obj).length > 0) {
+        requirejs.config({
+            paths: obj
+        });
+    }
+
+    require(['plyr'], console.debug);
 
     /*
     requirejs.config({
@@ -2227,21 +2324,14 @@ var requirejs, define;
 
     //global.GM_info = GM_info;
 
-    require(['enums'], (enums) => {
-        Object.assign(enums, exports);
-
-        //enums.test = '1';
-        //console.debug(enums);
-
-        require(['enums'], console.debug)
-    });
+    
 
 
 
 
 
 
-})((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window));
+}());
 
 
 

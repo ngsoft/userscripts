@@ -1,8 +1,8 @@
 (function(root, factory){
-    /* globals define, require, module, self, GM_info, GM */
+    /* globals define, require, module, self */
     const
-            name = "enums",
-            dependencies = ['module'];
+            name = "plyr",
+            dependencies = ['config', 'plyronline'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,12 +18,13 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(module){
-
-    const enums = {};
+}(typeof self !== 'undefined' ? self : this, function(c, p){
 
 
-    return Object.assign(enums, module.config());
+    console.debug(c, p);
 
+
+
+    return p;
 }));
 
