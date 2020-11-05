@@ -2,7 +2,7 @@
     /* globals define, require, module, self */
     const
             name = "plyr",
-            dependencies = ['config', 'plyronline'];
+            dependencies = ['config', 'utils', 'Plyr'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,13 +18,13 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(c, p){
-
-
-    console.debug(c, p);
+}(typeof self !== 'undefined' ? self : this, function(cfg, utils, plyr){
 
 
 
-    return p;
+
+
+
+    return plyr;
 }));
 

@@ -2,7 +2,7 @@
     /* globals define, require, module, self */
     const
             name = "utils",
-            dependencies = [];
+            dependencies = ['module', 'sprintf', 'enums'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,13 +18,13 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(){
+}(typeof self !== 'undefined' ? self : this, function(module, sprintf, enums){
+
+    const exports = {};
 
 
 
-
-
-
+    return Object.assign(exports, module.config(), sprintf);
 
 }));
 

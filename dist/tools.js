@@ -2218,7 +2218,7 @@ var requirejs, define;
     let  matches, root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist', exports = {
         s, b, f, o, u, n,
         second, minute, hour, day, week, year, month,
-        gettype, isPlainObject, GMinfo, scriptname, UUID
+        GMinfo, scriptname, UUID
     };
 
     GM_info.script.header.split(/\n+/).forEach(line => {
@@ -2241,54 +2241,37 @@ var requirejs, define;
         'GM_xmlhttpRequest'
     ].forEach(v => exports[v] = self[v]);
     
-    
+    const
+            cfg = {
+                Plyr: {
+                    version: '3.6.2',
+                    path: 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr'
+                },
+                subtitle: {
+                    version: '2.0.5', //last stable version before 3.0 (no easy converts)
+                    path: 'https://cdn.jsdelivr.net/npm/subtitle@%s/dist/subtitle.bundle.min'
+                },
+                dashjs: {
+                    path: 'https://cdn.dashjs.org/latest/dash.all.min'
+                },
+                Hls: {
+                    version: '0.14.16',
+                    path: 'https://cdn.jsdelivr.net/npm/hls.js@%s/dist/hls.min',
+                    config: {
+                        enableWebVTT: false,
+                        enableCEA708Captions: false
+                    }
+                }
+            },
+            obj = {};
+
     requirejs.config({
         baseUrl: "http://localhost:8092/dist/modules/",
         //baseUrl: root
-        config: {
-            enums: exports
-        }
+        config: {config: cfg, enums: exports, utils: {gettype, isPlainObject}}
     });
-
-
-    const cfg = {
-        plyronline: {
-            version: '3.6.2',
-            path: 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr'
-        },
-        subtitle: {
-            version: '2.0.5', //last stable version before 3.0 (no easy converts)
-            path: 'https://cdn.jsdelivr.net/npm/subtitle@%s/dist/subtitle.bundle.min'
-        },
-        dashjs: {
-            path: 'https://cdn.dashjs.org/latest/dash.all.min'
-        },
-        hls: {
-            version: '0.14.16',
-            path: 'https://cdn.jsdelivr.net/npm/hls.js@%s/dist/hls.min',
-            config: {
-                enableWebVTT: false,
-                enableCEA708Captions: false
-            }
-        }
-    };
-
-
-    let overrides = module.config();
-    Object.keys(overrides).forEach(key => {
-        let type = gettype(overrides[key]);
-        if (gettype(cfg[key] === gettype(overrides[key]))) {
-            if (type === o) Object.assign(cfg[key], overrides[key]);
-            else cfg[key] = overrides[key];
-        } else if (gettype(cfg[key] === u)) cfg[key] = overrides[key];
-    });
-
-
-    const obj = {};
-
 
     Object.keys(cfg).forEach(key => {
-
         if (gettype(cfg[key]) === o) {
             let item = cfg[key], path;
             if (gettype(item.path) === s) {
@@ -2298,6 +2281,8 @@ var requirejs, define;
             }
         }
     });
+    
+    console.debug(obj);
 
     if (Object.keys(obj).length > 0) {
         requirejs.config({
@@ -2306,27 +2291,6 @@ var requirejs, define;
     }
 
     require(['plyr'], console.debug);
-
-    /*
-    requirejs.config({
-
-        paths: {
-            Plyr: 'https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr'
-        }
-
-    });
-
-*/
-
-
-
-    // console.debug(GM_info, self);
-
-    //global.GM_info = GM_info;
-
-    
-
-
 
 
 
