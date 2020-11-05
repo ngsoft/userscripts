@@ -6,7 +6,7 @@
 // @author      daedelus
 //
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
-// @grant       none
+// @grant       GM_registerMenuCommand
 // @noframes
 //
 // @include     /^https?:\/\/(www\.)?viki.com\//
@@ -19,6 +19,89 @@
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+    console.debug(self.GM_registerMenuCommand);
+
+
+
+    console.debug(self, unsafeWindow);
+
+
+
+    function prequire(...variables){
+        return new Promise(resolve => {
+            let sources = prequire._sources;
+            if (variables.length === 0) return;
+
+            variables.forEach(v => {
+                let source, match = false;
+                for (let i = 0; i < sources.length; i++) {
+                    source = sources[i];
+                    if (source.vars.includes(v)) {
+                        match = true;
+                        if (!source.loaded) {
+                            source.urls.forEach(u => {
+                                if (/\.js$/.test(u)) loadjs(u);
+                                else if (/\.css$/.test(u)) loadcss(u);
+                            });
+                            source.loaded = true;
+
+                        }
+                        break;
+                    }
+
+                }
+                if (match === false) throw new Error('Cannot require ' + v);
+            });
+
+            let result = {};
+            const check = function(){
+                variables.forEach(v => {
+                    if (typeof self[v] !== u) result[v] = self[v];
+                });
+                if (variables.length === Object.keys(result).length) {
+                    resolve(result);
+                    return true;
+                }
+            };
+
+            if (check() === true) return;
+
+            new Timer(timer => {
+                if (check() === true) timer.stop();
+            }, 10, 10 * second);
+        });
+
+    }
+
+    prequire.sources = function(varname, url){
+        if (typeof url === s) url = [url];
+        if (!Array.isArray(url)) return false;
+        if (typeof varname === s) varname = [varname];
+        if (!Array.isArray(varname)) return false;
+        if (!prequire._sources) prequire._sources = [];
+        let sources = prequire._sources;
+        sources.push({
+            vars: varname,
+            urls: url,
+            loaded: false
+        });
+        return true;
+    };
+
+
 
     ["pushState", "replaceState"].forEach(fn => {
         history[fn] = (function(){
@@ -183,66 +266,7 @@
         }
     }
 
-    function require(...variables){
-        return new Promise(resolve => {
-            let sources = require._sources;
-            if (variables.length === 0) return;
 
-            variables.forEach(v => {
-                let source, match = false;
-                for (let i = 0; i < sources.length; i++) {
-                    source = sources[i];
-                    if (source.vars.includes(v)) {
-                        match = true;
-                        if (!source.loaded) {
-                            source.urls.forEach(u => {
-                                if (/\.js$/.test(u)) loadjs(u);
-                                else if (/\.css$/.test(u)) loadcss(u);
-                            });
-                            source.loaded = true;
-
-                        }
-                        break;
-                    }
-
-                }
-                if (match === false) throw new Error('Cannot require ' + v);
-            });
-            
-            let result = {};
-            const check = function(){
-                variables.forEach(v=>{
-                    if (typeof self[v] !== u) result[v] = self[v];
-                });
-                if (variables.length === Object.keys(result).length) {
-                    resolve(result);
-                    return true;
-                }
-            };
-
-            if (check() === true) return;
-
-            new Timer(timer => {
-                if (check() === true) timer.stop();
-            }, 10, 10 * second);
-        });
-
-    }
-
-    require.sources = function(varname, url){
-        if (typeof url === s) url = [url];
-        if (!Array.isArray(url)) return false;
-        if (typeof varname === s) varname = [varname];
-        if (!Array.isArray(varname)) return false;
-        if (!require._sources) require._sources = [];
-        let sources = require._sources;
-        sources.push({
-            vars: varname,
-            urls: url,
-            loaded: false
-        });
-        return true;
-    };
 
 
 
@@ -299,13 +323,13 @@
         static setDeps(){
             if (this.deps === true) return;
             this.deps = true;
-            require.sources('Plyr', [
+            prequire.sources('Plyr', [
                 'https://cdn.jsdelivr.net/npm/plyr@' + this.plyrVersion + '/dist/plyr.min.js',
                 'https://cdn.jsdelivr.net/npm/plyr@' + this.plyrVersion + '/dist/plyr.css'
             ]);
-            require.sources('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min.js');
-            require.sources('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js');
-            require.sources('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js');
+            prequire.sources('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min.js');
+            prequire.sources('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js');
+            prequire.sources('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js');
         }
         
         
@@ -333,7 +357,7 @@
                     source.unload(source);
                 }
                 newsource.load(newsource);
-                let storage = this.plyr.storage.get();
+                let storage = this.plyr.storage.get() || {};
                 storage.quality = newsource.label;
                 this.plyr.storage.set(storage);
                 this._currentSource = index;
@@ -583,7 +607,7 @@
                             enableCEA708Captions: false
                         };
                         
-                        require('Hls').then(exports => {
+                        prequire('Hls').then(exports => {
                             let {Hls} = exports,
                             hls = source.hls = new Hls(options);
                             hls.on(Hls.Events.MANIFEST_PARSED, function(){ });
@@ -605,7 +629,7 @@
             this.addSourceType(
                     'dash',
                     source => {
-                        require('dashjs').then(exports => {
+                        prequire('dashjs').then(exports => {
                             let {dashjs} = exports,
                             player = source.dash = dashjs.MediaPlayer().create();
                             player.initialize();
@@ -713,7 +737,7 @@
                                 throw new Error('Invalid status code ' + r.status);
                             })
                             .then(text => {
-                                require('Subtitle').then(exports => {
+                                prequire('Subtitle').then(exports => {
                                     let {Subtitle} = exports;
                                     let parsed, vtt, blob, virtualurl;
                                     if (Array.isArray(parsed = Subtitle.parse(text)) && parsed.length > 0) {
@@ -804,7 +828,7 @@
             });
 
             if (!this.plyr) {
-                require('Plyr').then(exports => {
+                prequire('Plyr').then(exports => {
                     let {Plyr} = exports;
                     PlyrPlayer.setStyles();
                     let plyr = this.plyr = new Plyr(this.video, this.options);
@@ -1032,7 +1056,7 @@
                     src = atob((new URL(json.dash.url)).searchParams.get('stream'));
                     if (isPlainObject(drm)) {
                         this.player.addSource(src, size, type, label, source => {
-                            require('dashjs').then(exports => {
+                            prequire('dashjs').then(exports => {
                                 let {dashjs} = exports,
                                 player = source.dash = dashjs.MediaPlayer().create();
                                 player.initialize();

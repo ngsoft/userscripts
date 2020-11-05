@@ -40,8 +40,8 @@
             year = 365 * day,
             month = Math.round(year / 12),
             GMinfo = (typeof GM_info !== u ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
-            scriptname = `${GMinfo.script.name} @${GMinfo.script.version}`,
-            UUID = GMinfo.script.uuid,
+            scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
+            UUID = GMinfo ? GMinfo.script.uuid : "",
             doc = document;
 
     /**
@@ -301,15 +301,19 @@
      */
     function loadjs(src, defer){
         return new Promise((resolve, reject) => {
-            if (!isValidUrl(src)) reject(new Error("Invalid argument src."));
+            if (!isValidUrl(src)) {
+                reject(new Error("Invalid argument src."));
+                return;
+            }
             let script = doc.createElement('script');
             Object.assign(script, {
                 type: 'text/javascript',
-                onload: e => resolve(e),
+                onload: e => resolve(e.target),
+                onerror: () => reject(new Error('Cannot load' + src)),
                 src: src
             });
             if (defer === true) script.defer = true;
-            doc.head.appendChild(script);
+            document.head.appendChild(script);
         });
     }
 
@@ -318,20 +322,27 @@
      * @param {string} src
      * @returns {Promise}
      */
-    function loadcss(src){
+    function  loadcss(src){
 
         return new Promise((resolve, reject) => {
-            if (!isValidUrl(src)) return reject(new Error('Invalid argument src'));
+            if (!isValidUrl(src)) {
+                reject(new Error('Invalid argument src'));
+                return;
+            }
             let style = doc.createElement('link');
             Object.assign(style, {
                 rel: "stylesheet",
                 type: "text/css",
                 href: src,
-                onload: e => resolve(e)
+                onload: e => resolve(e.target),
+                onerror: () => reject(new Error('Cannot load' + src))
             });
-            doc.head.appendChild(style);
+            document.head.appendChild(style);
         });
     }
+
+
+
 
 
     /**
