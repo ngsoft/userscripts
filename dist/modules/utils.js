@@ -2,7 +2,7 @@
     /* globals define, require, module, self */
     const
             name = "utils",
-            dependencies = ['module', 'sprintf', 'enums'];
+            dependencies = ['module', 'sprintf'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,10 +18,11 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(module, sprintf, enums, undef){
+}(typeof self !== 'undefined' ? self : this, function(module, sprintf, undef){
 
 
-    const {doc, s, f} = enums;
+    const {s, f} = module.config();
+    const doc = document;
 
     /**
      * Creates an HTMLElement from html code

@@ -2270,7 +2270,7 @@ var requirejs, define;
     requirejs.config({
         baseUrl: root,
         //baseUrl: root
-        config: {config: cfg, enums: exports, utils: {gettype, isPlainObject}}
+        config: {config: cfg, enums: exports, utils: Object.assign(exports, {gettype, isPlainObject})}
     });
 
     Object.keys(cfg).forEach(key => {
