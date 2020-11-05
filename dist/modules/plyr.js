@@ -20,11 +20,7 @@
     }
 }(typeof self !== 'undefined' ? self : this, function(cfg, utils, plyr){
 
-
-
-
-
-
+    const {sprintf, loadcss} = utils;
     return plyr;
 }));
 

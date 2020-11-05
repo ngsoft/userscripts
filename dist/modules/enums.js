@@ -20,9 +20,9 @@
     }
 }(typeof self !== 'undefined' ? self : this, function(module){
 
-    const enums = {};
+    const enums = {doc: document};
 
-
+    console.debug(document);
     return Object.assign(enums, module.config());
 
 }));

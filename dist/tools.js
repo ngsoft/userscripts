@@ -2185,8 +2185,7 @@ var requirejs, define;
             day = hour * 24,
             week = day * 7,
             year = 365 * day,
-            month = Math.round(year / 12),
-            doc = document;
+            month = Math.round(year / 12);
 
     /**
      * Test if given argument is a plain object
@@ -2221,10 +2220,13 @@ var requirejs, define;
         GMinfo, scriptname, UUID
     };
 
+    //dev mode local file with FF60ESR
+    if (GMinfo.script.description === "dev") root = "http://127.0.0.1:8092/dist";
+
     GM_info.script.header.split(/\n+/).forEach(line => {
         if ((matches = /@require[\s\t]+(\w+:\/\/.+)/.exec(line))) {
             let file = matches[1].trim();
-            if (/^\/tools(\.min)?\.js$/.test(file)) root = file.substr(0, file.lastIndexOf('/'));
+            if (/^http.+\/tools(\.min)?\.js$/.test(file)) root = file.substr(0, file.lastIndexOf('/'));
         }
     });
     root += '/modules/';
@@ -2266,7 +2268,7 @@ var requirejs, define;
             obj = {};
 
     requirejs.config({
-        baseUrl: "http://localhost:8092/dist/modules/",
+        baseUrl: root,
         //baseUrl: root
         config: {config: cfg, enums: exports, utils: {gettype, isPlainObject}}
     });
@@ -2281,18 +2283,13 @@ var requirejs, define;
             }
         }
     });
-    
-    console.debug(obj);
+
 
     if (Object.keys(obj).length > 0) {
         requirejs.config({
             paths: obj
         });
     }
-
-    require(['plyr'], console.debug);
-
-
 
 
 }());
