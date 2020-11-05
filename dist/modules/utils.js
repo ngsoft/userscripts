@@ -290,9 +290,9 @@
 
 
     return Object.assign( {
-        uniqid, html2element, html2doc, copyToClipboard, Text2File,
+        uniqid, html2element, html2doc, copyToClipboard, Text2File, doc,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, Interface
-    }, module.config(), sprintf, enums);
+    }, module.config(), sprintf);
 
 }));
 

@@ -2249,7 +2249,7 @@ var requirejs, define;
                     version: '3.6.2',
                     path: 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr'
                 },
-                subtitle: {
+                Subtitle: {
                     version: '2.0.5', //last stable version before 3.0 (no easy converts)
                     path: 'https://cdn.jsdelivr.net/npm/subtitle@%s/dist/subtitle.bundle.min'
                 },
@@ -2270,7 +2270,7 @@ var requirejs, define;
     requirejs.config({
         baseUrl: root,
         //baseUrl: root
-        config: {config: cfg, enums: exports, utils: Object.assign(exports, {gettype, isPlainObject})}
+        config: {config: cfg, utils: Object.assign(exports, {gettype, isPlainObject})}
     });
 
     Object.keys(cfg).forEach(key => {
