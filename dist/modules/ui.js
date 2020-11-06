@@ -2,7 +2,7 @@
     /* globals define, require, module, self, innerWidth */
     const
             name = "ui",
-            dependencies = ['utils', 'events', 'data'];
+            dependencies = ['utils', 'events'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,10 +18,14 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(utils, events){
+}(typeof self !== 'undefined' ? self : this, function ui(utils, events){
 
 
-    const {doc, f, s, n, u, b, uniqid, html2element, isPlainObject, isValidSelector, ResizeSensor, loadcss, NodeFinder} = utils;
+    const {
+        doc, f, s, n, u, b,
+        uniqid, html2element, isPlainObject, isValidSelector,
+        ResizeSensor, loadcss, NodeFinder, rootmodules
+    } = utils;
     const {Events, trigger} = events;
     let undef;
 
@@ -50,6 +54,14 @@
             //only text?
             this.elements.body.classList.remove('gm-flex-center');
             if (this.elements.body.children.length === 0) this.elements.body.classList.add('gm-flex-center');
+        }
+
+        get title(){
+            return this.elements.title.innerText;
+        }
+
+        get body(){
+            return this.elements.body;
         }
 
         get isClosed(){
@@ -952,22 +964,23 @@
 
     function gmStyles(){
         return new Promise(resolve => {
-
             if ((gmStyles.element instanceof Element) && gmStyles.element.parentElement !== null) {
                 resolve(gmStyles.element);
                 return;
             }
             if (gmStyles.loading === false) {
-
                 gmStyles.loading = true;
+                const resolver = el => {
+                    gmStyles.element = el;
+                    gmStyles.loading = false;
+                    resolve(el);
+                };
 
-
-
+                let root = rootmodules + 'css/';
+                loadcss(root + 'gmstyles.min.css')
+                        .then(resolver)
+                        .catch(() => loadcss(root + 'gmstyles.css').then(resolver).catch(x => x));
             }
-
-
-
-
         });
     }
     Object.assign(gmStyles, {
@@ -978,7 +991,7 @@
 
 
     return {
-        gmDialog, gmStyles, gmTabs, gmFlash
+        gmDialog, gmStyles, gmTabs, gmFlash, confirm: ask, alert
     };
 
 

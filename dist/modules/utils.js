@@ -1,7 +1,7 @@
 (function(root, factory){
     /* globals define, require, module, self, EventTarget */
     const
-            name = "utils",
+            name = 'utils',
             dependencies = ['module', 'sprintf'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
@@ -18,7 +18,7 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(module, sprintf, undef){
+}(typeof self !== 'undefined' ? self : this, function utils(module, sprintf, undef){
 
 
     const {s, f, n} = module.config();
@@ -172,6 +172,20 @@
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
 
+
+    function loadRejectMessage(e, reject){
+        let
+
+                target = e.target,
+                error = new Error('Cannot load resource');
+        Object.assign(error, {target});
+        target.remove();
+        console.warn(error.message, target.src || target.href);
+        reject(error);
+
+    }
+
+
     /**
      * Loads an external script
      * @param {string} src
@@ -180,7 +194,7 @@
      */
     function loadjs(src, defer){
         return new Promise((resolve, reject) => {
-            if (!isValidUrl(src)) {
+            if (typeof src !== s) {
                 reject(new Error("Invalid argument src."));
                 return;
             }
@@ -188,7 +202,7 @@
             Object.assign(script, {
                 type: 'text/javascript',
                 onload: e => resolve(e.target),
-                onerror: () => reject(new Error('Cannot load' + src)),
+                onerror: e => loadRejectMessage(e,reject),
                 src: src
             });
             if (defer === true) script.defer = true;
@@ -204,7 +218,7 @@
     function loadcss(src){
 
         return new Promise((resolve, reject) => {
-            if (!isValidUrl(src)) {
+            if (typeof src !== s) {
                 reject(new Error('Invalid argument src'));
                 return;
             }
@@ -212,9 +226,9 @@
             Object.assign(style, {
                 rel: "stylesheet",
                 type: "text/css",
-                href: src,
                 onload: e => resolve(e.target),
-                onerror: () => reject(new Error('Cannot load' + src))
+                onerror: e => loadRejectMessage(e, reject),
+                href: src
             });
             document.head.appendChild(style);
         });
@@ -657,8 +671,79 @@
     };
 
 
+
+    /**
+     * Creates a new Timer
+     * @param {function} callback
+     * @param {number|undefined} interval
+     * @param {number|undefined} timeout
+     * @returns {Timer}
+     */
+    class Timer {
+        /**
+         * Starts the timer
+         * @returns {undefined}
+         */
+        start(){
+            if (this.started !== true && typeof this.params.callback === f) {
+                const self = this;
+                self.__interval = setInterval(() => {
+                    self.params.callback.call(self, self);
+                }, self.params.interval);
+                if (self.params.timeout > 0) {
+                    self.__timeout = setTimeout(() => {
+                        self.stop();
+                    }, self.params.timeout);
+                }
+                self.started = true;
+            }
+
+        }
+        /**
+         * Stops the timer
+         * @returns {undefined}
+         */
+        stop(){
+            if (this.started === true) {
+                const self = this;
+                self.started = false;
+                if (self.__interval !== null) clearInterval(self.__interval);
+                if (self.__timeout !== null) clearTimeout(self.__timeout);
+                self.__timeout = null;
+                self.__interval = null;
+            }
+        }
+
+        /**
+         * Creates a new Timer
+         * @param {function} callback
+         * @param {number|undefined} interval
+         * @param {number|undefined} timeout
+         * @returns {Timer}
+         */
+        constructor(callback, interval, timeout){
+            if (typeof callback === f) {
+                const self = this;
+                Object.assign(self, {
+                    params: {
+                        callback: callback,
+                        interval: 10,
+                        timeout: 0
+                    },
+                    started: false,
+                    __interval: null,
+                    __timeout: null
+                });
+                if (typeof interval === n) self.params.interval = interval;
+                if (typeof timeout === n) self.params.timeout = timeout;
+                self.start();
+            }
+        }
+    }
+
+
     return Object.assign( {
-        uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector,
+        uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder
     }, module.config(), sprintf);
 

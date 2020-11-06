@@ -18,7 +18,7 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(utils, undef){
+}(typeof self !== 'undefined' ? self : this, function events(utils, undef){
 
 
     const {s, f, b, doc, isPlainObject} = utils;
