@@ -1,5 +1,5 @@
 (function(root, factory){
-    /* globals define, require, module, self */
+    /* globals define, require, module, self, EventTarget */
     const
             name = "utils",
             dependencies = ['module', 'sprintf'];
@@ -21,7 +21,7 @@
 }(typeof self !== 'undefined' ? self : this, function(module, sprintf, undef){
 
 
-    const {s, f} = module.config();
+    const {s, f, n} = module.config();
     const doc = document;
 
     /**
@@ -201,7 +201,7 @@
      * @param {string} src
      * @returns {Promise}
      */
-    function  loadcss(src){
+    function loadcss(src){
 
         return new Promise((resolve, reject) => {
             if (!isValidUrl(src)) {
@@ -408,7 +408,7 @@
                 let
                         width = self.currentWidth,
                         height = self.currentHeight;
-                this._params.observer = new MutationObserver(m => {
+                params.observer = new MutationObserver(m => {
                     if (self.currentWidth !== width || self.currentHeight !== height) {
                         self._params.width = width;
                         self._params.height = height;
@@ -433,9 +433,233 @@
     })();
 
 
+
+
+    class NodeFinderResults extends Array {
+
+        get current(){
+            return this[this.length - 1];
+        }
+
+
+        /**
+         * Use current result as root to find children matching selector
+         * @param {string} selector
+         * @param {function} callback
+         * @returns {NodeFinder}
+         */
+        find(selector, callback, limit = 0){
+            return NodeFinder(this.current).find(selector, callback, limit);
+        }
+
+        /**
+         * Use current result as root to find one children matching selector
+         * @param {string} selector
+         * @param {function} callback
+         * @returns {NodeFinder}
+         */
+        findOne(selector, callback){
+            return NodeFinder(this.current).find(selector, callback, 1);
+        }
+
+
+        /**
+         * Starts thee dom observer
+         * @returns {NodeFinderResults}
+         */
+        start(){
+            if (this.started === false) {
+                const $this = this;
+                if (doc.readyState === "loading") {
+                    doc.addEventListener("DOMContentLoaded", function(){
+                        $this.start();
+                    });
+                    return this;
+                }
+                this.started = true;
+                //initial search (nodes already in dom)
+                this.root.querySelectorAll(this.selector).forEach(node => {
+                    if (!$this.includes(node)) {
+                        $this.push(node);
+                        $this.callback.call(node, node, $this);
+                    }
+                });
+
+                this.observer.observe(this.root, {attributes: true, childList: true, subtree: true});
+                return this;
+            }
+        }
+        /**
+         * Stops the dom observer
+         * @returns {NodeFinderResults}
+         */
+        stop(){
+            if (this.started === true) {
+                this.started = false;
+                this.observer.disconnect();
+            }
+            return this;
+        }
+
+
+        constructor(root, selector, callback, limit, finder){
+
+            if (!isValidSelector(selector)) throw new Error('NodeFinder invalid selector.');
+            if (typeof callback !== f) throw new Error('NodeFinder invalid callback.');
+            if (typeof limit !== n) throw new Error('NodeFinder invalid limit.');
+
+            super();
+
+            Object.defineProperties(this, {
+                root: {value: root, enmerable: false, configurable: true, writable: false},
+                selector: {value: selector, enmerable: false, configurable: true, writable: false},
+                callback: {value: callback, enmerable: false, configurable: true, writable: false},
+                observer: {value: callback, enmerable: false, configurable: true, writable: true},
+                limit: {value: limit, enmerable: false, configurable: true, writable: false},
+                started: {value: false, enmerable: false, configurable: true, writable: true},
+                NodeFinder: {value: finder, enmerable: false, configurable: true, writable: false}
+            });
+
+
+            const
+                    $this = this,
+                    $callback = function(mutations){
+                        let nodes = [];
+                        mutations.forEach(m => {
+                            let node = m.target;
+                            if (nodes.includes(node)) return;
+                            if (node instanceof Element) {
+                                if (nodes.includes(node) === false ? $this.includes(node) === false : false) {
+                                    if (node.matches(selector)) nodes.push(node);
+                                }
+                            }
+                            if (m.type === 'childList') {
+                                [m.addedNodes, m.removedNodes].forEach(list => {
+                                    list.forEach(node => {
+                                        if (nodes.includes(node) || $this.includes(node)) return;
+                                        if (node instanceof Element ? node.matches(selector) : false) nodes.push(node);
+
+                                    });
+                                });
+                            }
+                        });
+                        root.querySelectorAll(selector).forEach(node => {
+                            if (nodes.includes(node) || $this.includes(node)) return;
+                            nodes.push(node);
+                        });
+
+                        if (nodes.length > 0) {
+                            nodes.forEach(node => {
+                                if (limit > 0 ? $this.length === limit : false) return;
+                                if ($this.includes(node)) return;
+                                if (root.contains(node)) {
+                                    $this.push(node);
+                                    callback.call(node, node, $this);
+                                }
+                            });
+                        }
+                        if (limit > 0 ? $this.length === limit : false) $this.stop();
+                    };
+            this.observer = new MutationObserver($callback);
+            this.start();
+        }
+    }
+
+
+    /**
+     * Node Finder v2
+     * @param {DocumentElement|HTMLElement|string} root single node, selector to use as root for the search
+     * @returns {NodeFinder}
+     */
+    function NodeFinder(root){
+        if (this instanceof NodeFinder == false) return new NodeFinder(root);
+        //throw new Error('NodeFinder cannot be instanciated using |new|.');
+        if (typeof root === s) root = doc.querySelector(root);
+        if (root instanceof EventTarget ? typeof root.querySelectorAll === f : false) {
+            Object.defineProperties(this, {
+                root: {value: root, enmerable: false, configurable: true, writable: false},
+                observers: {value: [], enmerable: false, configurable: true, writable: false}
+            });
+            NodeFinder.instances.push(this);
+            return this;
+        }
+        throw new Error('NodeFinder invalid root argument');
+    }
+
+
+    NodeFinder.instances = [];
+
+
+    NodeFinder.fn = NodeFinder.prototype = {
+        /**
+         * Find Nodes if existing or when created
+         * @param {string} selector
+         * @param {function} callback
+         * @param {number} [limit]
+         * @returns {NodeFinderRoot}
+         */
+        find(selector, callback, limit = 0){
+            this.observers.push(new NodeFinderResults(this.root, selector, callback, limit, this));
+            return this;
+        },
+
+        /**
+         * Find One Node if existing or when created
+         * @param {string} selector
+         * @param {function} callback
+         * @param {number} [limit]
+         * @returns {NodeFinderRoot}
+         */
+        findOne(selector, callback){
+            this.observers.push(new NodeFinderResults(this.root, selector, callback, 1, this));
+            return this;
+        },
+
+        /**
+         * Stops all observers for the current root
+         * @return {NodeFinder}
+         */
+        stop(){
+            this.observers.forEach(obs => obs.stop());
+            return this;
+        }
+    };
+
+    /**
+     * Find Nodes if existing or when created using the full document
+     * @param {string} selector
+     * @param {function} callback
+     * @param {number} [limit]
+     * @returns {NodeFinder}
+     */
+    NodeFinder.find = function(selector, callback, limit = 0){
+        return NodeFinder(doc).find(selector, callback, limit);
+    };
+    /**
+     * Find Nodes if existing or when created using the full document
+     * @param {string} selector
+     * @param {function} callback
+     * @param {number} [limit]
+     * @returns {NodeFinder}
+     */
+    NodeFinder.findOne = function(selector, callback){
+        return NodeFinder(doc).find(selector, callback, 1);
+    };
+
+    /**
+     * Stops all observers
+     * @return {undefined}
+     */
+    NodeFinder.stop = function(){
+        this.instances.forEach(finder => {
+            finder.stop();
+        });
+    };
+
+
     return Object.assign( {
         uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector,
-        addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor
+        addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder
     }, module.config(), sprintf);
 
 }));

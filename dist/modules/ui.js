@@ -21,7 +21,7 @@
 }(typeof self !== 'undefined' ? self : this, function(utils, events){
 
 
-    const {doc, f, s, n, u, b, uniqid, html2element, isPlainObject, isValidSelector, ResizeSensor, loadcss} = utils;
+    const {doc, f, s, n, u, b, uniqid, html2element, isPlainObject, isValidSelector, ResizeSensor, loadcss, NodeFinder} = utils;
     const {Events, trigger} = events;
     let undef;
 
