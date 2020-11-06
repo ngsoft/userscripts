@@ -18,9 +18,9 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(utils){
+}(typeof self !== 'undefined' ? self : this, function(utils, undef){
 
-    const {f, s, u, isPlainObject, GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = utils;
+    const {f, s, u, n, isPlainObject, GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = utils;
 
 
 
@@ -112,7 +112,7 @@
          */
         clear(){ }
     }
-    ;
+
 
 
 
@@ -312,7 +312,344 @@
 
     }
 
-    return {Iface, nullStore, xStore, gmStore, exStore};
+
+
+    /**
+     * Cache Item
+     * @link https://www.php-fig.org/psr/psr-6/
+     */
+    class LSCacheItem {
+
+        constructor(key, hit, value){
+            this.key = key;
+            this.hit = hit === true;
+            this.value = value;
+        }
+        /**
+         * Returns the key for the current cache item.
+         *
+         * The key is loaded by the Implementing Library, but should be available to
+         * the higher level callers when needed.
+         *
+         * @returns {string} The key string for this cache item.
+         */
+        getKey(){
+            return this.key;
+        }
+
+        /**
+         * Retrieves the value of the item from the cache associated with this object's key.
+         *
+         * The value returned must be identical to the value originally stored by set().
+         *
+         * If isHit() returns false, this method MUST return null. Note that null
+         * is a legitimate cached value, so the isHit() method SHOULD be used to
+         * differentiate between "null value was found" and "no value was found."
+         *
+         * @return {any} The value corresponding to this cache item's key, or undefined if not found.
+         */
+        get(){
+            return this.value;
+        }
+
+        /**
+         * Confirms if the cache item lookup resulted in a cache hit.
+         *
+         * Note: This method MUST NOT have a race condition between calling isHit()
+         * and calling get().
+         *
+         * @return {boolean} True if the request resulted in a cache hit. False otherwise.
+         */
+        isHit(){
+            return this.hit === true;
+        }
+
+        /**
+         * Sets the value represented by this cache item.
+         *
+         * The $value argument may be any item that can be serialized by PHP,
+         * although the method of serialization is left up to the Implementing
+         * Library.
+         *
+         * @param {any} value
+         *
+         * @return {LSCacheItem}   The invoked object.
+         */
+        set(value){
+            this.value = value;
+            return this;
+        }
+
+        /**
+         * Sets the expiration time for this cache item.
+         *
+         * @param {Date|number} expiration
+         *
+         * @return {LSCacheItem} The called object.
+         */
+        expiresAt(expiration){
+            if (typeof expiration === n) expiration = new Date(expiration);
+            if (expiration instanceof Date) this.expiration = +expiration;
+            return this;
+        }
+
+
+        /**
+         * Sets the expiration time for this cache item.
+         *
+         * @param {number} time
+         *
+         * @return {LSCacheItem} The called object.
+         */
+        expiresAfter(time){
+            if (typeof time === n) {
+                let tt = +new Date();
+                tt += time;
+                this.expiration = +new Date(tt);
+            }
+            return this;
+        }
+
+
+    }
+
+
+
+
+
+    /**
+     * Cache data into localStorage
+     * Item Cache Pool
+     * @link https://www.php-fig.org/psr/psr-6/
+     */
+    class LSCache {
+        /**
+         * @returns {DataStore}
+         */
+        get storage(){
+            return this._storage;
+        }
+
+        get prefix(){
+            let prefix = this._prefix;
+            if (prefix.length > 0) prefix += ":";
+            prefix += 'LSCache:';
+            return prefix;
+        }
+
+        get ttl(){
+            return this._ttl;
+        }
+
+        get deferred(){
+            return this._deferred;
+        }
+
+        get entries(){
+            return this._entries;
+        }
+
+        /**
+         * Creates a new cache pool
+         * @param {number} [ttl]
+         * @param {string} prefix
+         * @param {DataStore} storage
+         */
+        constructor(ttl, prefix, storage){
+
+            Object.defineProperties(this, {
+                _ttl: {
+                    configurable: true, enumerable: false, writable: true,
+                    value: typeof ttl === n ? ttl : 60000
+                },
+                _prefix: {
+                    configurable: true, enumerable: false, writable: true,
+                    value: typeof prefix === s ? prefix : ""
+                },
+                _storage: {
+                    configurable: true, enumerable: false, writable: true,
+                    value: storage instanceof DataStore ? storage : new xStore(localStorage)
+                },
+                _deferred: {
+                    configurable: true, enumerable: false, writable: true,
+                    value: []
+                },
+                _entries: {
+                    configurable: true, enumerable: false, writable: true,
+                    value: null
+                }
+
+            });
+
+            this._entries = new exStore(this.storage, (typeof prefix === s ? prefix : "") + ":LSCacheEntries");
+            this._removeExpired();
+        }
+
+        _removeExpired(){
+            let list = this.entries.get(), now = +new Date();
+            Object.keys(list).forEach(key => {
+                if (now > list[key]) {
+                    this.entries.remove(key);
+                    this.storage.remove(key);
+                }
+            });
+        }
+
+        /**
+         * Returns a Cache Item representing the specified key.
+         *
+         * This method must always return a CacheItemInterface object, even in case of
+         * a cache miss. It MUST NOT return null.
+         *
+         * @param {string} key The key for which to return the corresponding Cache Item.
+         *
+         *
+         * @return {LSCacheItem} The corresponding Cache Item.
+         */
+        getItem(key){
+            if (typeof key !== s) throw new Error("Invalid Argument");
+            let value, pkey = this.prefix + key;
+            if (this.hasItem(key)) value = this.storage.get(pkey);
+            return new LSCacheItem(key, value !== undef, value);
+        }
+
+        /**
+         * Returns a traversable set of cache items.
+         *
+         * @param {Array} keys An indexed array of keys of items to retrieve.
+         *
+         *
+         * @return {Array}.
+         */
+        getItems(keys = []){
+            let ret = [];
+            if (Array.isArray(keys)) {
+                for (let i = 0; i < keys.length; i++) {
+                    ret.push(this.getItem(keys[i]));
+                }
+            }
+            return ret;
+        }
+        /**
+         * Confirms if the cache contains specified cache item.
+         *
+         * Note: This method MAY avoid retrieving the cached value for performance reasons.
+         * This could result in a race condition with CacheItemInterface::get(). To avoid
+         * such situation use CacheItemInterface::isHit() instead.
+         *
+         * @param {string} key The key for which to check existence.
+         *
+         *
+         * @return {boolean}   True if item exists in the cache, false otherwise.
+         */
+        hasItem(key){
+            if (typeof key !== s) throw new Error("Invalid Argument");
+            this._removeExpired();
+            return this.storage.has(this.prefix + key);
+        }
+
+        /**
+         * Deletes all items in the pool.
+         *
+         * @return {boolean}  True if the pool was successfully cleared. False if there was an error.
+         */
+        clear(){
+            const list = this.entries.get();
+            Object.keys(list).forEach(key => {
+                this.storage.remove(key);
+            });
+            this.entries.clear();
+            return true;
+        }
+
+        /**
+         * Removes the item from the pool.
+         *
+         * @param {string} key The key to delete.
+         *
+         *
+         * @return {boolean} True if the item was successfully removed. False if there was an error.
+         */
+        deleteItem(key){
+            if (typeof key !== s) throw new Error("Invalid Argument");
+            let list = this.entries.get(), pkey = this.prefix + key;
+            this.entries.remove(pkey);
+            this.storage.remove(pkey);
+            return true;
+        }
+
+        /**
+         * Removes multiple items from the pool.
+         *
+         * @param {Array} keys
+         *   An array of keys that should be removed from the pool.
+
+         *
+         * @return {boolean}
+         *   True if the items were successfully removed. False if there was an error.
+         */
+        deleteItems(keys){
+            if (Array.isArray(keys)) {
+                for (let i = 0; i < keys.length; i++) {
+                    this.deleteItem(keys[i]);
+                }
+            }
+            return true;
+        }
+        /**
+         * Persists a cache item immediately.
+         *
+         * @param {LSCacheItem} item
+         *   The cache item to save.
+         *
+         * @return {boolean} True if the item was successfully persisted. False if there was an error.
+         */
+        save(item){
+            if (item instanceof LSCacheItem) {
+                let now = +new Date(), tt = item.expiration || (now + this.ttl), pkey = this.prefix + item.getKey();
+                if (typeof item.get() === u || item.get() === null) {
+                    this.deleteItem(item.key);
+                    return true;
+                }
+                this.storage.set(pkey, item.value);
+                this.entries.set(pkey, tt);
+                return true;
+
+            }
+            return false;
+
+        }
+
+        /**
+         * Sets a cache item to be persisted later.
+         *
+         * @param {LSCacheItem} item
+         *   The cache item to save.
+         *
+         * @return {boolean}  False if the item could not be queued or if a commit was attempted and failed. True otherwise.
+         */
+        saveDeferred(item){
+            if (item instanceof LSCacheItem) {
+                this.deferred.push(item);
+                return true;
+            }
+        }
+
+        /**
+         * Persists any deferred cache items.
+         *
+         * @return {boolean}  True if all not-yet-saved items were successfully saved or there were none. False otherwise.
+         */
+        commit(){
+            let item;
+            while ((item = this.deferred.shift()) !== undef) {
+                this.save(item);
+            }
+            return true;
+        }
+    }
+
+    return {Iface, nullStore, xStore, gmStore, exStore, LSCache};
 
 }));
 
