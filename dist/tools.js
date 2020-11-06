@@ -2269,8 +2269,7 @@ var requirejs, define;
 
     requirejs.config({
         baseUrl: root,
-        //baseUrl: root
-        config: {config: cfg, utils: Object.assign(exports, {gettype, isPlainObject})}
+        config: {config: cfg, utils: Object.assign(exports, {gettype, isPlainObject}, {rootmodules: root})}
     });
 
     Object.keys(cfg).forEach(key => {
