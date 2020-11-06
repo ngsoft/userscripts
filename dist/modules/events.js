@@ -195,74 +195,8 @@
     }
 
 
-
-
-
-    class ON {
-        /**
-         * Resolves when body is created
-         * @returns {Promise}
-         */
-        get body(){
-            return new Promise(resolve => {
-
-                if (doc.body === null) {
-                    const observer = new MutationObserver(mutations => {
-                        let ready = false;
-                        mutations.forEach(mutation => {
-                            mutation.addedNodes.forEach(node => {
-                                if (typeof node.matches === f ? node.matches('body') : false) {
-                                    ready = true;
-                                }
-                            });
-                        });
-                        if (ready === true) {
-                            observer.disconnect();
-                            resolve(doc.body);
-                        }
-
-                    });
-                    observer.observe(doc.documentElement, {childList: true});
-                } else resolve(doc.body);
-
-            });
-        }
-
-        /**
-         * Resolves when page is loading DOMContentLoaded
-         * @returns {Promise}
-         */
-        get load(){
-            return new Promise(resolve => {
-                if (doc.readyState === "loading") {
-                    doc.addEventListener("DOMContentLoaded", function(){
-                        resolve(doc.body);
-                    });
-                } else resolve(doc.body);
-            });
-        }
-
-
-
-        /**
-         * Resolves when page is completely loaded
-         * @returns {Promise}
-         */
-        get loaded(){
-            return new Promise(resolve => {
-                if (doc.readyState !== "complete") {
-                    addEventListener("load", function(){
-                        resolve(doc.body);
-                    });
-
-                } else resolve(doc.body);
-
-            });
-        }
-    }
-
     return {
-        Events, ON, trigger
+        Events, trigger
     };
 
 
