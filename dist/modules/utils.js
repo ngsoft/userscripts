@@ -52,6 +52,27 @@
         return node;
     }
 
+
+
+    /**
+     * Tests whenever the given selector is valid
+     * @param {string} selector
+     * @returns {Boolean}
+     */
+    function isValidSelector(selector){
+
+        if (typeof selector !== s) return false;
+        let valid = true;
+        try {
+            //throws syntax error on invalid selector
+            valid = doc.createElement('template').querySelector(selector) === null;
+        } catch (e) {
+            valid = false;
+        }
+        return valid;
+    }
+
+
     /**
      * Adds CSS to the bottom of the head
      * @param {string} css
@@ -301,9 +322,120 @@
     }
 
 
+
+    /**
+     * Resize Sensor
+     * @param {HTMLElement|string} element Element or selector
+     * @param {function} callback Callback to use ob resize
+     */
+    const ResizeSensor = (function(){
+
+        const
+                sensors = [],
+                domObserver = new MutationObserver((mutations, obs) => {
+                    mutations.forEach(mutation => {
+                        if (mutation.type === "childList" && mutation.removedNodes.length > 0) {
+                            sensors.filter(x => x.started === true).forEach(sensor => {
+                                if (!doc.body.contains(sensor.element)) sensor.stop();
+                            });
+                            if (sensors.every(x => x.started === false)) obs.stop();
+                        }
+                    });
+                });
+        Object.assign(domObserver, {
+            started: false,
+            start(){
+                if (this.started === false) {
+                    this.started = true;
+                    this.observe(doc.body, {childList: true, subtree: true});
+                }
+            },
+            stop(){
+                if (this.started === true) {
+                    this.started = false;
+                    this.disconnect();
+                }
+            }
+        });
+
+
+        class ResizeSensor {
+
+            get element(){
+                return this._params.element;
+            }
+            get started(){
+                return this._params.started;
+            }
+            get currentWidth(){
+                return this.element.offsetWidth;
+            }
+            get currentHeight(){
+                return this.element.offsetHeight;
+            }
+            get previousWidth(){
+                return this._params.width;
+            }
+            get previousHeight(){
+                return this._params.height;
+            }
+
+            start(){
+                if (this._params.started === false) {
+                    this._params.width = this.currentWidth;
+                    this._params.height = this.currentHeight;
+                    this._params.started = true;
+                    this._params.observer.observe(this.element, {attributes: true, characterData: true, childList: true, subtree: true});
+                    domObserver.start();
+                }
+            }
+            stop(){
+                if (this._params.started === true) {
+                    this._params.started = false;
+                    this._params.observer.disconnect();
+                }
+            }
+
+            constructor(element, callback){
+                const
+                        self = this,
+                        params = this._params = {
+                            element: element,
+                            width: null,
+                            height: null,
+                            started: false
+                        };
+                let
+                        width = self.currentWidth,
+                        height = self.currentHeight;
+                this._params.observer = new MutationObserver(m => {
+                    if (self.currentWidth !== width || self.currentHeight !== height) {
+                        self._params.width = width;
+                        self._params.height = height;
+                        width = self.currentWidth;
+                        height = self.currentHeight;
+                        callback.call(element, self);
+                    }
+                });
+                sensors.push(this);
+                this.start();
+            }
+        }
+
+        function sensor(element, callback){
+            if (typeof callback !== f) throw new Error('ResizeSensor invalid callback.');
+            if (typeof element === s) element = doc.querySelectorAll(element);
+            if (element instanceof NodeList) return Array.from(element).map(el => sensor(el, callback));
+            if (!(element instanceof Element)) throw new Error('ResizeSensor invalid element.');
+            return new ResizeSensor(element, callback);
+        }
+        return sensor;
+    })();
+
+
     return Object.assign( {
-        uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON,
-        addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName
+        uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector,
+        addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor
     }, module.config(), sprintf);
 
 }));

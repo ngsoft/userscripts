@@ -2,6 +2,7 @@
 !.gitignore
 /deps/
 /build/
+/libs.dev/
 /nbproject/*/
 *.dev.*
 */*.bak.*
