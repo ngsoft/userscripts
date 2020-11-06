@@ -2,7 +2,7 @@
     /* globals define, require, module, self, innerWidth */
     const
             name = "ui",
-            dependencies = ['utils', 'events'];
+            dependencies = ['utils'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,16 +18,15 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function ui(utils, events){
+}(typeof self !== 'undefined' ? self : this, function ui(utils, undef){
 
 
     const {
         doc, f, s, n, u, b,
         uniqid, html2element, isPlainObject, isValidSelector,
-        ResizeSensor, loadcss, NodeFinder, rootmodules
+        ResizeSensor, loadcss, NodeFinder, rootmodules,
+        Events, trigger
     } = utils;
-    const {Events, trigger} = events;
-    let undef;
 
 
 

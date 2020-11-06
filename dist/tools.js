@@ -2200,9 +2200,10 @@ var requirejs, define;
     /**
      * Get the type of the current value
      * @param {any} value
-     * @returns {string}
+     * @param {string} [compare]
+     * @returns {string|boolean}
      */
-    function gettype(value){
+    function gettype(value, compare){
         let type = typeof value;
         if (type === o) {
             if (value === null) type = "null";
@@ -2211,6 +2212,7 @@ var requirejs, define;
             type = "float";
             if (Number.isInteger(value)) type = "int";
         }
+        if (typeof compare === s) return type === compare;
         return type;
     }
 
