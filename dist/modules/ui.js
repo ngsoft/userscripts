@@ -25,7 +25,7 @@
         doc, f, s, n, u, b,
         uniqid, html2element, isPlainObject, isValidSelector,
         ResizeSensor, loadcss, NodeFinder, rootmodules,
-        Events, trigger, rfetch
+        Events, trigger, rfetch, GMinfo
     } = utils;
 
 
@@ -171,7 +171,7 @@
                         no: "No"
                     },
                     events: {},
-                    title: doc.title,
+                    title: GMinfo.script.name,
                     body: ""
                 }, settings),
                 events: {
