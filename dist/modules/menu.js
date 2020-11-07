@@ -58,14 +58,11 @@
         }
         
         static addEntry(name, description, command){
-            assert(
-                    supported,
-                    'Cannot use Menu, %s not defined.', ['GM_registerMenuCommand', 'GM_unregisterMenuCommand'].filter(x => !gettype(utils[x], f)).join(', ')
-                    );
             assert(gettype(name, s), 'Invalid argument name, not a string');
             assert(gettype(description, s), 'Invalid argument description, not a string');
             assert(gettype(command, f), 'Invalid argument command, not a function');
             assert(!commands[name], 'Command %s already defined', name);
+            if (!supported) return;
             return new Menu(name, description, command);
         }
         

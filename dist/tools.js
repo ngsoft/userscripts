@@ -2190,19 +2190,30 @@ var requirejs, define;
 
 
 
-    let  matches, root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist', exports = {GM_info};
+    let  matches, root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist', exports = {GM_info}, dev = false, usecache = false;
 
-    //dev mode local file with FF60ESR
-    if (GM_info.script.description === "dev") root = "http://127.0.0.1:8092/dist";
 
     GM_info.script.header.split(/\n+/).forEach(line => {
         if ((matches = /@require[\s\t]+(\w+:\/\/.+)/.exec(line))) {
             let file = matches[1].trim();
             if (/^http.+\/tools(\.min)?\.js$/.test(file)) root = file.substr(0, file.lastIndexOf('/'));
-        }
+        }else if (/@usecache/.test(line) && !(/false/.test(line))) usecache = true;
+        else if (/@dev/.test(line)) dev = true;
     });
+
+
+    //dev mode local file with FF60ESR @dev    
+    if(dev === true) root = "http://127.0.0.1:8092/dist";
+
+
     root += '/modules/';
     
+    requirejs.config({
+        baseUrl: root,
+        waitSeconds: 15
+    });
+
+    // Pass sandboxed functions into the modules(they are loaded into the global scope (window))
 
     [
         'GM_setValue',
@@ -2227,14 +2238,6 @@ var requirejs, define;
         'GM_setClipboard'
 
     ].forEach(v => exports[v] = self[v]);
-
-
-    requirejs.config({
-        baseUrl: root
-    });
-
-
-
 
 
     class Configuration {
@@ -2281,7 +2284,14 @@ var requirejs, define;
 
 
     const config = new Configuration();
-    config.set({root});
+    config.set({
+        root, dev,
+        cache: {
+            enabled: usecache,
+            ttl: 30 * minute,
+            prefix: 'GMCache:'
+        }
+    });
 
     config
             .addPath('Plyr', 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr', '3.6.2')
@@ -2296,17 +2306,153 @@ var requirejs, define;
 
 
     define('GM', exports);
-    define('config', config)
+    define('config', config);
 
+    class Cache {
 
+        get entries(){
+            let entries = localStorage.getItem(this.prefix + 'CacheEntries');
+            if (typeof entries === s) entries = JSON.parse(entries);
+            else entries = {};
+            return entries;
+        }
+        set entries(entries){
+            localStorage.setItem(this.prefix + 'CacheEntries', JSON.stringify(entries));
+        }
+
+        get now(){
+            return  +new Date();
+        }
+        get enabled(){
+            return (config.get('cache').enabled === true) && this.supported;
+        }
+        get supported(){
+            return ("localStorage" in global) && ("getItem" in global.localStorage);
+        }
+
+        get prefix(){
+            return config.get('cache').prefix;
+        }
+        get ttl(){
+            return config.get('cache').ttl;
+        }
+
+        saveItem(module, code){
+            if (!this.enabled) return false;
+            let
+                    key = this.prefix + module,
+                    entries = this.entries;
+            entries[key] = this.now + this.ttl;
+            try {
+                localStorage.setItem(key, code);
+                this.entries = entries;
+                return true;
+            } catch (e) {
+            }
+            return false;
+        }
+
+        loadItem(module){
+            if (!this.enabled) return null;
+            let
+                    key = this.prefix + module,
+                    expire = this.entries[key] || 0;
+            if (this.now > expire) {
+                localStorage.removeItem(key);
+                return null;
+            }
+            return localStorage.getItem(key);
+        }
+        
+        clear(){
+
+            if (this.supported) {
+                let keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    let key = localStorage.key(i);
+                    if (key.indexOf(this.prefix) === 0) keys.push(key);
+                }
+                keys.forEach(k => localStorage.removeItem(k));
+            }
+
+        }
+
+        exec(code){
+            try {
+                requirejs.exec(code);
+                return true;
+            } catch (e) {
+            }
+            return false;
+        }
+
+        constructor(){
+            if (this.supported) {
+
+                //clear cache on new session
+                if (sessionStorage.getItem(GM_info.script.uuid) === null) {
+                    this.clear();
+                    sessionStorage.setItem(GM_info.script.uuid, this.now);
+                    config.set('newsession', true);
+                    return;
+                }
+
+                let entries = this.entries;
+                //detects expired entries
+                Object.keys(entries).forEach(key => {
+                    if (this.now > entries[key]) {
+                        localStorage.removeItem(key);
+                        delete entries[key];
+                    }
+
+                });
+                this.entries = entries;
+            }
+        }
+    }
+
+    const
+            load = requirejs.load,
+            cache = new Cache();
+
+    //Code fast load using localStorage Cache set @usecache in userscript header
+    requirejs.load = function(context, moduleName, url){
+
+        if (cache.enabled) {
+            let contents = cache.loadItem(moduleName);
+            if (contents === null) {
+
+                fetch(url, {method: "GET", redirect: "follow", cache: "no-store"})
+                        .then(r => {
+                            if (r.status !== 200) {
+                                let error = new Error('Invalid Status Code');
+                                Object.assign(error, {status: r.status});
+                                throw error;
+                            }
+                            return r.text();
+                        })
+                        .then(text => {
+                            if (cache.exec(text)) {
+                                cache.saveItem(moduleName, text);
+                                context.completeLoad(moduleName);
+                            } else load(context, moduleName, url);
+
+                        })
+                        .catch(() => {
+                            load(context, moduleName, url);
+                        });
+                        return ;
+
+            } else if (cache.exec(contents)) {
+                context.completeLoad(moduleName);
+                return;
+            }
+
+        } else load(context, moduleName, url);
+    };
 
 
 }((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window)));
-
-
-
-
-console.debug(requirejs);
 
 
 

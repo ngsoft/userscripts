@@ -24,7 +24,7 @@
     const {
         doc, f, s, n, u, b,
         uniqid, html2element, isPlainObject, isValidSelector,
-        ResizeSensor, loadcss, NodeFinder, rootmodules,
+        ResizeSensor, loadcss, NodeFinder,
         Events, trigger, rfetch, GMinfo
     } = utils;
 
@@ -315,7 +315,6 @@
 
             self.setScroll();
 
-            gmStyles();
             //register current instance
             if (typeof doc.documentElement.gmDialog === u) {
                 Object.defineProperty(doc.documentElement, 'gmDialog', {
@@ -371,34 +370,7 @@
         return dialog;
     }
 
-    function gmStyles(){
-        return new Promise(resolve => {
-            if ((gmStyles.element instanceof Element) && gmStyles.element.parentElement !== null) {
-                resolve(gmStyles.element);
-                return;
-            }
-
-            if (gmStyles.loading === false) {
-                gmStyles.loading = true;
-                const resolver = el => {
-                    gmStyles.element = el;
-                    gmStyles.loading = false;
-                    resolve(el);
-                };
-
-                let root = config.get('root');
-                loadcss(root + 'gmstyles.css')
-                        .then(resolver)
-                        .catch(x => x);
-            }
-        });
-    }
-    Object.assign(gmStyles, {
-        element: null,
-        loading: false
-    });
-
-
+    loadcss(config.get('root') + 'css/gmstyles.css');
 
     return {
         gmDialog, confirm: ask, alert
