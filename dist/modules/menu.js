@@ -23,10 +23,9 @@
     }
 }(typeof self !== 'undefined' ? self : this, function menu(utils){
 
-    const {n, f, u, doc, GM_registerMenuCommand, GM_unregisterMenuCommand, Events, uniqid, gettype, assert} = utils;
+    const {n, f, u, s, doc, GM_registerMenuCommand, GM_unregisterMenuCommand, trigger, uniqid, gettype, assert} = utils;
 
     const
-            listeners = Events(doc),
             commands = {},
             supported = gettype(GM_registerMenuCommand, f) && gettype(GM_unregisterMenuCommand, f);
 
@@ -58,15 +57,20 @@
         }
         
         static addEntry(name, description, command){
-            assert(gettype(name, s), 'Invalid argument name');
-            assert(gettype(description, s), 'Invalid argument description');
-            assert(gettype(command, f), 'Invalid argument command');
+            assert(
+                    supported,
+                    'Cannot use Menu, %s not defined.', ['GM_registerMenuCommand', 'GM_unregisterMenuCommand'].filter(x => !gettype(utils[x], f)).join(', ')
+                    );
+            assert(gettype(name, s), 'Invalid argument name, not a string');
+            assert(gettype(description, s), 'Invalid argument description, not a string');
+            assert(gettype(command, f), 'Invalid argument command, not a function');
             assert(!commands[name], 'Command %s already defined', name);
             return new Menu(name, description, command);
         }
         
         static removeEntry(name){
-            assert(gettype(name,s), 'Invalid Argument: name');
+            assert(gettype(name, s), 'Invalid Argument: name');
+            if (commands[name]) GM_unregisterMenuCommand(commands[name].id)
             delete commands[name];
         }
         
@@ -90,8 +94,17 @@
                     value: [command]
                 }
             });
+
+            this.id = GM_registerMenuCommand(description, () => {
+                trigger(doc, 'GM_MenuCommand', {command: name});
+            });
             commands[name] = this;
             addListener();
+        }
+
+        addCommand(command){
+            assert(gettype(command, f), 'Invalid Argument command, not a function');
+            this.commands.push(command);
         }
 
     }

@@ -21,25 +21,6 @@
     /* jshint -W083 */
 
 
-
-
-
-
-
-
-
-
-
-
-
-    console.debug(self.GM_registerMenuCommand);
-
-
-
-    console.debug(self, unsafeWindow);
-
-
-
     function prequire(...variables){
         return new Promise(resolve => {
             let sources = prequire._sources;
