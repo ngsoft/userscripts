@@ -680,38 +680,64 @@
      * @returns {Timer}
      */
     class Timer {
+        
+        get started(){
+            return this.ids.interval !== null || this.ids.timeout !== null;
+        }
+
+        get interval(){
+            return this.params.interval;
+        }
+
+        get timeout(){
+            return this.params.timeout;
+        }
+
+
         /**
          * Starts the timer
-         * @returns {undefined}
+         * @returns {Timer}
          */
         start(){
-            if (this.started !== true && typeof this.params.callback === f) {
-                const self = this;
-                self.__interval = setInterval(() => {
-                    self.params.callback.call(self, self);
-                }, self.params.interval);
-                if (self.params.timeout > 0) {
-                    self.__timeout = setTimeout(() => {
-                        self.stop();
-                    }, self.params.timeout);
+            
+            if (!this.started) {
+
+                if (this.interval > 0) {
+                    this.ids.interval = setInterval(() => {
+                        this.params.callback.call(null, this);
+                    }, this.interval);
+                    if (this.timeout > 0) {
+                        this.ids.timeout = setTimeout(() => {
+                            this.stop();
+                        }, this.timeout);
+                    }
+
+                } else if (this.timeout > 0) {
+                    this.ids.timeout = setTimeout(() => {
+                        this.stop();
+                        this.params.callback.call(null, this);
+                    }, this.timeout);
                 }
-                self.started = true;
             }
+            return this;
 
         }
         /**
          * Stops the timer
-         * @returns {undefined}
+         * @returns {Timer}
          */
         stop(){
-            if (this.started === true) {
-                const self = this;
-                self.started = false;
-                if (self.__interval !== null) clearInterval(self.__interval);
-                if (self.__timeout !== null) clearTimeout(self.__timeout);
-                self.__timeout = null;
-                self.__interval = null;
+            if (this.started) {
+                if (this.ids.interval !== null) {
+                    clearInterval(this.ids.interval);
+                    this.ids.interval = null;
+                }
+                if (this.ids.timeout !== null) {
+                    clearTimeout(this.ids.timeout);
+                    this.ids.timeout = null;
+                }
             }
+            return this;
         }
 
         /**
@@ -719,27 +745,31 @@
          * @param {function} callback
          * @param {number|undefined} interval
          * @param {number|undefined} timeout
+         * @param {boolean} autostart
          * @returns {Timer}
          */
-        constructor(callback, interval, timeout){
+        constructor(callback, interval, timeout, autostart = true){
+            Object.defineProperties(this, {
+                params: {
+                    configurable: true, enumerable: false, writable: true,
+                    value: {
+                        callback: typeof callback === f ? callback : null,
+                        interval: typeof interval === n ? interval : 10,
+                        timeout: typeof timeout === n ? timeout : 0
+                    }
+                },
+                ids: {
+                    configurable: true, enumerable: false, writable: true,
+                    value: {interval: null, timeout: null}
+                }
+            });
+
             if (typeof callback === f) {
-                const self = this;
-                Object.assign(self, {
-                    params: {
-                        callback: callback,
-                        interval: 10,
-                        timeout: 0
-                    },
-                    started: false,
-                    __interval: null,
-                    __timeout: null
-                });
-                if (typeof interval === n) self.params.interval = interval;
-                if (typeof timeout === n) self.params.timeout = timeout;
-                self.start();
-            }
+                if (autostart === true) this.start();
+            } else throw new Error('Invalid Argument callback.');
         }
     }
+
 
 
     /**
@@ -913,11 +943,54 @@
         }
     }
 
+    /**
+     * Resource Fetch
+     * @param {string|URL} url
+     * @param {Object} [options]
+     * @returns {Promise}
+     */
+    function rfetch(url, options){
+        const params = {
+            method: "GET",
+            redirect: "follow",
+            cache: "no-store"
+        };
+        if(isPlainObject(options)) Object.assign(options,params);
+        let src;
+        if (url instanceof URL) src = url;
+        else if (typeof url === s) {
+            src = getURL(url);
+            if(typeof src === s) src = new URL(src);
+        }
+        if (!(src instanceof URL)) {
+            let error = new Error('rfetch: Invalid URL');
+            Object.assign(error, {
+                url, options
+            });
+            throw error;
+        }
+        
+        
+        return new Promise((resove, reject)=>{
+            fetch(src, options)
+                    .then(r => {
+                        if (r.status !== 200) {
+                            let error = new Error('Invalid Status Code');
+                            Object.assign(error, {status: r.status});
+                            throw error;
+                        }
+                        resove(r.text());
+                    })
+                    .catch(err => reject(err));
+        });
+    }
+
+
 
     return Object.assign( {
         uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder,
-        Events, trigger
+        Events, trigger, rfetch
     }, module.config(), sprintf);
 
 }));
