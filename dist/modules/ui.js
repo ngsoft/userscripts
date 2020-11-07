@@ -386,9 +386,9 @@
                 };
 
                 let root = rootmodules + 'css/';
-                loadcss(root + 'gmstyles.min.css')
+                loadcss(root + 'gmstyles.css')
                         .then(resolver)
-                        .catch(() => loadcss(root + 'gmstyles.css').then(resolver).catch(x => x));
+                        .catch(x => x);
             }
         });
     }
