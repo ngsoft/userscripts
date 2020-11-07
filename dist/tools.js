@@ -2162,15 +2162,16 @@ var requirejs, define;
 }((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window), (typeof setTimeout === 'undefined' ? undefined : setTimeout)));
 
 
-(function(){
+/**
+ * GM Script Framework initialisation
+ */
 
+(function(global){
+
+    /* globals define, require, module, self, requirejs, unsafeWindow, GM_info */
 
     if (!GM_info) throw new Error('Not loaded in userscript.');
     const
-            GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
-            scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
-            UUID = GMinfo ? GMinfo.script.uuid : "",
-
             // Scallar types
             s = "string",
             b = "boolean",
@@ -2187,43 +2188,12 @@ var requirejs, define;
             year = 365 * day,
             month = Math.round(year / 12);
 
-    /**
-     * Test if given argument is a plain object
-     * @param {any} v
-     * @returns {Boolean}
-     */
-    function isPlainObject(v){
-        return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
-    }
 
 
-    /**
-     * Get the type of the current value
-     * @param {any} value
-     * @param {string} [compare]
-     * @returns {string|boolean}
-     */
-    function gettype(value, compare){
-        let type = typeof value;
-        if (type === o) {
-            if (value === null) type = "null";
-            else if (Array.isArray(value)) type = "array";
-        } else if (type === n) {
-            type = "float";
-            if (Number.isInteger(value)) type = "int";
-        }
-        if (typeof compare === s) return type === compare;
-        return type;
-    }
-
-    let  matches, root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist', exports = {
-        s, b, f, o, u, n,
-        second, minute, hour, day, week, year, month,
-        GMinfo, scriptname, UUID
-    };
+    let  matches, root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist', exports = {GM_info};
 
     //dev mode local file with FF60ESR
-    if (GMinfo.script.description === "dev") root = "http://127.0.0.1:8092/dist";
+    if (GM_info.script.description === "dev") root = "http://127.0.0.1:8092/dist";
 
     GM_info.script.header.split(/\n+/).forEach(line => {
         if ((matches = /@require[\s\t]+(\w+:\/\/.+)/.exec(line))) {
@@ -2232,73 +2202,111 @@ var requirejs, define;
         }
     });
     root += '/modules/';
+    
 
     [
-        'GM_deleteValue',
-        'GM_listValues',
         'GM_setValue',
         'GM_getValue',
-        'GM_getResourceText',
-        'GM_getResourceURL',
+        'GM_deleteValue',
+        'GM_listValues',
+        'GM_addValueChangeListener',
+        'GM_removeValueChangeListener',
         'GM_registerMenuCommand',
         'GM_unregisterMenuCommand',
-        'GM_xmlhttpRequest'
+        'GM_getResourceText',
+        'GM_getResourceURL',
+        'GM_xmlhttpRequest',
+        'GM_download',
+        'GM_log',
+        'GM_openInTab',
+        'GM_getTab',
+        'GM_saveTab',
+        'GM_getTabs',
+        'GM_addStyle',
+        'GM_notification',
+        'GM_setClipboard'
+
     ].forEach(v => exports[v] = self[v]);
-    
-    const
-            cfg = {
-                Plyr: {
-                    version: '3.6.2',
-                    path: 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr'
-                },
-                Subtitle: {
-                    version: '2.0.5', //last stable version before 3.0 (no easy converts)
-                    path: 'https://cdn.jsdelivr.net/npm/subtitle@%s/dist/subtitle.bundle.min'
-                },
-                dashjs: {
-                    path: 'https://cdn.dashjs.org/latest/dash.all.min'
-                },
-                Hls: {
-                    version: '0.14.16',
-                    path: 'https://cdn.jsdelivr.net/npm/hls.js@%s/dist/hls.min',
-                    config: {
-                        enableWebVTT: false,
-                        enableCEA708Captions: false
-                    }
-                }
-            },
-            obj = {};
+
 
     requirejs.config({
-        baseUrl: root,
-        config: {utils: Object.assign(exports, {gettype, isPlainObject}, {rootmodules: root, config: cfg})}
+        baseUrl: root
     });
 
-    Object.keys(cfg).forEach(key => {
-        if (gettype(cfg[key]) === o) {
-            let item = cfg[key], path;
-            if (gettype(item.path) === s) {
-                if (gettype(item.version) === s) path = item.path.replace('%s', item.version);
-                else path = item.path;
-                obj[key] = path;
+
+
+
+
+    class Configuration {
+
+        constructor(){
+            Object.defineProperties(this, {
+                config: {value: {}, enmerable: false, configurable: true, writable: false}
+            });
+        }
+
+        addPath(name, path, version, extra){
+            if (typeof name !== s) throw new Error('Invalid Argument name.');
+            else if (typeof path !== s || !(/^http/.test(path))) throw new Error('Invalid Argument path.');
+            let obj = {name, path};
+            if (typeof version === s) {
+                obj.version = version;
+                path = path.replace('%s', version);
+            }
+            if (extra instanceof Object && Object.getPrototypeOf(extra) === Object.prototype) Object.assign(obj, extra);
+            this.config[name] = obj;
+            let config = {paths: {}};
+            config.paths[name] = path;
+            requirejs.config(config);
+            return this;
+        }
+
+        get(key){
+            if (typeof key === u) return Object.assign({}, this.config);
+            else if (typeof key === s) return this.config[key];
+        }
+
+        set(key, value){
+            if (key instanceof Object && Object.getPrototypeOf(key) === Object.prototype) {
+                Object.assign(this.config, key);
+            } else if (typeof key === s) {
+                this.config[key] = value;
             }
         }
-    });
 
-
-    if (Object.keys(obj).length > 0) {
-        requirejs.config({
-            paths: obj
-        });
+        has(key){
+            return typeof key === s && typeof this.config[key] !== u;
+        }
     }
 
 
-}());
+    const config = new Configuration();
+    config.set({root});
+
+    config
+            .addPath('Plyr', 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr', '3.6.2')
+            .addPath('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@%s/dist/subtitle.bundle.min', '2.0.5')
+            .addPath('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@%s/dist/hls.min', '0.14.16', {
+                config: {
+                    enableWebVTT: false,
+                    enableCEA708Captions: false
+                }
+            })
+            .addPath('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min')
+
+
+    define('GM', exports);
+    define('config', config)
 
 
 
 
+}((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window)));
 
+
+
+
+console.debug(requirejs);
 
 
 

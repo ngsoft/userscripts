@@ -2,7 +2,7 @@
     /* globals define, require, module, self */
     const
             name = "storage",
-            dependencies = ['utils'];
+            dependencies = ['GM'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,10 +18,27 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function storage(utils, undef){
+}(typeof self !== 'undefined' ? self : this, function storage(GM, undef){
 
-    const {f, s, u, n, isPlainObject, GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = utils;
+const {GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = GM;
 
+    const
+
+            // Scallar types
+            s = "string",
+            f = "function",
+            u = "undefined",
+            n = "number";
+            
+
+    /**
+     * Test if given argument is a plain object
+     * @param {any} v
+     * @returns {Boolean}
+     */
+    function isPlainObject(v){
+        return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
+    }
 
 
     /**

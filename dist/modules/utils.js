@@ -2,7 +2,7 @@
     /* globals define, require, module, self, EventTarget */
     const
             name = 'utils',
-            dependencies = ['module', 'sprintf'];
+            dependencies = ['sprintf', 'GM'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,11 +18,60 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function utils(module, sprintf, undef){
+}(typeof self !== 'undefined' ? self : this, function utils(sprintf, gm, undef){
+
+    const {GM_info} = gm;
+
+    const
+            GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
+            scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
+            UUID = GMinfo ? GMinfo.script.uuid : "",
+            // Scallar types
+            s = "string",
+            b = "boolean",
+            f = "function",
+            o = "object",
+            u = "undefined",
+            n = "number",
+            //time
+            second = 1000,
+            minute = 60 * second,
+            hour = minute * 60,
+            day = hour * 24,
+            week = day * 7,
+            year = 365 * day,
+            month = Math.round(year / 12),
+            doc = document;
+
+    /**
+     * Test if given argument is a plain object
+     * @param {any} v
+     * @returns {Boolean}
+     */
+    function isPlainObject(v){
+        return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
+    }
 
 
-    const {s, f, n, b, isPlainObject} = module.config();
-    const doc = document;
+    /**
+     * Get the type of the current value
+     * @param {any} value
+     * @param {string} [compare]
+     * @returns {string|boolean}
+     */
+    function gettype(value, compare){
+        let type = typeof value;
+        if (type === o) {
+            if (value === null) type = "null";
+            else if (Array.isArray(value)) type = "array";
+        } else if (type === n) {
+            type = "float";
+            if (Number.isInteger(value)) type = "int";
+        }
+        if (typeof compare === s) return type === compare;
+        return type;
+    }
+
 
     /**
      * Creates an HTMLElement from html code
@@ -1002,10 +1051,12 @@
 
 
     return Object.assign( {
+        s, b, f, o, u, n, GMinfo, scriptname, UUID,
+        second, minute, hour, day, week, year, month,
         uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder,
-        Events, trigger, rfetch, assert
-    }, module.config(), sprintf);
+        Events, trigger, rfetch, assert, isPlainObject, gettype
+    }, sprintf);
 
 }));
 

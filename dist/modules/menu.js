@@ -5,7 +5,7 @@
     /* globals define, require, module, self */
     const
             name = 'menu'
-    dependencies = ['utils'];
+    dependencies = ['utils', 'GM'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -21,9 +21,10 @@
         };
         root["menu"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function menu(utils){
+}(typeof self !== 'undefined' ? self : this, function menu(utils, GM){
 
-    const {n, f, u, s, doc, GM_registerMenuCommand, GM_unregisterMenuCommand, trigger, uniqid, gettype, assert} = utils;
+    const {n, f, u, s, doc, trigger, uniqid, gettype, assert} = utils;
+    const {GM_registerMenuCommand, GM_unregisterMenuCommand} = GM;
 
     const
             commands = {},
