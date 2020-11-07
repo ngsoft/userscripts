@@ -1,8 +1,11 @@
+/**
+ * Module player
+ */
 (function(root, factory){
     /* globals define, require, module, self */
     const
-            name = "plyr",
-            dependencies = ['utils', 'Plyr'];
+            name = 'player'
+    dependencies = ['utils', 'plyr', 'dash', 'Hls'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -16,13 +19,32 @@
             });
             return result;
         };
-        root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
+        root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(utils, plyr){
+}(typeof self !== 'undefined' ? self : this, function player(utils, Plyr, dashjs, Hls){
 
-    const {sprintf, loadcss} = utils;
-    const cfg = utils.config;
-    loadcss(sprintf(cfg.Plyr.path, cfg.Plyr.version) + '.css');
-    return plyr;
+
+    const {loadcss, rootmodules} = utils;
+
+
+    class Player {
+
+
+    }
+
+
+    loadcss(rootmodules + 'css/player.css');
+
+
+
+
+    return {Player};
 }));
+
+
+
+
+
+
+
 

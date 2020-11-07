@@ -985,12 +985,26 @@
         });
     }
 
+    /**
+     * Assert if a condition is true and throws error if not
+     * @param {boolean} compare
+     * @param {string} message Message to display on Error
+     * @param {string} ...replacements sprintf replacements
+     * @returns {Boolean}
+     */
+    function assert(compare, message, ...replacements){
+        if (typeof compare !== b) throw new Error('assert: Invalid Argument: compare');
+        if (compare === true) return true;
+        if (replacements.length > 0) message = sprintf.sprintf(message, ...replacements);
+        throw new Error(message);
+    }
+
 
 
     return Object.assign( {
         uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder,
-        Events, trigger, rfetch
+        Events, trigger, rfetch, assert
     }, module.config(), sprintf);
 
 }));
