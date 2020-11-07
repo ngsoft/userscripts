@@ -2,7 +2,7 @@
     /* globals define, require, module, self */
     const
             name = "plyr",
-            dependencies = ['utils', 'Plyr'];
+            dependencies = ['utils', 'config', 'Plyr'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,11 +18,11 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(utils, plyr){
+}(typeof self !== 'undefined' ? self : this, function(utils, config, plyr){
 
     const {sprintf, loadcss} = utils;
-    const cfg = utils.config;
-    loadcss(sprintf(cfg.Plyr.path, cfg.Plyr.version) + '.css');
+    const cfg = config.get('Plyr');
+    loadcss(sprintf(cfg.path, cfg.version) + '.css');
     return plyr;
 }));
 

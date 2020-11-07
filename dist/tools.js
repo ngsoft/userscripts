@@ -2292,7 +2292,7 @@ var requirejs, define;
                     enableCEA708Captions: false
                 }
             })
-            .addPath('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min')
+            .addPath('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min');
 
 
     define('GM', exports);

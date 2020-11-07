@@ -2,7 +2,7 @@
     /* globals define, require, module, self, innerWidth */
     const
             name = "ui",
-            dependencies = ['utils'];
+            dependencies = ['utils', 'config'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,7 +18,7 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function ui(utils, undef){
+}(typeof self !== 'undefined' ? self : this, function ui(utils, config, undef){
 
 
     const {
@@ -386,7 +386,7 @@
                     resolve(el);
                 };
 
-                let root = rootmodules + 'css/';
+                let root = config.get('root');
                 loadcss(root + 'gmstyles.css')
                         .then(resolver)
                         .catch(x => x);
