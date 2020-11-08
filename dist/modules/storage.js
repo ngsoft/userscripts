@@ -18,7 +18,7 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function storage(GM, undef){
+}(typeof self !== 'undefined' ? self : this, function(GM, undef){
 
 const {GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = GM;
 

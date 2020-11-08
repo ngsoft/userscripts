@@ -21,7 +21,7 @@
         };
         root["menu"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function menu(utils, GM){
+}(typeof self !== 'undefined' ? self : this, function(utils, GM){
 
     const {n, f, u, s, doc, trigger, uniqid, gettype, assert} = utils;
     const {GM_registerMenuCommand, GM_unregisterMenuCommand} = GM;

@@ -18,7 +18,7 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function ui(utils, config, GM, undef){
+}(typeof self !== 'undefined' ? self : this, function(utils, config, GM, undef){
 
 
     const {

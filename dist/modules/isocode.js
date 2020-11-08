@@ -18,7 +18,7 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function isocode(){
+}(typeof self !== 'undefined' ? self : this, function(){
 
 
     const s = "string";

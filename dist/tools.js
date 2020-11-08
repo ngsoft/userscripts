@@ -619,7 +619,6 @@
 
     //Code fast load using localStorage Cache set @usecache in userscript header
     requirejs.load = function(context, moduleName, url){
-        console.debug(moduleName);
         let  hit = false;
         url = new URL(url);
         if (cache.enabled) {

@@ -21,7 +21,7 @@
         };
         root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function player(utils, config, Plyr, dashjs, Hls){
+}(typeof self !== 'undefined' ? self : this, function(utils, config, Plyr, dashjs, Hls){
 
 
     const {loadcss, sprintf} = utils;
@@ -37,7 +37,7 @@
 
     loadcss(sprintf(cfg.path, cfg.version) + '.css');
     loadcss(config.get('root') + 'css/player.css');
-    return Player;
+    return {Player, dashjs, Hls, Plyr};
 }));
 
 
