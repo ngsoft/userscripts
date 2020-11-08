@@ -592,17 +592,29 @@
     define('preload', () => {
         return function preload(...modules){
             if (cache.enabled) {
-                let loaded = true;
+                let loaded = true, callbacks = [], list = [];
                 modules.forEach(module => {
-                    if (cache.loadItem(module) === null) loaded = false;
+                    if (typeof module === s) {
+                        list.push(module);
+                        if (cache.loadItem(module) === null) loaded = false;
+                    } else if (typeof module === f) callbacks.push(module);
                 });
                 if (loaded === false) {
-                    requirejs(modules, () => {
+                    requirejs(list, function(){
                         sessionStorage.setItem('newsession', 'true');
                         //reload page to get cached versions
                         location.replace(location.href);
                     });
+                }else if (callbacks.length > 0) {
+                    requirejs(list, function(){
+                        callbacks.forEach(fn => fn(...arguments));
+                    });
+
                 }
+
+
+
+
             } else console.warn('Using preload without enabling cache is pointless. @usecache');
 
         };
