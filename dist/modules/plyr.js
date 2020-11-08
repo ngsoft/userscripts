@@ -22,6 +22,7 @@
 
     const {sprintf, loadcss} = utils;
     const cfg = config.get('Plyr');
+    console.debug(utils);
     loadcss(sprintf(cfg.path, cfg.version) + '.css');
     return plyr;
 }));

@@ -4,8 +4,8 @@
 (function(root, factory){
     /* globals define, require, module, self */
     const
-            name = 'player'
-    dependencies = ['utils', 'config', 'plyr', 'dash', 'Hls'];
+            name = 'player',
+            dependencies = ['utils', 'config', 'plyr', 'dash', 'Hls'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -38,7 +38,7 @@
 
 
 
-    return {Player};
+    return Player;
 }));
 
 

@@ -4,8 +4,8 @@
 (function(root, factory){
     /* globals define, require, module, self */
     const
-            name = 'menu'
-    dependencies = ['utils', 'GM'];
+            name = 'menu',
+            dependencies = ['utils', 'GM'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -68,7 +68,7 @@
         
         static removeEntry(name){
             assert(gettype(name, s), 'Invalid Argument: name');
-            if (commands[name]) GM_unregisterMenuCommand(commands[name].id)
+            if (commands[name]) GM_unregisterMenuCommand(commands[name].id);
             delete commands[name];
         }
         

@@ -210,18 +210,19 @@
      * export to either browser or node.js
      */
     /* eslint-disable quote-props */
-    if (typeof exports !== 'undefined') {
-        exports['sprintf'] = sprintf;
-        exports['vsprintf'] = vsprintf;
-    } else if (typeof define === 'function' && define['amd']) {
-        define(function(){
+    
+    if (typeof define === 'function' && define.amd) {
+         define(function(){
 
             return {
                 'sprintf': sprintf,
                 'vsprintf': vsprintf
             };
         });
-    } else if (typeof window !== 'undefined') {
+    } else if (typeof exports === 'object' && module.exports) {
+        exports['sprintf'] = sprintf;
+        exports['vsprintf'] = vsprintf;
+    } else {
         window['sprintf'] = sprintf;
         window['vsprintf'] = vsprintf;
     }

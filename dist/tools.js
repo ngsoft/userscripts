@@ -5,10 +5,9 @@
  * https://github.com/requirejs/requirejs/blob/latest/require.js
  * @link https://github.com/ngsoft/userscripts/blob/master/dist/tools.js
  */
-
 (function(global){
 
-    /* globals define, require, module, self, requirejs, unsafeWindow, GM_info */
+    /* globals define, require, module, self, requirejs, unsafeWindow, GM_info, GM */
 
     if (!GM_info) throw new Error('Not loaded in userscript.');
     const
@@ -70,8 +69,8 @@
         if (/^http.+\/tools(\.min)?\.js$/.test(src)) root = src.substr(0, src.lastIndexOf('/'));
     });
 
-    dev = headers.dev === true;
-    usecache = headers.usecache === true;
+    let dev = headers.dev === true;
+    let usecache = headers.usecache === true;
     //dev mode local file with FF60ESR @dev    
     if (dev === true) root = "http://127.0.0.1:8092/dist";
     root += '/modules/';
@@ -160,6 +159,21 @@
         }
     }
 
+
+
+    /* Storage size
+     var _lsTotal = 0,
+     _xLen, _x;
+     for (_x in localStorage) {
+     if (!localStorage.hasOwnProperty(_x)) {
+     continue;
+     }
+     _xLen = ((localStorage[_x].length + _x.length) * 2);
+     _lsTotal += _xLen;
+     console.log(_x.substr(0, 50) + " = " + (_xLen / 1024).toFixed(2) + " KB")
+     };
+     console.log("Total = " + (_lsTotal / 1024).toFixed(2) + " KB");*/
+
     class Cache {
 
         get entries(){
@@ -201,6 +215,7 @@
                 this.entries = entries;
                 return true;
             } catch (e) {
+                console.warn('Cannot save cache item', module);
             }
             return false;
         }
@@ -363,7 +378,7 @@
 
             if (typeof url !== s) throw new Error('Invalid Argument url');
 
-            async = typeof async === b ? async : false;
+            async = typeof async === b ? async : true;
             cookies = typeof cookies === b ? cookies : false;
 
             if (typeof headers === b) {
@@ -490,22 +505,11 @@
         }
     });
 
+    const cache = new Cache();
     if (sessionStorage.getItem('newsession') !== null) {
         config.set('newsession', true);
         sessionStorage.removeItem('newsession');
     }
-
-    const
-            cache = new Cache(),
-            reqjs = {
-                src: 'https://cdn.jsdelivr.net/gh/requirejs/requirejs@latest/require.min.js',
-                key: 'require.min.js'
-            };
-
-
-
-
-
 
     /**
      * requirejs Loader
@@ -513,7 +517,11 @@
 
     // async=false to get the variable available inside the script
     let
-            req = new Request(reqjs.src, false, true),
+            reqjs = {
+                src: 'https://cdn.jsdelivr.net/gh/requirejs/requirejs@latest/require.min.js',
+                key: 'require.min.js'
+            },
+            req = new Request(reqjs.src, false, false),
             get = true;
 
 
@@ -528,7 +536,7 @@
 
         req
                 .success(response => {
-                    code = response.text;
+                    let code = response.text;
                     addscript(code);
                     try {
                         localStorage.setItem(reqjs.key, code);
@@ -544,9 +552,7 @@
 
 
 
-    if (typeof requirejs !== f) throw new Error('Cannot execute' + reqjs.key);
-
-    const define = global.define;
+    if (typeof requirejs !== f) throw new Error('Cannot execute ' + reqjs.key);
 
     requirejs.config({
         baseUrl: root,
@@ -575,17 +581,19 @@
             .addPath('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min');
 
 
+    let define = global.define;
+
     //exporting this script contents
     define('GM', exports);
     define('config', config);
     define('Request', Request);
 
-    define('preload', ()=>{
+    define('preload', () => {
         return function preload(...modules){
             if (cache.enabled) {
                 let loaded = true;
                 modules.forEach(module => {
-                    if (cache.getItem(module) === null) loaded = false;
+                    if (cache.loadItem(module) === null) loaded = false;
                 });
                 if (loaded === false) {
                     requirejs(modules, () => {
@@ -604,6 +612,7 @@
 
     //Code fast load using localStorage Cache set @usecache in userscript header
     requirejs.load = function(context, moduleName, url){
+
         let  hit = false;
         url = new URL(url);
         if (cache.enabled) {
@@ -621,12 +630,15 @@
                         if (cache.exec(response.text)) {
                             if (cache.enabled) cache.saveItem(moduleName, response.text);
                             context.completeLoad(moduleName);
+                        } else {
+                            console.warn('Cannot execute', moduleName, 'module using xhr, fallback to regular method.');
+                            load(context, moduleName, url.href);
                         }
-
                     })
                     .catch(response => {
                         console.warn('Cannot fetch', moduleName, 'module using xhr, fallback to regular method.');
-                        load(context, moduleName, url);
+                        console.debug(response);
+                        load(context, moduleName, url.href);
                     });
         }
     };
