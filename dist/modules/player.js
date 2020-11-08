@@ -5,7 +5,7 @@
     /* globals define, require, module, self */
     const
             name = 'player',
-            dependencies = ['utils', 'config', 'plyr', 'dash', 'Hls'];
+            dependencies = ['utils', 'config', 'Plyr', 'dash', 'Hls'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -24,8 +24,8 @@
 }(typeof self !== 'undefined' ? self : this, function player(utils, config, Plyr, dashjs, Hls){
 
 
-    const {loadcss} = utils;
-
+    const {loadcss, sprintf} = utils;
+    const cfg = config.get('Plyr');
 
     class Player {
 
@@ -33,11 +33,10 @@
     }
 
 
+
+
+    loadcss(sprintf(cfg.path, cfg.version) + '.css');
     loadcss(config.get('root') + 'css/player.css');
-
-
-
-
     return Player;
 }));
 

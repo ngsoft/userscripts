@@ -33,8 +33,8 @@
     let
             matches,
             root = 'https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist',
-            exports = {GMinfo, scriptname, UUID},
-            headers = exports.headers = {},
+            gmexports = {GMinfo, scriptname, UUID},
+            headers = gmexports.headers = {},
             inline = [
                 'name', 'namespace', 'version', 'author', 'description',
                 'homepage', 'homepageURL', 'website', 'source',
@@ -99,7 +99,7 @@
         'GM_addStyle',
         'GM_notification',
         'GM_setClipboard'
-    ].forEach(v => exports[v] = self[v]);
+    ].forEach(v => gmexports[v] = self[v]);
 
 
     /**
@@ -585,7 +585,7 @@
     let define = global.define;
 
     //exporting this script contents
-    define('GM', exports);
+    define('GM', gmexports);
     define('config', config);
     define('Request', Request);
 
@@ -593,11 +593,11 @@
         return function preload(...modules){
             if (!cache.enabled)  console.warn('Using preload without enabling cache is pointless. @usecache');
             let loaded = true, callbacks = [], list = [];
-            modules.forEach(module => {
-                if (typeof module === s) {
-                    list.push(module);
-                    if (cache.enabled && cache.loadItem(module) === null) loaded = false;
-                } else if (typeof module === f) callbacks.push(module);
+            modules.forEach(m => {
+                if (typeof m === s) {
+                    list.push(m);
+                    if (cache.enabled && cache.loadItem(m) === null) loaded = false;
+                } else if (typeof m === f) callbacks.push(m);
             });
             if (loaded === false) {
                 requirejs(list, function(){
@@ -619,7 +619,7 @@
 
     //Code fast load using localStorage Cache set @usecache in userscript header
     requirejs.load = function(context, moduleName, url){
-
+        console.debug(moduleName);
         let  hit = false;
         url = new URL(url);
         if (cache.enabled) {
