@@ -6,7 +6,7 @@
  * @link https://github.com/ngsoft/userscripts/blob/master/dist/tools.js
  */
 
-(function GMLoader(global){
+(function(global){
 
     /* globals define, require, module, self, requirejs, unsafeWindow, GM_info */
 
@@ -47,7 +47,7 @@
                 'dev', 'usecache'
             ];
 
-    GM_info.script.header.split(/\n+/).forEach(line => {
+    GMinfo.script.header.split(/\n+/).forEach(line => {
         if ((matches = /@([\w\-]+)(.*)?/.exec(line)) !== null) {
             let key = matches[1],
                     value = matches[2] || "", real;
@@ -78,12 +78,7 @@
 
 
 
-    //https://cdn.jsdelivr.net/gh/requirejs/requirejs@latest/require.js
-    
-
-
     // Pass sandboxed functions into the modules(they are loaded into the global scope (window))
-
     [
         'GM_setValue',
         'GM_getValue',
@@ -105,7 +100,6 @@
         'GM_addStyle',
         'GM_notification',
         'GM_setClipboard'
-
     ].forEach(v => exports[v] = self[v]);
 
 
@@ -253,7 +247,7 @@
                 if (sessionStorage.getItem(GM_info.script.uuid) === null) {
                     this.clear();
                     sessionStorage.setItem(GM_info.script.uuid, this.now);
-                    config.set('newsession', true);
+                    sessionStorage.setItem('newsession', true);
                     return;
                 }
 
@@ -496,6 +490,11 @@
         }
     });
 
+    if (sessionStorage.getItem('newsession') !== null) {
+        config.set('newsession', true);
+        sessionStorage.removeItem('newsession');
+    }
+
     const
             cache = new Cache(),
             reqjs = {
@@ -581,6 +580,25 @@
     define('config', config);
     define('Request', Request);
 
+    define('preload', ()=>{
+        return function preload(...modules){
+            if (cache.enabled) {
+                let loaded = true;
+                modules.forEach(module => {
+                    if (cache.getItem(module) === null) loaded = false;
+                });
+                if (loaded === false) {
+                    requirejs(modules, () => {
+                        sessionStorage.setItem('newsession', 'true');
+                        //reload page to get cached versions
+                        location.replace(location.href);
+                    });
+                }
+            } else console.warn('Using preload without enabling cache is pointless. @usecache');
+
+        };
+    });
+
 
     const load = requirejs.load;
 
@@ -612,8 +630,6 @@
                     });
         }
     };
-
-    requirejs(['utils'], console.debug);
 
 }((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window)));
 
