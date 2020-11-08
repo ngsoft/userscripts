@@ -2,7 +2,7 @@
     /* globals define, require, module, self, EventTarget */
     const
             name = 'utils',
-            dependencies = ['sprintf', 'GM'];
+            dependencies = ['sprintf'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,14 +18,11 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function utils(sprintf, gm, undef){
+}(typeof self !== 'undefined' ? self : this, function utils(sprintf, undef){
 
-    const {GM_info} = gm;
 
     const
-            GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
-            scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
-            UUID = GMinfo ? GMinfo.script.uuid : "",
+
             // Scallar types
             s = "string",
             b = "boolean",
@@ -1025,7 +1022,7 @@
                     .then(r => {
                         if (r.status !== 200) {
                             let error = new Error('Invalid Status Code');
-                            Object.assign(error, {status: r.status});
+                            Object.assign(error, {status: r.status, url: src});
                             throw error;
                         }
                         resove(r.text());
@@ -1048,10 +1045,8 @@
         throw new Error(message);
     }
 
-
-
     return Object.assign( {
-        s, b, f, o, u, n, GMinfo, scriptname, UUID,
+        s, b, f, o, u, n,
         second, minute, hour, day, week, year, month,
         uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder,
