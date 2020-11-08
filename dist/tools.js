@@ -251,6 +251,7 @@
                 eval(code);
                 return true;
             } catch (e) {
+                console.error(e.message);
             }
             return false;
         }
@@ -636,8 +637,10 @@
                         }
                     })
                     .catch(response => {
-                        console.warn('Cannot fetch', moduleName, 'module using xhr, fallback to regular method.');
-                        console.debug(response);
+                        let message = ['Cannot fetch', moduleName, 'module using xhr, fallback to regular method.'];
+
+                        if (response instanceof Error) message.push(response.message);
+                        console.warn(...message);
                         load(context, moduleName, url.href);
                     });
         }

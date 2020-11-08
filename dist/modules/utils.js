@@ -38,7 +38,7 @@
             week = day * 7,
             year = 365 * day,
             month = Math.round(year / 12),
-            doc = document;
+            doc = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).document;
 
     /**
      * Test if given argument is a plain object
