@@ -589,32 +589,6 @@
     define('config', config);
     define('Request', Request);
 
-    define('preload', () => {
-        return function preload(...modules){
-            if (!cache.enabled)  console.warn('Using preload without enabling cache is pointless. @usecache');
-            let loaded = true, callbacks = [], list = [];
-            modules.forEach(m => {
-                if (typeof m === s) {
-                    list.push(m);
-                    if (cache.enabled && cache.loadItem(m) === null) loaded = false;
-                } else if (typeof m === f) callbacks.push(m);
-            });
-            if (loaded === false) {
-                requirejs(list, function(){
-                    sessionStorage.setItem('newsession', 'true');
-                    //reload page to get cached versions
-                    location.replace(location.href);
-                });
-            } else if (callbacks.length > 0) {
-                requirejs(list, function(){
-                    callbacks.forEach(fn => fn(...arguments));
-                });
-            }
-
-        };
-    });
-
-
     const load = requirejs.load;
 
     //Code fast load using localStorage Cache set @usecache in userscript header
