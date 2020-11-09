@@ -1238,12 +1238,123 @@
     }
 
 
+
+    /**
+     * @param {Element} element
+     * @returns {DataSet}
+     */
+    function DataSet(element){
+        if (!(this instanceof DataSet)) return new DataSet(element);
+        if (typeof element === s) element = doc.querySelector(element);
+        this.element = element;
+    }
+    
+    DataSet.prototype = {
+        /**
+         * @param {string|Array|Object} key
+         * @param {any} [value]
+         * @returns {DataSet}
+         */
+        set(key, value){
+            if(this.element instanceof Element){
+                if (value === null || value === undef) {
+                    if (gettype(key, s) || Array.isArray(key)) return this.remove(key);
+                    if (isPlainObject(key)) Object.keys(key).forEach(k => this.set(k, key[k]));
+                    return this;
+                }
+                if (gettype(key, s)) key = [key];
+                if (Array.isArray(key)) key.forEach(k => this.element.dataset[k] = gettype(value, s) ? value : JSON.stringify(value));
+                else throw new Error('Invalid Argument key');
+            }
+
+            return this;
+        },
+        /**
+         * @param {string|Array|undefined} key
+         * @returns {any}
+         */
+        get(key){
+            let result;
+            if (this.element instanceof Element) {
+                if (key === undef) {
+                    result = {};
+                    Object.keys(this.element.dataset).forEach(k => result[k] = this.get(k));
+                } else if (gettype(key, s)) {
+                    let value = this.element.dataset[key];
+                    if (gettype(value, s)) {
+                        try {
+                            result = JSON.parse(value);
+                        } catch (e) {
+                            result = value;
+                        }
+                    }
+                } else if (Array.isArray(key)) {
+                    result = {};
+                    key.forEach(k => result[k] = this.get(k));
+                }
+            }
+            return result;
+        },
+        /**
+         * @param {string|Array} key
+         * @returns {boolean}
+         */
+        has(key){
+            if (this.element instanceof Element) {
+                if (gettype(key, s)) key = [key];
+                if (Array.isArray(key)) return key.every(k => this.element.dataset[k] !== undef);
+            }
+            return false;
+        },
+        /**
+         * @param {string|Array} key
+         * @returns {DataSet}
+         */
+        remove(key){
+            if (this.element instanceof Element) {
+                if (gettype(key, s)) key = [key];
+                if (Array.isArray(key)) {
+                    key.forEach(k => delete this.element.dataset[k]);
+                }
+            }
+            return this;
+        },
+        clear(){
+            return this.remove(Object.keys(this.element.dataset));
+        }
+
+    };
+
+    /**
+     * Get element siblings
+     * @param {Element} element
+     * @param {string} [selector]
+     * @returns {Array}
+     */
+    function siblings(element, selector){
+        let retval = [];
+        if (element instanceof Element) {
+            if (element.parentElement !== null) {
+                let list = element.parentElement.children;
+                for (let i = 0; i < list.length; i++) {
+                    let el = list[i];
+                    if (el === element) continue;
+                    if (gettype(selector, s) && !el.matches(selector)) continue;
+                    retval.push(el);
+                }
+            }
+        }
+        return retval;
+    }
+
+
+
     return Object.assign( {
         s, b, f, o, u, n,
         second, minute, hour, day, week, year, month,
         uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder,
-        Events, trigger, rfetch, assert, isPlainObject, gettype, sprintf, vsprintf
+        Events, trigger, rfetch, assert, isPlainObject, gettype, sprintf, vsprintf, DataSet, siblings
     });
 
 }));

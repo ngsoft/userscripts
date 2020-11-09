@@ -5,7 +5,7 @@
     /* globals define, require, module, self */
     const
             name = 'player',
-            dependencies = ['utils', 'config', 'storage', 'Plyr', 'dash', 'Hls'];
+            dependencies = ['utils', 'config', 'storage', 'Plyr', 'Subtitle', 'dash', 'Hls'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -21,7 +21,7 @@
         };
         root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, Plyr, dashjs, Hls){
+}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, Plyr, Subtitle, dashjs, Hls){
 
 
 
@@ -95,7 +95,7 @@
             forced: true,
             onChange: x => x
         },
-        
+
         i18n: {
             qualityBadge: {
                 '4320p': '8K',
@@ -107,7 +107,7 @@
                 '540p': 'SD',
                 '480p': 'SD'
             }
-    }
+        }
         
         
 
@@ -135,6 +135,7 @@
             assert(player instanceof PlyrPlayer, 'Invalid argument player.');
             assert(gettype(type, s), 'Invalid argument type.');
             assert(gettype(attach, f), 'Invalid argument attach.');
+            
             if (!gettype(detach, f)) detach = x => x;
 
             Object.defineProperties(this, {
@@ -184,6 +185,10 @@
         set detach(fn){
             if (gettype(fn, f)) this.config.detach = fn;
         }
+        
+        get selected(){
+            return this.src === this.player.video.dataset.src;
+        }
 
 
         constructor(player, type, src, size, label){
@@ -232,9 +237,12 @@
                 }
             });
             const el = this.element;
-
-
-
+            el.setAttribute('src', src);
+            el.setAttribute('size', size);
+            el.setAttribute('type', type.type);
+            el.setAttribute('label', label);
+            player.sources.push(this);
+            
         }
 
 
