@@ -284,6 +284,21 @@
 
 
     class Request {
+        
+        /**
+         * Executes callback when complete
+         * @param {function} callback
+         * @returns {Request}
+         */
+        complete(callback){
+            Array.from(arguments).forEach(arg => {
+                if (typeof arg === f) {
+                    if (this.status !== null) arg(this.response);
+                    else this.config.complete.push(arg);
+                }
+            });
+            return this._send();
+        }
 
         /**
          * Executes callback on success
@@ -300,21 +315,7 @@
             });
             return this._send();
         }
-        /**
-         * Executes callback when complete
-         * @param {function} callback
-         * @returns {Request}
-         */
-        complete(callback){
 
-            Array.from(arguments).forEach(arg => {
-                if (typeof arg === f) {
-                    if (this.status !== null) arg(this.response);
-                    else this.config.complete.push(arg);
-                }
-            });
-            return this._send();
-        }
         /**
          * Executes callback on error
          * @param {function} callback
@@ -334,9 +335,12 @@
 
             if (!this.sent) {
                 this.sent = true;
-                setTimeout(() => {
-                    if (this.xhr.readyState < 4) this.xhr.abort();
-                }, 15 * second);
+                if (this.config.timeout > 0) {
+                    setTimeout(() => {
+                        if (this.xhr.readyState !== 4) this.xhr.abort();
+                    }, this.config.timeout * second);
+                }
+
                 try {
                      this.xhr.send();
                 } catch (e) {
@@ -371,22 +375,31 @@
         /**
          *
          * @param {string} url
-         * @param {Object} [headers]
-         * @param {boolean} [cookies]
-         * @param {boolean} [async]
+         * @param {Object} [headers] Headers to send
+         * @param {number} [timeout] Timeout in seconds
+         * @param {boolean} [cookies] Send Credentials
+         * @param {boolean} [async] Asynchronous Request
          */
-        constructor(url, headers, cookies, async){
+        constructor(url, headers, timeout, cookies, async){
 
             if (typeof url !== s) throw new Error('Invalid Argument url');
 
-            async = typeof async === b ? async : true;
-            cookies = typeof cookies === b ? cookies : false;
-
-            if (typeof headers === b) {
+            if (typeof headers === n) {
                 async = cookies;
+                cookies = timeout;
+                timeout = headers;
+                headers = null;
+            } else if (typeof headers === b) {
+                async = timeout;
                 cookies = headers;
-                headers = {};
-            } else if (!(headers instanceof Object && Object.getPrototypeOf(headers) === Object.prototype)) headers = {};
+                timeout = null;
+                headers = null;
+            }
+
+            headers = (headers instanceof Object && Object.getPrototypeOf(headers) === Object.prototype) ? headers : {};
+            timeout = typeof timeout === n ? timeout : 0;
+            cookies = typeof cookies === b ? cookies : false;
+            async = typeof async === b ? async : true;
 
 
             Object.defineProperties(this, {
@@ -396,9 +409,10 @@
                         success: [],
                         error: [],
                         complete: [],
-                        cookies: cookies === true,
-                        async: async === true,
-                        headers: headers
+                        cookies: cookies,
+                        async: async,
+                        headers: headers,
+                        timeout: timeout
                     }
                 },
                 url: {
@@ -411,7 +425,7 @@
                 },
                 xhr: {
                     enmerable: false, configurable: true, writable: true,
-                    value: null
+                    value: new XMLHttpRequest()
                 },
                 response: {
                     enmerable: false, configurable: true, writable: true,
@@ -428,25 +442,18 @@
             });
 
             let
-                    xhr = this.xhr = new XMLHttpRequest(),
+                    xhr = this.xhr,
                     listener = this.listener;
 
-            listener.addEventListener('success', e => {
-                this.config.success.forEach(c => c(e.response));
-                let ev = new Event('complete');
-                ev.response = e.response;
-                this.listener.dispatchEvent(ev);
-            });
-
-            listener.addEventListener('error', e => {
-                this.config.error.forEach(c => c(e.response));
-                let ev = new Event('complete');
-                this.listener.dispatchEvent(ev);
-
-            });
-
-            listener.addEventListener('complete', e => {
-                this.config.complete.forEach(c => c(e.response));
+            ['success', 'error', 'complete'].forEach(type => {
+                this.listener.addEventListener(type,e=>{
+                    this.config[e.type].forEach(fn => fn(this.response));
+                    if (e.type !== 'complete') {
+                        let evt = new Event('complete');
+                        evt.response = this.response;
+                        this.listener.dispatchEvent(evt);
+                    }
+                });
             });
 
             xhr.open('GET', url, async === true);
@@ -459,37 +466,32 @@
                     let
                             type = 'success',
                             response = this.response = {
-                        status: xhr.status,
-                        text: xhr.responseText,
-                        statusText: xhr.statusText,
-                        url: xhr.responseURL
-                    };
+                                status: xhr.status,
+                                text: xhr.responseText,
+                                statusText: xhr.statusText,
+                                url: xhr.responseURL
+                            };
                     if (response.status < 200 || response.status > 300) {
                         response.error = new Error('Invalid Status Code');
                         type = 'error';
                     }
-                    let evt = new Event(type);
-                    evt.response = response;
                     this.status = type;
-                    this.listener.dispatchEvent(evt);
+                    this.listener.dispatchEvent(new Event(type));
                 }
             };
             xhr.onerror = xhr.onabort = e => {
                 let
-                        xhr = this.xhr, error,
+                        error,
                         response = this.response = {
                             status: xhr.status,
                             text: xhr.responseText,
                             statusText: xhr.statusText,
                             url: xhr.responseURL
                         };
-                if (e.type === 'abort') error = new Error('Operation timeout.');
-                else error = new Error('Network Error.');
-                response.error = error;
-                let evt = new Event('error');
-                evt.response = response;
+                if (e.type === 'abort') response.error = new Error('Operation timeout.');
+                else response.error = new Error('Network Error.');
                 this.status = 'error';
-                this.listener.dispatchEvent(evt);
+                this.listener.dispatchEvent(new Event('error'));
             };
 
         }
@@ -557,7 +559,7 @@
 
     requirejs.config({
         baseUrl: root,
-        waitSeconds: 15,
+        waitSeconds: 30,
         packages: [
             {
                 // https://github.com/brix/crypto-js/tree/4.0.0
@@ -619,7 +621,6 @@
                     })
                     .catch(response => {
                         let message = ['Cannot fetch', moduleName, 'module using xhr, fallback to regular method.'];
-
                         if (response instanceof Error) message.push(response.message);
                         console.warn(...message);
                         load(context, moduleName, url.href);
