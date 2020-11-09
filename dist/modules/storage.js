@@ -18,9 +18,9 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(GM, undef){
+}(typeof self !== 'undefined' ? self : this, function yzb1pb3wd1fubjf7jutqyb(GM, undef){
 
-const {GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = GM;
+    const {GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = GM;
 
     const
 
@@ -309,6 +309,20 @@ const {GM_getValue, GM_setValue, GM_deleteValue, GM_listValues} = GM;
                 configurable: true, writable: true
             });
 
+        }
+
+        get(key){
+            let obj = this.datastore.get(this.key);
+            if (!isPlainObject(obj)) obj = {};
+            this.storage = obj;//sync data
+            return super.get(key);
+        }
+
+        has(key){
+            let obj = this.datastore.get(this.key);
+            if (!isPlainObject(obj)) obj = {};
+            this.storage = obj;//sync data
+            return super.has(key);
         }
 
         set(key, val){
