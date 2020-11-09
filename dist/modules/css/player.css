@@ -10,21 +10,6 @@
     color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
     display: none; text-shadow: none;
 }
-@media (min-width: 768px) {
-    .plyr__caption{font-size: 24px;}
-}
-@media (min-width: 992px) {
-    .plyr__caption{font-size: 32px;}
-}
-.plyr-player [disabled], .plyr-player .disabled{pointer-events: none !important;}
-.plyr-player .hidden, .plyr-player .hidden *{
-    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
-    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
-    display: inline !important;z-index: -1 !important;
-}
-.plyr-player [hidden], .plyr-player button[data-plyr="quality"][disabled]{display: none !important;}
-.no-select, .plyr-toolbar{-webkit-touch-callout: none !important;-webkit-user-select: none !important;-moz-user-select: none !important;user-select: none !important;}
-
 
 .plyr-toolbar{
     position: absolute; top: 0 ; left: 0 ; right: 0;padding: 0; margin: 0;
@@ -38,3 +23,21 @@
     transition: opacity .4s ease-in-out,transform .4s ease-in-out;
 }
 .plyr-toolbar > *:hover{transform: scale(1.1);}
+
+
+@media (min-width: 768px) {
+    .plyr__caption{font-size: 24px;}
+}
+@media (min-width: 992px) {
+    .plyr__caption{font-size: 32px;}
+}
+.plyr-player [disabled], .plyr-player .disabled{pointer-events: none !important;}
+.plyr-player .hidden, .plyr-player .hidden *{
+    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+    display: inline !important;z-index: -1 !important;
+}
+.plyr-player [hidden], .plyr-player button[data-plyr="quality"][disabled], .plyr-toolbar.hidden{display: none !important;}
+.no-select, .plyr-toolbar{-webkit-touch-callout: none !important;-webkit-user-select: none !important;-moz-user-select: none !important;user-select: none !important;}
+
+

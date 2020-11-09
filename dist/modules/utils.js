@@ -1263,7 +1263,7 @@
                     return this;
                 }
                 if (gettype(key, s)) key = [key];
-                if (Array.isArray(key)) key.forEach(k => this.element.dataset[k] = gettype(value, s) ? value : JSON.stringify(value));
+                if (Array.isArray(key)) key.forEach(k => this.element.setAttribute('data-' + k, gettype(value, s) ? value : JSON.stringify(value)));
                 else throw new Error('Invalid Argument key');
             }
             return this;
@@ -1277,9 +1277,9 @@
             if (this.element instanceof Element) {
                 if (key === undef) {
                     result = {};
-                    Object.keys(this.element.dataset).forEach(k => result[k] = this.get(k));
+                    this.keys().forEach(k => result[k] = this.get(k));
                 } else if (gettype(key, s)) {
-                    let value = this.element.dataset[key];
+                    let value = this.element.getAttribute('data-' + key);
                     if (gettype(value, s)) {
                         try {
                             result = JSON.parse(value);
@@ -1301,7 +1301,7 @@
         has(key){
             if (this.element instanceof Element) {
                 if (gettype(key, s)) key = [key];
-                if (Array.isArray(key)) return key.every(k => this.element.dataset[k] !== undef);
+                if (Array.isArray(key)) return key.every(k => this.element.hasAttribute('data-' + k));
             }
             return false;
         },
@@ -1313,13 +1313,27 @@
             if (this.element instanceof Element) {
                 if (gettype(key, s)) key = [key];
                 if (Array.isArray(key)) {
-                    key.forEach(k => delete this.element.dataset[k]);
+                    key.forEach(k => delete this.element.removeAttribute('data-' + k));
                 }
             }
             return this;
         },
         clear(){
-            return this.remove(Object.keys(this.element.dataset));
+            return this.remove(this.keys());
+        },
+
+        keys(){
+
+            let result = [];
+
+            if (this.element instanceof Element) {
+                let attrs = this.element.attributes;
+                for (let i = 0; i < attrs.length; i++) {
+                    let name = attrs[i].name;
+                    if (name.indexOf('data-') === 0) result.push(name.substr(5));
+                }
+            }
+            return result;
         }
 
     };
