@@ -1266,7 +1266,6 @@
                 if (Array.isArray(key)) key.forEach(k => this.element.dataset[k] = gettype(value, s) ? value : JSON.stringify(value));
                 else throw new Error('Invalid Argument key');
             }
-
             return this;
         },
         /**

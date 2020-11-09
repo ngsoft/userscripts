@@ -27,7 +27,7 @@
 
 
 
-    const {doc, loadcss, sprintf, gettype, s, f, u, n, b, assert, Events} = utils;
+    const {doc, loadcss, sprintf, gettype, s, f, u, n, b, assert, Events, DataSet} = utils;
     const cfg = config.get('Plyr');
 
 
@@ -112,9 +112,6 @@
         
 
     };
-
-
-
 
     class PlyrPlayerType {
 
