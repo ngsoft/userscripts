@@ -68,6 +68,7 @@
         
         static removeEntry(name){
             assert(gettype(name, s), 'Invalid Argument: name');
+            if (!supported) return;
             if (commands[name]) GM_unregisterMenuCommand(commands[name].id);
             delete commands[name];
         }

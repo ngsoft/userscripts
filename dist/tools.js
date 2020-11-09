@@ -587,7 +587,9 @@
     //exporting this script contents
     define('GM', gmexports);
     define('config', config);
-    define('Request', Request);
+    define('Request', () => {
+        return Request;
+    });
 
     const load = requirejs.load;
 

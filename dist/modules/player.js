@@ -27,7 +27,7 @@
     const {loadcss, sprintf} = utils;
     const cfg = config.get('Plyr');
 
-    class Player {
+    class PlyrPlayer {
 
 
     }
@@ -37,7 +37,7 @@
 
     loadcss(sprintf(cfg.path, cfg.version) + '.css');
     loadcss(config.get('root') + 'css/player.css');
-    return {Player, dashjs, Hls, Plyr};
+    return {PlyrPlayer, dashjs, Hls, Plyr};
 }));
 
 
