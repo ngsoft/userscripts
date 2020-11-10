@@ -6,8 +6,8 @@
     const
             name = 'player',
             dependencies = [
-                'utils', 'config', 'storage', 'isocode'
-                        //,'Plyr', 'Subtitle', 'dashjs', 'Hls'
+                'utils', 'config', 'storage', 'isocode', 'Plyr', 'Subtitle', 'Hls'
+                        //, 'dashjs'
             ];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
@@ -24,13 +24,14 @@
         };
         root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, isocode){
+}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, isocode, Plyr, Subtitle, Hls){
 
 
     const {doc, loadcss, sprintf, gettype, s, f, u, n, b, assert, Events, DataSet, html2element, Text2File, isPlainObject, prequire} = utils;
     const {xStore, exStore} = storage;
     const cfg = config.get('Plyr');
-    let undef, Plyr, dashjs, Hls;
+
+    let undef, dashjs, getReady = new Events();
 
     const options = {
 
@@ -757,7 +758,22 @@
 
     }
 
-    loadcss(sprintf(cfg.path, cfg.version) + '.css');
+    getReady.isReady = false;
+    getReady.one('ready', () => {
+        getReady.isReady = true
+    });
+
+
+    prequire('dashjs')
+            .then(ex => {
+                dashjs = ex.dashjs;
+                getReady.trigger('ready')
+            })
+            .catch(console.error);
+
+    console.debug(getReady, prequire);
+
+    // loadcss(sprintf(cfg.path, cfg.version) + '.css');
     loadcss(config.get('root') + 'css/player.css');
     return {PlyrPlayer, PlyrPlayerType, PlyrPlayerSource, dashjs, Hls, Plyr};
 }));

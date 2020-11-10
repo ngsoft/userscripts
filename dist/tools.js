@@ -650,7 +650,7 @@
                 'https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.js',
                 'https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css',
             ] )
-            .addSource('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@2.0.5/dist/hls.min.js')
+            .addSource('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js')
             .addSource('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js');
 
 
@@ -664,7 +664,7 @@
     });
 
 
-    console.debug(requirejs);
+
 
     const
             load = requirejs.load,

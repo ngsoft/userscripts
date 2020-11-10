@@ -830,8 +830,8 @@
 
         if (this instanceof Events) {
             const self = this;
-            binding = binding instanceof Object ? binding : target;
             if (!(target instanceof EventTarget)) target = doc.createElement('div');
+            binding = binding instanceof Object ? binding : target;
             if (!(binding instanceof EventTarget)) {
                 ["on", "off", "one", "trigger"].forEach(method => {
                     binding[method] = function(...args){
