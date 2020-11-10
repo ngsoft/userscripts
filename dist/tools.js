@@ -664,86 +664,42 @@
     });
 
 
+    if (cache.enabled) {
+        const load = requirejs.load;
 
+        //Code fast load using localStorage Cache set @usecache in userscript header
+        requirejs.load = function(context, moduleName, url){
 
-    const
-            load = requirejs.load,
-            listener = doc.createElement('div'),
-            loader = function(context, moduleName, url){
-                return new Promise((resolve, reject) => {
-                    listener.addEventListener('load', e => {
-                        if (e.data.module === moduleName) resolve(e.data.target);
-                    });
-                    listener.addEventListener('error', e => {
-                        if (e.data.module === moduleName) reject(e);
-                    });
-
-                    load(context, moduleName, url);
-
-                });
-            };
-
-
-
-
-    //Code fast load using localStorage Cache set @usecache in userscript header
-    requirejs.load2 = function(context, moduleName, url){
-
-        if (!isPlainObject(context.backup)) {
-            context.backup = {};
-            ['onScriptLoad', 'onScriptError'].forEach(fn => {
-
-                context.backup[fn] = context[fn];
-                context[fn] = function(e){
-
-                    let evt = new Event(e.type);
-                    Object.assign(evt, {
-                        data: {
-                            target: e.target,
-                            module: e.target.getAttribute('data-requiremodule')
-                        }
-                    });
-                    listener.dispatchEvent(evt);
-                    context.backup[fn](e);
-                };
-
-
-
-            });
-
-        }
-
-
-        let  hit = false;
-        url = new URL(url);
-        if (cache.enabled) {
-            url.searchParams.set('tt', +new Date()); // get a fresh version
-            let contents = cache.loadItem(moduleName);
-            if (contents !== null) {
-                let
-                        blob = new Blob([contents], {type: "text/javascript"});
-
-                load(context, moduleName, URL.createObjectURL(blob));
-                hit = true;
+            let  hit = false;
+            url = new URL(url);
+            if (cache.enabled) {
+                url.searchParams.set('tt', +new Date()); // get a fresh version
+                let contents = cache.loadItem(moduleName);
+                if (contents !== null) {
+                    let blob = new Blob([contents], {type: "text/javascript"});
+                    load(context, moduleName, URL.createObjectURL(blob));
+                    hit = true;
+                }
             }
-        }
-        if (hit === false) {
+            if (hit === false) {
+                (new Request(url.href)).fetch()
+                        .then(response => {
+                            let blob = new Blob([response.text], {type: "text/javascript"});
+                            if (cache.enabled) cache.saveItem(moduleName, response.text);
+                            load(context, moduleName, URL.createObjectURL(blob));
+                        })
+                        .catch(response => {
+                            let message = ['Cannot fetch', moduleName, 'module using xhr, fallback to regular method.'];
+                            if (response instanceof Error) message.push(response.message);
+                            console.warn(...message);
+                            // console.warn(response);
+                            load(context, moduleName, url.href);
+                        });
+            }
+        };
+    }
 
-            (new Request(url.href)).fetch()
-                    .then(response => {
-                        let blob = new Blob([response.text], {type: "text/javascript"});
-                        load(context, moduleName, URL.createObjectURL(blob));
-                        
-                    })
-                    .catch(response => {
-                        let message = ['Cannot fetch', moduleName, 'module using xhr, fallback to regular method.'];
-                        if (response instanceof Error) message.push(response.message);
-                        console.warn(...message);
-                        console.warn(response);
-                        load(context, moduleName, url.href);
-                    });
-        }
-    };
+
 
 }((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window)));
 

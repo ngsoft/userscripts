@@ -6,6 +6,7 @@
     const
             name = 'player',
             dependencies = [
+
                 'utils', 'config', 'storage', 'isocode', 'Plyr', 'Subtitle', 'Hls'
                         //, 'dashjs'
             ];
@@ -31,7 +32,8 @@
     const {xStore, exStore} = storage;
     const cfg = config.get('Plyr');
 
-    let undef, dashjs, getReady = new Events();
+    let undef, dashjs;
+    //, Plyr, Subtitle, Hls;
 
     const options = {
 
@@ -437,6 +439,23 @@
             });
         }
 
+        get loaded(){
+            return new Promise(resolve => {
+                
+                if(this.sources.some(source=> source.type === "dash")){
+                    prequire('dashjs')
+                            .then(exp => {
+                                dashjs = exp.dashjs;
+                                resolve(this);
+                            })
+                            .catch(() => {
+                                console.warn('Cannot Load dashjs.');
+                            });
+                } else resolve(this);
+
+            });
+        }
+
 
         constructor(){
 
@@ -528,6 +547,7 @@
 
                 player: {
                     trackchange(e){
+                        console.debug(e);
                         let {track} = e.detail;
                         if (gettype(track.vtt, s)) {
                             track.element.src = URL.createObjectURL(new Blob([track.vtt], {type: "text/vtt"}));
@@ -536,6 +556,7 @@
                 },
 
                 languagechange(e){
+
                     let {plyr} = e.detail;
                     let
                             tn = plyr.captions.currentTrack,
@@ -738,19 +759,16 @@
                     console.debug(player);
 
                 });
+                this.loaded.then(()=>{
+                    if (this.root.parentElement !== root) {
+                        root.innerHTML = "";
+                        root.appendChild(this.root);
+                    }
+                    if (this.plyr === null) {
+                        this.plyr = new Plyr(this.video, this.options);
+                    }
+                });
 
-                prequire('dashjs')
-                        .then(ex => {
-                            dashjs = ex.dashjs;
-                            if (this.root.parentElement !== root) {
-                                root.innerHTML = "";
-                                root.appendChild(this.root);
-                            }
-                            if (this.plyr === null) {
-                                this.plyr = new Plyr(this.video, this.options);
-                            }
-                        })
-                        .catch(console.warn);
 
             }
 
@@ -762,7 +780,7 @@
 
     loadcss(sprintf(cfg.path, cfg.version) + '.css');
     loadcss(config.get('root') + 'css/player.css');
-    return {PlyrPlayer, PlyrPlayerType, PlyrPlayerSource, dashjs, Hls, Plyr};
+    return {PlyrPlayer, PlyrPlayerType, PlyrPlayerSource, PlyrPlayerCaption};
 }));
 
 
