@@ -28,7 +28,8 @@
     const {xStore, exStore} = storage;
     const cfg = config.get('Plyr');
     let undef;
-    console.debug(isocode);
+    console.debug('isocode', isocode);
+    console.debug('config', config);
     const options = {
 
         captions: {active: false, language: 'auto', update: true},

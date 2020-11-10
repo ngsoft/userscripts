@@ -2,7 +2,7 @@
     /* globals define, require, module, self, EventTarget */
     const
             name = 'utils',
-            dependencies = [];
+            dependencies = ['config'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,7 +18,7 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(undef){
+}(typeof self !== 'undefined' ? self : this, function(config, undef){
 
     const
 
@@ -37,7 +37,8 @@
             week = day * 7,
             year = 365 * day,
             month = Math.round(year / 12),
-            doc = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).document;
+            global = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window),
+            doc = global.document;
 
     /**
      * Test if given argument is a plain object
@@ -1362,12 +1363,87 @@
 
 
 
+    function prequire(...variables){
+
+
+        return new Promise(resolve => {
+
+            let sources = prequire._sources;
+            if (variables.length === 0) return;
+
+            variables.forEach(v => {
+                let source, match = false;
+                for (let i = 0; i < sources.length; i++) {
+                    source = sources[i];
+                    if (source.vars.includes(v)) {
+                        match = true;
+                        if (!source.loaded) {
+                            source.urls.forEach(u => {
+                                if (/\.js$/.test(u)) loadjs(u);
+                                else if (/\.css$/.test(u)) loadcss(u);
+                            });
+                            source.loaded = true;
+
+                        }
+                        break;
+                    }
+
+                }
+                if (match === false) throw new Error('Cannot require ' + v);
+            });
+
+            let result = {};
+            const check = function(){
+                variables.forEach(v => {
+                    if (typeof self[v] !== u) result[v] = self[v];
+                });
+                if (variables.length === Object.keys(result).length) {
+                    resolve(result);
+                    return true;
+                }
+            };
+
+            if (check() === true) return;
+
+            new Timer(timer => {
+                if (check() === true) timer.stop();
+            }, 10, 10 * second);
+        });
+
+    }
+
+    prequire.sources = function(varname, url){
+        if (typeof url === s) url = [url];
+        if (!Array.isArray(url)) return false;
+        if (typeof varname === s) varname = [varname];
+        if (!Array.isArray(varname)) return false;
+        if (!prequire._sources) prequire._sources = [];
+        let sources = prequire._sources;
+        sources.push({
+            vars: varname,
+            urls: url,
+            loaded: false
+        });
+        return true;
+    };
+
+    if (config && typeof config.get === f) {
+        let sources = config.get('sources');
+        if (Array.isArray(sources)) {
+            prequire._sources = sources;
+        }
+    }
+
+
+
+
+
     return Object.assign( {
         s, b, f, o, u, n,
         second, minute, hour, day, week, year, month,
         uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder,
-        Events, trigger, rfetch, assert, isPlainObject, gettype, sprintf, vsprintf, DataSet, siblings
+        Events, trigger, rfetch, assert, isPlainObject, gettype, sprintf, vsprintf, DataSet, siblings, prequire
     });
 
 }));

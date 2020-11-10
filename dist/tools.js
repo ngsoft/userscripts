@@ -152,12 +152,14 @@
                 obj.version = version;
                 fullpath = path.replace('%s', version);
             } else fullpath = path;
+            obj.fullpath = fullpath;
             if (isPlainObject(extraconfig)) {
                 obj.config = extraconfig;
                 config.config[name] = extraconfig;
             }
             this.config[name] = obj;
             config.paths[name] = fullpath;
+
             requirejs.config(config);
             return this;
         }
