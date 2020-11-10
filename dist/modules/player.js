@@ -5,7 +5,10 @@
     /* globals define, require, module, self */
     const
             name = 'player',
-            dependencies = ['utils', 'config', 'storage', 'isocode', 'Plyr', 'Subtitle', 'dashjs', 'Hls'];
+            dependencies = [
+                'utils', 'config', 'storage', 'isocode'
+                        //,'Plyr', 'Subtitle', 'dashjs', 'Hls'
+            ];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -21,15 +24,14 @@
         };
         root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, isocode, Plyr, Subtitle, dashjs, Hls){
+}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, isocode){
 
 
-    const {doc, loadcss, sprintf, gettype, s, f, u, n, b, assert, Events, DataSet, html2element, Text2File, isPlainObject} = utils;
+    const {doc, loadcss, sprintf, gettype, s, f, u, n, b, assert, Events, DataSet, html2element, Text2File, isPlainObject, prequire} = utils;
     const {xStore, exStore} = storage;
     const cfg = config.get('Plyr');
-    let undef;
-    console.debug('isocode', isocode);
-    console.debug('config', config);
+    let undef, Plyr, dashjs, Hls;
+
     const options = {
 
         captions: {active: false, language: 'auto', update: true},

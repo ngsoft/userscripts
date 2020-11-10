@@ -1379,11 +1379,10 @@
                         match = true;
                         if (!source.loaded) {
                             source.urls.forEach(u => {
-                                if (/\.js$/.test(u)) loadjs(u);
-                                else if (/\.css$/.test(u)) loadcss(u);
+                                if (/\.css$/.test(u)) loadcss(u);
+                                else loadjs(u);
                             });
                             source.loaded = true;
-
                         }
                         break;
                     }

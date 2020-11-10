@@ -164,6 +164,26 @@
             return this;
         }
 
+        addSource(varname, url){
+            
+            url = typeof url === s ? [url] : url;
+            varname = typeof varname === s ? [varname] : varname;
+            if (!Array.isArray(url) || !Array.isArray(varname) || !url.every(x => /^http/.test(x))) {
+                console.warn('Cannot add Source, Invalid Arguments');
+                return this;
+            }
+            if (!Array.isArray(this.config.sources)) {
+                this.config.sources = [];
+            }
+            const sources = this.config.sources;
+            sources.push({
+                vars: varname,
+                urls: url,
+                loaded: false
+            });
+            return this;
+        }
+
         get(key){
             if (typeof key === u) return Object.assign({}, this.config);
             else if (typeof key === s) return this.config[key];
@@ -623,6 +643,15 @@
                 enableWebVTT: false, enableCEA708Captions: false
             })
             .addPath('dashjs', 'https://cdn.dashjs.org/v%s/dash.all.min', '3.1.3');
+    
+    config
+            .addSource('dashjs', 'https://cdn.dashjs.org/v3.1.3/dash.all.min.js')
+            .addSource('Plyr',[
+                'https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.js',
+                'https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css',
+            ] )
+            .addSource('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@2.0.5/dist/hls.min.js')
+            .addSource('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js');
 
 
     let define = global.define;
