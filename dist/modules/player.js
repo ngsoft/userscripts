@@ -410,7 +410,7 @@
         get currentTrack(){
             if (this.plyr) {
                 let tn = this.plyr.captions.currentTrack, track = this.tracks[tn];
-                if (track instanceof Element) return track;
+                if (track instanceof PlyrPlayerCaption) return track;
             }
             return null;
         }
@@ -589,13 +589,118 @@
                         }
                     });
                 }
-
             });
+
+
+            ["webm", "mp4", "ogg"].forEach(type => {
+                this.addSourceType(type, source => {
+                    video.src = source.src;
+                });
+            });
+
+            this.addType(
+                    'hls',
+                    source => {
+
+                        let options = {
+                            enableWebVTT: false,
+                            enableCEA708Captions: false
+                        };
+
+                        let hls = source.hls = new Hls(options);
+
+                        hls.on(Hls.Events.MANIFEST_PARSED, function(){ });
+                        hls.on(Hls.Events.MEDIA_ATTACHED, function(){
+                            hls.loadSource(source.src);
+                        });
+                        hls.attachMedia(video);
+
+                    },
+                    source => {
+                        if (source.hls) {
+                            source.hls.destroy();
+                            delete source.hls;
+                        }
+
+                    }
+            );
+
+            this.addType(
+                    'dash',
+                    source => {
+                        let dash = source.dash = dashjs.MediaPlayer().create();
+                        dash.initialize();
+                        dash.setAutoPlay(false);
+                        dash.attachView(video);
+                        dash.attachSource(source.src);
+                    },
+                    source => {
+                        if (source.dash) {
+                            source.dash.reset();
+                            delete source.dash;
+                        }
+
+                    }
+            );
+        }
+
+
+        addType(type, attach, detach){
+            if (gettype(type, s) && gettype(this.types[type], u)) {
+                this.types[type] = new PlyrPlayerType(this, type, attach, detach);
+                return true;
+            }
+            return false;
+        }
+
+        addSource(src, size, type, attach, detach){
+
+            if (/^http/.test(src) || src instanceof URL) {
+                type = type || "mp4";
+                if(this.types[type] instanceof PlyrPlayerType){
+                    let source = new PlyrPlayerSource(this, this.types[type], src, size);
+                    if(gettype(attach, f)) source.attach = attach;
+                    if(gettype(detach, f)) source.detach = detach;
+                    this.sources.push(source);
+                    this.video.appendChild(source.element);
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        addCaption(src, srclang, label){
+            if (/^http/.test(src) || src instanceof URL) {
+                let track = new PlyrPlayerCaption(this, src, srclang, label);
+                this.tracks.push(track);
+                this.video.appendChild(track.element);
+                return true;
+            }
+            return false;
+        }
+
+
+
+        reset(){
+
+
+        }
+
+
+        start(root){
+
+
+
+
+
+
 
 
 
 
         }
+        
+        
 
 
 
@@ -691,10 +796,6 @@
             }
             return null;
         }
-
-
-
-
 
 
         constructor(container){
