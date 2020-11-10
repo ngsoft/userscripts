@@ -28,7 +28,8 @@
             month = Math.round(year / 12),
             GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
             scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
-            UUID = GMinfo ? GMinfo.script.uuid : "";
+            UUID = GMinfo ? GMinfo.script.uuid : "",
+            doc = global.document;
 
     let
             matches,
@@ -109,11 +110,21 @@
      */
     function addscript(src){
         if (typeof src === s && src.length > 0) {
-            let s = global.document.createElement("script");
+            let s = doc.createElement("script");
             s.setAttribute("type", "text/javascript");
-            s.appendChild(global.document.createTextNode(src));
-            global.document.head.appendChild(s);
+            s.appendChild(doc.createTextNode(src));
+            doc.head.appendChild(s);
+            return s;
         }
+    }
+
+    /**
+     * Test if given argument is a plain object
+     * @param {any} v
+     * @returns {Boolean}
+     */
+    function isPlainObject(v){
+        return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
     }
 
 
@@ -125,18 +136,28 @@
             });
         }
 
-        addPath(name, path, version, extra){
+        addPath(name, path, version, extraconfig){
             if (typeof name !== s) throw new Error('Invalid Argument name.');
             else if (typeof path !== s || !(/^http/.test(path))) throw new Error('Invalid Argument path.');
-            let obj = {name, path};
+            let obj = {name, path, config: {}};
+            let
+                    fullpath,
+                    config = {
+                        paths: {},
+                        config: {
+                            [name]: {}
+                        }
+                    };
             if (typeof version === s) {
                 obj.version = version;
-                path = path.replace('%s', version);
+                fullpath = path.replace('%s', version);
+            } else fullpath = path;
+            if (isPlainObject(extraconfig)) {
+                obj.config = extraconfig;
+                config.config[name] = extraconfig;
             }
-            if (extra instanceof Object && Object.getPrototypeOf(extra) === Object.prototype) Object.assign(obj, extra);
             this.config[name] = obj;
-            let config = {paths: {}};
-            config.paths[name] = path;
+            config.paths[name] = fullpath;
             requirejs.config(config);
             return this;
         }
@@ -147,7 +168,7 @@
         }
 
         set(key, value){
-            if (key instanceof Object && Object.getPrototypeOf(key) === Object.prototype) {
+            if (isPlainObject(key)) {
                 Object.assign(this.config, key);
             } else if (typeof key === s) {
                 this.config[key] = value;
@@ -246,6 +267,22 @@
         }
 
         exec(code){
+
+            if (typeof code === s && code.length > 0) {
+                let
+                        el = doc.createElement("script"),
+                        txt = doc.createTextNode(code);
+                el.setAttribute("type", "text/javascript");
+                el.appendChild(txt);
+                doc.head.appendChild(el);
+               return true;
+            }
+            return false;
+        }
+        execOld(code){
+
+
+
             try {
                 /*jslint evil: true */
                 eval(code);
@@ -254,6 +291,7 @@
                 console.error(e.message);
             }
             return false;
+
         }
 
         constructor(){
@@ -396,7 +434,7 @@
                 headers = null;
             }
 
-            headers = (headers instanceof Object && Object.getPrototypeOf(headers) === Object.prototype) ? headers : {};
+            headers = (isPlainObject(headers)) ? headers : {};
             timeout = typeof timeout === n ? timeout : 0;
             cookies = typeof cookies === b ? cookies : false;
             async = typeof async === b ? async : true;
@@ -471,7 +509,7 @@
                                 statusText: xhr.statusText,
                                 url: xhr.responseURL
                             };
-                    if (response.status < 200 || response.status > 300) {
+                    if (response.status !== 200) {
                         response.error = new Error('Invalid Status Code');
                         type = 'error';
                     }
@@ -568,7 +606,11 @@
                 main: 'index'
 
             }
-        ]
+        ],
+        shim: {
+            dashjs: {exports: 'dashjs'}
+        }
+
     });
 
     // adding some deps
@@ -576,12 +618,9 @@
             .addPath('Plyr', 'https://cdn.jsdelivr.net/npm/plyr@%s/dist/plyr', '3.6.2')
             .addPath('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@%s/dist/subtitle.bundle.min', '2.0.5')
             .addPath('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@%s/dist/hls.min', '0.14.16', {
-                config: {
-                    enableWebVTT: false,
-                    enableCEA708Captions: false
-                }
+                enableWebVTT: false, enableCEA708Captions: false
             })
-            .addPath('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min');
+            .addPath('dashjs', 'https://cdn.dashjs.org/v%s/dash.all.min', '3.1.3');
 
 
     let define = global.define;
@@ -589,21 +628,71 @@
     //exporting this script contents
     define('GM', gmexports);
     define('config', config);
-    define('Request', () => {
+    define('Request', function(){
         return Request;
     });
 
-    const load = requirejs.load;
+
+    console.debug(requirejs);
+
+    const
+            load = requirejs.load,
+            listener = doc.createElement('div'),
+            loader = function(context, moduleName, url){
+                return new Promise((resolve, reject) => {
+                    listener.addEventListener('load', e => {
+                        if (e.data.module === moduleName) resolve(e.data.target);
+                    });
+                    listener.addEventListener('error', e => {
+                        if (e.data.module === moduleName) reject(e);
+                    });
+
+                    load(context, moduleName, url);
+
+                });
+            };
+
+
+
 
     //Code fast load using localStorage Cache set @usecache in userscript header
-    requirejs.load = function(context, moduleName, url){
+    requirejs.load2 = function(context, moduleName, url){
+
+        if (!isPlainObject(context.backup)) {
+            context.backup = {};
+            ['onScriptLoad', 'onScriptError'].forEach(fn => {
+
+                context.backup[fn] = context[fn];
+                context[fn] = function(e){
+
+                    let evt = new Event(e.type);
+                    Object.assign(evt, {
+                        data: {
+                            target: e.target,
+                            module: e.target.getAttribute('data-requiremodule')
+                        }
+                    });
+                    listener.dispatchEvent(evt);
+                    context.backup[fn](e);
+                };
+
+
+
+            });
+
+        }
+
+
         let  hit = false;
         url = new URL(url);
         if (cache.enabled) {
             url.searchParams.set('tt', +new Date()); // get a fresh version
             let contents = cache.loadItem(moduleName);
-            if (contents !== null && cache.exec(contents)) {
-                context.completeLoad(moduleName);
+            if (contents !== null) {
+                let
+                        blob = new Blob([contents], {type: "text/javascript"});
+
+                load(context, moduleName, URL.createObjectURL(blob));
                 hit = true;
             }
         }
@@ -611,18 +700,15 @@
 
             (new Request(url.href)).fetch()
                     .then(response => {
-                        if (cache.exec(response.text)) {
-                            if (cache.enabled) cache.saveItem(moduleName, response.text);
-                            context.completeLoad(moduleName);
-                        } else {
-                            console.warn('Cannot execute', moduleName, 'module using xhr, fallback to regular method.');
-                            load(context, moduleName, url.href);
-                        }
+                        let blob = new Blob([response.text], {type: "text/javascript"});
+                        load(context, moduleName, URL.createObjectURL(blob));
+                        
                     })
                     .catch(response => {
                         let message = ['Cannot fetch', moduleName, 'module using xhr, fallback to regular method.'];
                         if (response instanceof Error) message.push(response.message);
                         console.warn(...message);
+                        console.warn(response);
                         load(context, moduleName, url.href);
                     });
         }

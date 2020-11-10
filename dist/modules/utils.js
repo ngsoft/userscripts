@@ -1313,7 +1313,7 @@
             if (this.element instanceof Element) {
                 if (gettype(key, s)) key = [key];
                 if (Array.isArray(key)) {
-                    key.forEach(k => delete this.element.removeAttribute('data-' + k));
+                    key.forEach(k => this.element.removeAttribute('data-' + k));
                 }
             }
             return this;

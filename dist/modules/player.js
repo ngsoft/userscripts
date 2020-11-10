@@ -5,7 +5,7 @@
     /* globals define, require, module, self */
     const
             name = 'player',
-            dependencies = ['utils', 'config', 'storage', 'isocode', 'Plyr', 'Subtitle', 'dash', 'Hls'];
+            dependencies = ['utils', 'config', 'storage', 'isocode', 'Plyr', 'Subtitle', 'dashjs', 'Hls'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -21,13 +21,14 @@
         };
         root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, isoCode, Plyr, Subtitle, dashjs, Hls){
+}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, isocode, Plyr, Subtitle, dashjs, Hls){
 
 
     const {doc, loadcss, sprintf, gettype, s, f, u, n, b, assert, Events, DataSet, html2element, Text2File, isPlainObject} = utils;
+    const {xStore, exStore} = storage;
     const cfg = config.get('Plyr');
-
-
+    let undef;
+    console.debug(isocode);
     const options = {
 
         captions: {active: false, language: 'auto', update: true},
@@ -265,7 +266,7 @@
             srclang = gettype(srclang, s) ? srclang : "und";
 
             let
-                    lang = isoCode(srclang).lang.split(';')[0].split(',')[0].trim(),
+                    lang = isocode(srclang).lang.split(';')[0].split(',')[0].trim(),
                     id = player.tracks.length,
                     el = doc.createElement('track'),
                     data = new DataSet(el);
@@ -371,7 +372,7 @@
                 this.data.set('src', newsource.src);
                 newsource.attach(newsource);
                 //store prefs
-
+                this.storage.set('quality', newsource.label);
             }
         }
 
@@ -452,6 +453,10 @@
                     enmerable: false, configurable: true, writable: true,
                     value: Object.assign({}, options)
                 },
+                storage: {
+                    enmerable: true, configurable: true, writable: false,
+                    value: new exStore(new xStore(localStorage), 'plyr')
+                },
                 sources: {
                     enmerable: false, configurable: true, writable: true,
                     value: []
@@ -509,6 +514,7 @@
                     player.trigger('player.ready');
                 },
                 qualitychange(e){
+
                     if (e.detail !== undef) {
                         if (player.currentSource === -1 && e.detail.init !== true) return;
                         position = video.currentTime;
@@ -702,18 +708,42 @@
                     this.root.querySelectorAll('button[data-plyr="quality"][value]').forEach(btn => {
                         btn.disabled = true;
                         if (this.sources.map(x => x.label).includes(btn.value)) btn.disabled = null;
-                        console.debug(btn);
                     });
+
+                    let
+                            quality = player.storage.get('quality') || null,
+                            index = player.sources.map(x => x.label).indexOf(quality);
+                    if (index === -1 && player.sources.length > 0) index = 0;
+
+                    if (index !== -1) {
+
+                        player.trigger('qualitychange', {
+                            detail: {
+                                quality: player.sources[index].label,
+                                plyr: player.plyr,
+                                init: true
+                            }
+                        });
+
+                    }
+
+                    console.debug(quality, index);
+
+                    console.debug(this.storage.get());
 
                     console.debug(player);
 
                 });
 
+                if (this.root.parentElement !== root) {
+                    root.innerHTML = "";
+                    root.appendChild(this.root);
+                }
 
-
-
-                if (this.root.parentElement !== root) root.appendChild(this.root);
-                if (this.plyr === null) this.plyr = new Plyr(this.video, this.options);
+                if (this.plyr === null) {
+                    console.debug(Plyr);
+                    this.plyr = new Plyr(this.video, this.options);
+                }
 
 
 
