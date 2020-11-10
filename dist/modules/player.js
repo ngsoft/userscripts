@@ -739,17 +739,18 @@
 
                 });
 
-                if (this.root.parentElement !== root) {
-                    root.innerHTML = "";
-                    root.appendChild(this.root);
-                }
-
-                if (this.plyr === null) {
-                    console.debug(Plyr);
-                    this.plyr = new Plyr(this.video, this.options);
-                }
-
-
+                prequire('dashjs')
+                        .then(ex => {
+                            dashjs = ex.dashjs;
+                            if (this.root.parentElement !== root) {
+                                root.innerHTML = "";
+                                root.appendChild(this.root);
+                            }
+                            if (this.plyr === null) {
+                                this.plyr = new Plyr(this.video, this.options);
+                            }
+                        })
+                        .catch(console.warn);
 
             }
 
@@ -758,22 +759,8 @@
 
     }
 
-    getReady.isReady = false;
-    getReady.one('ready', () => {
-        getReady.isReady = true
-    });
 
-
-    prequire('dashjs')
-            .then(ex => {
-                dashjs = ex.dashjs;
-                getReady.trigger('ready')
-            })
-            .catch(console.error);
-
-    console.debug(getReady, prequire);
-
-    // loadcss(sprintf(cfg.path, cfg.version) + '.css');
+    loadcss(sprintf(cfg.path, cfg.version) + '.css');
     loadcss(config.get('root') + 'css/player.css');
     return {PlyrPlayer, PlyrPlayerType, PlyrPlayerSource, dashjs, Hls, Plyr};
 }));
