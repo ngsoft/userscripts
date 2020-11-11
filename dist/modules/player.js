@@ -281,6 +281,23 @@
             return this.id === this.player.currentTrack;
         }
 
+        get textTrack(){
+            let track = this, tt;
+            let
+                    id = track.element.id,
+                    tts = this.player.video.textTracks;
+            for (let i = 0; i < tts.length; i++) {
+                let ctt = tts[i];
+                if (id === ctt.id) {
+                    tt = ctt;
+                    break;
+                }
+            }
+            return tt;
+        }
+
+
+
         constructor(player, src, srclang, label){
 
             assert(player instanceof PlyrPlayer, 'Invalid argument player.');
@@ -318,86 +335,54 @@
             el.setAttribute('lang', lang);
             el.setAttribute('srclang', srclang);
             el.setAttribute('id', "plyrtrack" + id);
-            // el.setAttribute('crossorigin', "");
-
-
+            el.setAttribute('data-src', src.href);
             Events(el, this);
-            this
-                    .on('load error', e => {
-
-                        //console.debug(e);
-
-
-                    })
-                    .on('loaded', e => {
-                        console.debug(e);
-                        if (gettype(this.vtt, s)) {
-                            el.src = URL.createObjectURL(new Blob([this.vtt], {type: "text/vtt"}));
-                        }
-
-                    });
-
-            this.load();
-
-
-            //  let orig = el.dispatchEvent;
-            /*el.dispatchEvent = function(...args){
-
-                console.debug(...args);
-                EventTarget.prototype.dispatchEvent.call(this, ...args);
-            };*/
-
-            el.src = src.href;
+            this.on('loaded', e => {
+                e.stopPropagation();
+                let tt = this.textTrack, cues = this.config.cues;
+                if (Array.isArray(cues) && cues.length > 0) {
+                    if (tt.cues.length !== cues.length) {
+                        cues.forEach(entry => tt.addCue(entry));
+                    }
+                }
+            });
         }
 
 
         load(src){
 
+            if (gettype(this.vtt, s)) return;
+
             if (src instanceof URL) src = src.href;
-            src = /^http/.test(src) ? src : this.src;
-            (new Request(src))
+            let url = /^http/.test(src) ? src : this.src;
+            (new Request(url))
                     .fetch()
                     .then(r => {
-                        console.debug(r);
+
                         let
                                 text = r.text,
                                 parsed = Subtitle.parse(text);
+
                         if (Array.isArray(parsed) && parsed.length > 0) {
+                            this.config.cues = parsed.map(entry => {
+                                return new VTTCue(entry.start / 1000, entry.end / 1000, entry.text);
+                            });
                             let vtt = Subtitle.stringifyVtt(parsed);
                             if (gettype(vtt, s) && vtt.length > 0) {
                                 this.config.vtt = vtt;
                                 this.trigger('loaded');
-
-                                // track.element.src = URL.createObjectURL(new Blob([vtt], {type: "text/vtt"}));
-
                             }
                         }
                     })
-                    .catch(console.warn);
-
-
-        }
-
-
-        attach(){
-
-            if (!gettype(this.vtt, n)) {
-
-
-
-
-
-            }
-
+                    .catch(err => {
+                        console.warn(err);
+                        if (gettype(src, u)) {
+                            src = "https://cors-anywhere.herokuapp.com/" + this.src;
+                            this.load(src);
+                        }
+                    });
 
         }
-
-        detach(){
-
-        }
-
-
-
     }
 
 
@@ -438,9 +423,9 @@
                     //this.tracks.forEach(track => track.element.remove());
                 }
                 this.data.set('src', newsource.src);
-                this.tracks.forEach(track => {
+                /*this.tracks.forEach(track => {
                     if (track.element.parentElement === null) this.video.appendChild(track.element);
-                });
+                });*/
                 newsource.attach(newsource);
 
                 //store prefs
@@ -495,21 +480,10 @@
         }
 
         get currentTextTrack(){
-            let track = this.currentTrack, tt;
+            let track = this.currentTrack;
             if (track instanceof PlyrPlayerCaption) {
-                let
-                        id = track.element.id,
-                        tts = this.video.textTracks;
-                for (let i = 0; i < tts.length; i++) {
-
-                    let ctt = tts[i];
-                    if (id === ctt.id) {
-                        tt = ctt;
-                        break;
-                    }
-                }
+                return track.textTrack;
             }
-            return tt;
 
         }
 
@@ -634,38 +608,15 @@
                     trackchange(e){
                         console.debug(e);
                         let {track} = e.detail;
-                        
-                        if(this.currentTextTrack.cues instanceof TextTrackCueList){
-                            console.debug(track.element.id, this.currentTextTrack.cues.length, this.currentTextTrack.cues);
+                        let cttcues = track.textTrack.cues;
+
+                        if (cttcues instanceof TextTrackCueList) {
+                            if (gettype(track.vtt, s)) {
+                                if (cttcues.length === 0) track.trigger('loaded');
+                            } else track.load();
                         }
 
-
-
-
-
-
-
-                        return;
-                        if (gettype(track.vtt, s)) {
-                            track.element.src = URL.createObjectURL(new Blob([track.vtt], {type: "text/vtt"}));
-                        } else {
-                            (new Request(track.src))
-                                    .fetch()
-                                    .then(r => {
-                                        let
-                                                text = r.text,
-                                                parsed = Subtitle.parse(text);
-                                        if (Array.isArray(parsed) && parsed.length > 0) {
-                                            let vtt = Subtitle.stringifyVtt(parsed);
-                                            if (gettype(vtt, s) && vtt.length > 0) {
-                                                track.config.vtt = vtt;
-                                                track.element.src = URL.createObjectURL(new Blob([vtt], {type: "text/vtt"}));
-
-                                            }
-                                        }
-                                    })
-                                    .catch(console.warn);
-                        }
+                        //console.debug(track.textTrack);
                     }
                 },
 
@@ -823,7 +774,7 @@
             if (/^http/.test(src) || src instanceof URL) {
                 let track = new PlyrPlayerCaption(this, src, srclang, label);
                 this.tracks.push(track);
-                //this.video.appendChild(track.element);
+                this.video.appendChild(track.element);
                 return true;
             }
             return false;
@@ -865,10 +816,7 @@
                         });
 
                     }
-
-                    console.debug(quality, index);
-
-                    console.debug(this.storage.get());
+                    
 
                     console.debug(player);
 

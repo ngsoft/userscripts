@@ -5,6 +5,16 @@
  * https://github.com/requirejs/requirejs/blob/latest/require.js
  * @link https://github.com/ngsoft/userscripts/blob/master/dist/tools.js
  */
+
+(function(window, document){
+
+    window.executeGMCode = function(codeToExecute){
+        return window.eval(codeToExecute);
+    };
+
+
+}((typeof unsafeWindow !== 'undefined' ? unsafeWindow : window), (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).document));
+
 (function(global){
 
     /* globals define, require, module, self, requirejs, unsafeWindow, GM_info, GM */
@@ -658,7 +668,43 @@
 
     if (!cache.enabled) {
 
-        const load = requirejs.load;
+        console.debug(executeGMCode);
+
+        const
+                load = requirejs.load,
+                sourceUrlRegExp = /\/\/@\s+sourceURL=/,
+                sourceMappingUrlRegExp = /(\/\/#\s+sourceMappingURL=[^\n\r]*)/g,
+                transform = function(content, url){
+                    let sourceMappingUrl = content.match(sourceMappingUrlRegExp);
+                    if (sourceMappingUrl) {
+                        content = content.replace(sourceMappingUrlRegExp, '');
+                        let
+                                smurl = '//# sourceMappingURL=',
+                                newSource = sourceMappingUrl[0],
+                                matches = newSource.match(/=(.*)$/);
+                        if (matches !== null) {
+                            let file = matches[1];
+                            if (file.indexOf('//') === 0) {
+                                file = url.protocol + file;
+                            } else if (file.indexOf('/') === 0) {
+                                file = url.origin + file;
+                            } else if (!(/^https?:\/\//.test(file))) {
+                                file = url.origin + url.pathname.substr(0, url.pathname.lastIndexOf('/') + 1) + file;
+                            }
+                            smurl += file;
+                            console.debug(file);
+                            content += '\n' + smurl;
+                        }
+
+                    }
+                    if (!sourceUrlRegExp.test(content)) {
+                        sourceUrl = url.href;
+                        content += "\r\n//# sourceURL=" + sourceUrl;
+                    }
+
+
+                    return content;
+                };
 
         //Code fast load using localStorage Cache set @usecache in userscript header
         requirejs.load = function(context, moduleName, url){
@@ -675,14 +721,18 @@
                 }
             }
             if (hit === false) {
-                (new Request(url.href)).fetch()
+                (new Request(url.href, false, false)).fetch()
                         .then(response => {
-                            console.debug(moduleName, response.status);
+                            // console.debug(moduleName, response.status);
                             let script = response.text;
                             if (typeof script === s && script.length > 0) {
+                                script = transform(script, url);
                                 let blob = new Blob([response.text], {type: "text/javascript"});
                                 if (cache.enabled) cache.saveItem(moduleName, response.text);
-                                return load(context, moduleName, URL.createObjectURL(blob));
+                                //return load(context, moduleName, URL.createObjectURL(blob));
+                                executeGMCode(script);
+                                context.completeLoad(moduleName);
+                                return;
                             }
                             throw new Error('Fetch Failed');
 
