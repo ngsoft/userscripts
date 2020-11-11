@@ -869,6 +869,97 @@
     }
 
 
+    class PlyrToolbar {
+
+        get root(){
+            return this.elements.root;
+        }
+
+        get title(){
+            return this.elements.title.innerHTML;
+        }
+        set title(title){
+            this.elements.title.innerHTML = "";
+            if (gettype(title, s)) this.elements.title.innerHTML = title;
+            else if (title instanceof Element) {
+                this.elements.title.innerHTML = "";
+                this.elements.title.appendChild(title);
+            } else if (title === null) {
+                this.elements.title.innerHTML = "";
+            }
+        }
+
+
+        constructor(){
+
+            Object.defineProperties(this, {
+                elements: {
+                    enmerable: false, configurable: true, writable: true,
+                    value: {
+                        root: '<div class="plyr-toolbar"/>',
+                        title: '<div class="plyr-title" data-placement="left"/>',
+                        areas: {
+                            left: '<div class="plyr-toolbar-left"/>',
+                            center: '<div class="plyr-toolbar-left"/>',
+                            right: '<div class="plyr-toolbar-left"/>'
+                        }
+                    }
+                },
+                data: {
+                    enmerable: false, configurable: true, writable: true,
+                    value: null
+                },
+                options: {
+                    enmerable: false, configurable: true, writable: true,
+                    value: Object.assign({}, options)
+                },
+                storage: {
+                    enmerable: true, configurable: true, writable: false,
+                    value: new exStore(new xStore(localStorage), 'plyr')
+                },
+                player: {
+                    enmerable: false, configurable: true, writable: true,
+                    value: null
+                },
+                isReady: {
+                    enmerable: true, configurable: true, writable: true,
+                    value: false
+                }
+            });
+
+            const H2EL = function(obj){
+
+                if (isPlainObject(obj)) {
+                    Object.keys(obj).forEach(key => {
+                        if (gettype(obj[key], s)) obj[key] = html2element(obj[key]);
+                        else if (isPlainObject(obj[key])) H22L(obj[key]);
+                    });
+                }
+
+
+            };
+
+
+            H2EL(this.elements);
+
+
+
+
+            //this.elements.toolbar = html2element('<div class="plyr-toolbar hidden"><span class="plyr-title"></span></div>');
+            // this.elements.title = this.elements.toolbar.querySelector('.plyr-title');
+
+
+
+        }
+
+
+
+
+
+
+    }
+
+
     loadcss(sprintf(cfg.path, cfg.version) + '.css');
     loadcss(config.get('root') + 'css/player.css');
     return {PlyrPlayer, PlyrPlayerType, PlyrPlayerSource, PlyrPlayerCaption};
