@@ -308,34 +308,6 @@
 
         }
 
-        exec(code){
-
-            if (typeof code === s && code.length > 0) {
-                let
-                        el = doc.createElement("script"),
-                        txt = doc.createTextNode(code);
-                el.setAttribute("type", "text/javascript");
-                el.appendChild(txt);
-                doc.head.appendChild(el);
-               return true;
-            }
-            return false;
-        }
-        execOld(code){
-
-
-
-            try {
-                /*jslint evil: true */
-                eval(code);
-                return true;
-            } catch (e) {
-                console.error(e.message);
-            }
-            return false;
-
-        }
-
         constructor(){
             if (this.supported) {
 
