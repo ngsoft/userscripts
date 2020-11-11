@@ -442,6 +442,7 @@
          */
         constructor(url, headers, timeout, cookies, async){
 
+            if (url instanceof URL) url = url.href;
             if (typeof url !== s) throw new Error('Invalid Argument url');
 
             if (typeof headers === n) {
@@ -531,7 +532,7 @@
                                 statusText: xhr.statusText,
                                 url: xhr.responseURL
                             };
-                    if (response.status !== 200) {
+                    if (response.status > 399 && response.status < 600) {
                         response.error = new Error('Invalid Status Code');
                         type = 'error';
                     }
@@ -628,10 +629,8 @@
                 main: 'index'
 
             }
-        ],
-        shim: {
-            dashjs: {exports: 'dashjs'}
-        }
+        ]
+
 
     });
 
@@ -642,16 +641,7 @@
             .addPath('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@%s/dist/hls.min', '0.14.16', {
                 enableWebVTT: false, enableCEA708Captions: false
             })
-            .addPath('dashjs', 'https://cdn.dashjs.org/v%s/dash.all.min', '3.1.3');
-    
-    config
-            .addSource('dashjs', 'https://cdn.dashjs.org/v3.1.3/dash.all.min.js')
-            .addSource('Plyr',[
-                'https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.js',
-                'https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css',
-            ] )
-            .addSource('Hls', 'https://cdn.jsdelivr.net/npm/hls.js@0.14.16/dist/hls.min.js')
-            .addSource('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js');
+            .addSource('dashjs', 'https://cdn.dashjs.org/v3.1.3/dash.all.min.js');
 
 
     let define = global.define;
@@ -663,8 +653,11 @@
         return Request;
     });
 
+    define('cache', cache);
 
-    if (cache.enabled) {
+
+    if (!cache.enabled) {
+
         const load = requirejs.load;
 
         //Code fast load using localStorage Cache set @usecache in userscript header
@@ -675,7 +668,7 @@
             if (cache.enabled) {
                 url.searchParams.set('tt', +new Date()); // get a fresh version
                 let contents = cache.loadItem(moduleName);
-                if (contents !== null) {
+                if(typeof contents ===s && contents.length > 0){
                     let blob = new Blob([contents], {type: "text/javascript"});
                     load(context, moduleName, URL.createObjectURL(blob));
                     hit = true;
@@ -684,9 +677,15 @@
             if (hit === false) {
                 (new Request(url.href)).fetch()
                         .then(response => {
-                            let blob = new Blob([response.text], {type: "text/javascript"});
-                            if (cache.enabled) cache.saveItem(moduleName, response.text);
-                            load(context, moduleName, URL.createObjectURL(blob));
+                            console.debug(moduleName, response.status);
+                            let script = response.text;
+                            if (typeof script === s && script.length > 0) {
+                                let blob = new Blob([response.text], {type: "text/javascript"});
+                                if (cache.enabled) cache.saveItem(moduleName, response.text);
+                                return load(context, moduleName, URL.createObjectURL(blob));
+                            }
+                            throw new Error('Fetch Failed');
+
                         })
                         .catch(response => {
                             let message = ['Cannot fetch', moduleName, 'module using xhr, fallback to regular method.'];

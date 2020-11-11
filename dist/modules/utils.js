@@ -323,7 +323,7 @@
          * Resolves when body is created
          * @returns {Promise}
          */
-        get body(){
+        static get body(){
             return new Promise(resolve => {
 
                 if (doc.body === null) {
@@ -352,7 +352,7 @@
          * Resolves when page is loading DOMContentLoaded
          * @returns {Promise}
          */
-        get load(){
+        static get load(){
             return new Promise(resolve => {
                 if (doc.readyState === "loading") {
                     doc.addEventListener("DOMContentLoaded", function(){
@@ -368,7 +368,7 @@
          * Resolves when page is completely loaded
          * @returns {Promise}
          */
-        get loaded(){
+        static get loaded(){
             return new Promise(resolve => {
                 if (doc.readyState !== "complete") {
                     addEventListener("load", function(){

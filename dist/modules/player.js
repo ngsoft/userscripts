@@ -6,8 +6,10 @@
     const
             name = 'player',
             dependencies = [
+                'require',
 
-                'utils', 'config', 'storage', 'isocode', 'Plyr', 'Subtitle', 'Hls'
+                'utils', 'config', 'storage', 'isocode', 'Request',
+                        'Plyr', 'Subtitle', 'Hls'
                         //, 'dashjs'
             ];
     if (typeof define === 'function' && define.amd) {
@@ -25,15 +27,30 @@
         };
         root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(utils, config, storage, isocode, Plyr, Subtitle, Hls){
+}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(require, utils, config, storage){
 
 
-    const {doc, loadcss, sprintf, gettype, s, f, u, n, b, assert, Events, DataSet, html2element, Text2File, isPlainObject, prequire} = utils;
+    const
+            Request = require('Request'),
+            isocode = require('isocode'),
+            Subtitle = require('Subtitle'),
+            Plyr = require('Plyr'),
+            Hls = require('Hls');
+
+
+
+    const {
+        doc, loadcss, sprintf, gettype,
+        s, f, u, n, b, assert, Events,
+        DataSet, html2element, Text2File,
+        isPlainObject, prequire, sanitizeFileName
+        } = utils;
     const {xStore, exStore} = storage;
     const cfg = config.get('Plyr');
 
     let undef, dashjs;
     //, Plyr, Subtitle, Hls;
+
 
     const options = {
 
@@ -204,7 +221,7 @@
 
             Object.defineProperties(this, {
                 element: {
-                    enmerable: true, configurable: true, writable: false,
+                    enmerable: true, configurable: true, writable: true,
                     value: doc.createElement('source')
                 },
                 config: {
@@ -256,7 +273,7 @@
         }
 
         get vtt(){
-            return this.element.text;
+            return this.config.vtt;
         }
 
 
@@ -281,13 +298,13 @@
 
             Object.defineProperties(this, {
                 element: {
-                    enmerable: true, configurable: true, writable: false,
+                    enmerable: true, configurable: true, writable: true,
                     value: el
                 },
                 config: {
                     enmerable: false, configurable: true, writable: true,
                     value: {
-                        src, lang, srclang, label, id
+                        src, lang, srclang, label, id, vtt: null
                     }
                 },
                 player: {
@@ -301,41 +318,85 @@
             el.setAttribute('lang', lang);
             el.setAttribute('srclang', srclang);
             el.setAttribute('id', "plyrtrack" + id);
+            // el.setAttribute('crossorigin', "");
 
-            /*el.onload = el.onerror = e => {
-                let
-                        target = e.target,
-                        src = target.src;
-                if (/^blob/.test(src)) return;
-                if (gettype(el.text, s)) return;
-                if (data.get('loading') === true) return;
-                data.set('loading', true);
-                if (e.type === "error") src = "https://cors-anywhere.herokuapp.com/" + src;
-                (new Request(src))
-                        .fetch()
-                        .then(r => {
-                            let
-                                    text = r.text,
-                                    parsed = Subtitle.parse(text);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                                let vtt = Subtitle.stringifyVtt(parsed);
-                                if (gettype(vtt, s) && vtt.length > 0) {
-                                    Object.defineProperty(el, 'text', {
-                                        configurable: true, value: vtt
-                                    });
-                                    data.set({
-                                        loading: null,
-                                        src: this.src
-                                    });
-                                    target.src = URL.createObjectURL(new Blob([vtt], {type: "text/vtt"}));
-                                }
-                            }
-                        })
-                        .catch(console.warn);
+
+            Events(el, this);
+            this
+                    .on('load error', e => {
+
+                        //console.debug(e);
+
+
+                    })
+                    .on('loaded', e => {
+                        console.debug(e);
+                        if (gettype(this.vtt, s)) {
+                            el.src = URL.createObjectURL(new Blob([this.vtt], {type: "text/vtt"}));
+                        }
+
+                    });
+
+            this.load();
+
+
+            //  let orig = el.dispatchEvent;
+            /*el.dispatchEvent = function(...args){
+
+                console.debug(...args);
+                EventTarget.prototype.dispatchEvent.call(this, ...args);
             };*/
 
-            el.setAttribute('src', src);
+            el.src = src.href;
         }
+
+
+        load(src){
+
+            if (src instanceof URL) src = src.href;
+            src = /^http/.test(src) ? src : this.src;
+            (new Request(src))
+                    .fetch()
+                    .then(r => {
+                        console.debug(r);
+                        let
+                                text = r.text,
+                                parsed = Subtitle.parse(text);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            let vtt = Subtitle.stringifyVtt(parsed);
+                            if (gettype(vtt, s) && vtt.length > 0) {
+                                this.config.vtt = vtt;
+                                this.trigger('loaded');
+
+                                // track.element.src = URL.createObjectURL(new Blob([vtt], {type: "text/vtt"}));
+
+                            }
+                        }
+                    })
+                    .catch(console.warn);
+
+
+        }
+
+
+        attach(){
+
+            if (!gettype(this.vtt, n)) {
+
+
+
+
+
+            }
+
+
+        }
+
+        detach(){
+
+        }
+
+
 
     }
 
@@ -368,15 +429,20 @@
             });
 
             if (gettype(index, 'int') && this.sources[index] instanceof PlyrPlayerSource) {
-
                 if (current === index) return;
+
                 let newsource = this.sources[index];
                 if (current !== -1) {
                     let source = this.sources[current];
                     source.detach(source);
+                    //this.tracks.forEach(track => track.element.remove());
                 }
                 this.data.set('src', newsource.src);
+                this.tracks.forEach(track => {
+                    if (track.element.parentElement === null) this.video.appendChild(track.element);
+                });
                 newsource.attach(newsource);
+
                 //store prefs
                 this.storage.set('quality', newsource.label);
             }
@@ -426,6 +492,25 @@
                 if (track instanceof PlyrPlayerCaption) return track;
             }
             return null;
+        }
+
+        get currentTextTrack(){
+            let track = this.currentTrack, tt;
+            if (track instanceof PlyrPlayerCaption) {
+                let
+                        id = track.element.id,
+                        tts = this.video.textTracks;
+                for (let i = 0; i < tts.length; i++) {
+
+                    let ctt = tts[i];
+                    if (id === ctt.id) {
+                        tt = ctt;
+                        break;
+                    }
+                }
+            }
+            return tt;
+
         }
 
         get ready(){
@@ -501,7 +586,7 @@
             const
                     player = this,
                     root = this.elements.root = html2element('<div class="plyr-player"/>'),
-                    video = this.elements.video = html2element('<video controls crossorigin src="" preload="none" tabindex="-1" class="plyrvideo"/>'),
+                    video = this.elements.video = html2element('<video controls crossorigin="" src="" preload="none" tabindex="-1" class="plyrvideo"/>'),
                     data = this.data = new DataSet(video);
 
             root.appendChild(video);
@@ -549,8 +634,37 @@
                     trackchange(e){
                         console.debug(e);
                         let {track} = e.detail;
+                        
+                        if(this.currentTextTrack.cues instanceof TextTrackCueList){
+                            console.debug(track.element.id, this.currentTextTrack.cues.length, this.currentTextTrack.cues);
+                        }
+
+
+
+
+
+
+
+                        return;
                         if (gettype(track.vtt, s)) {
                             track.element.src = URL.createObjectURL(new Blob([track.vtt], {type: "text/vtt"}));
+                        } else {
+                            (new Request(track.src))
+                                    .fetch()
+                                    .then(r => {
+                                        let
+                                                text = r.text,
+                                                parsed = Subtitle.parse(text);
+                                        if (Array.isArray(parsed) && parsed.length > 0) {
+                                            let vtt = Subtitle.stringifyVtt(parsed);
+                                            if (gettype(vtt, s) && vtt.length > 0) {
+                                                track.config.vtt = vtt;
+                                                track.element.src = URL.createObjectURL(new Blob([vtt], {type: "text/vtt"}));
+
+                                            }
+                                        }
+                                    })
+                                    .catch(console.warn);
                         }
                     }
                 },
@@ -709,7 +823,7 @@
             if (/^http/.test(src) || src instanceof URL) {
                 let track = new PlyrPlayerCaption(this, src, srclang, label);
                 this.tracks.push(track);
-                this.video.appendChild(track.element);
+                //this.video.appendChild(track.element);
                 return true;
             }
             return false;

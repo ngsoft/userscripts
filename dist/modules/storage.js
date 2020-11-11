@@ -319,25 +319,23 @@
         }
 
         has(key){
-            let obj = this.datastore.get(this.key);
-            if (!isPlainObject(obj)) obj = {};
-            this.storage = obj;//sync data
-            return super.has(key);
+            return this.get(key) !== undef;
         }
 
         set(key, val){
+            this.get();
             super.set(key, val);
             this.datastore.set(this.key, this.storage);//sync data
             return this;
         }
         remove(key){
+            this.get();
             super.remove(key);
             this.datastore.set(this.key, this.storage);//sync data
             return this;
         }
         clear(){
-            super.clear();
-            this.datastore.set(this.key, this.storage);//sync data
+            this.datastore.set(this.key, {});//sync data
             return this;
         }
 
