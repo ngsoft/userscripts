@@ -9,7 +9,17 @@
 (function(window, document){
 
     window.executeGMCode = function(codeToExecute){
-        return window.eval(codeToExecute);
+        
+        try {
+            /*jslint evil: true */
+            window.eval(codeToExecute);
+            return true;
+        } catch (e) {
+            console.error(e);
+        }
+        return false;
+        
+
     };
 
 
@@ -666,9 +676,8 @@
     define('cache', cache);
 
 
-    if (!cache.enabled) {
+    if (cache.supported) {
 
-        console.debug(executeGMCode);
 
         const
                 load = requirejs.load,
@@ -692,7 +701,6 @@
                                 file = url.origin + url.pathname.substr(0, url.pathname.lastIndexOf('/') + 1) + file;
                             }
                             smurl += file;
-                            console.debug(file);
                             content += '\n' + smurl;
                         }
 
@@ -714,24 +722,34 @@
             if (cache.enabled) {
                 url.searchParams.set('tt', +new Date()); // get a fresh version
                 let contents = cache.loadItem(moduleName);
-                if(typeof contents ===s && contents.length > 0){
-                    let blob = new Blob([contents], {type: "text/javascript"});
-                    load(context, moduleName, URL.createObjectURL(blob));
+                if (typeof contents === s && contents.length > 0) {
+                    executeGMCode(script);
+                    context.completeLoad(moduleName);
+                    //let blob = new Blob([contents], {type: "text/javascript"});
+                    //load(context, moduleName, URL.createObjectURL(blob));
                     hit = true;
                 }
             }
             if (hit === false) {
-                (new Request(url.href, false, false)).fetch()
+
+                (new Request(url.href, false, false))
+                        .fetch()
                         .then(response => {
-                            // console.debug(moduleName, response.status);
+                            console.debug(moduleName, response.status);
                             let script = response.text;
                             if (typeof script === s && script.length > 0) {
+
                                 script = transform(script, url);
-                                let blob = new Blob([response.text], {type: "text/javascript"});
+                                //let blob = new Blob([script], {type: "text/javascript"});
                                 if (cache.enabled) cache.saveItem(moduleName, response.text);
                                 //return load(context, moduleName, URL.createObjectURL(blob));
+
+                                console.debug(context.defined[moduleName]);
                                 executeGMCode(script);
+                                console.debug(context.defined[moduleName]);
+                                console.debug(context);
                                 context.completeLoad(moduleName);
+                                console.debug(context.defined[moduleName]);
                                 return;
                             }
                             throw new Error('Fetch Failed');

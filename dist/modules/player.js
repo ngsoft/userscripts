@@ -273,7 +273,23 @@
         }
 
         get vtt(){
-            return this.config.vtt;
+            let result;
+            if (Array.isArray(this.config.subtitles) && this.config.subtitles.length > 0) {
+                result = Subtitle.stringifyVtt(this.config.subtitles);
+            }
+            return result;
+        }
+
+        get srt(){
+            let result;
+            if (Array.isArray(this.config.subtitles) && this.config.subtitles.length > 0) {
+                result = Subtitle.stringify(this.config.subtitles);
+            }
+            return result;
+        }
+
+        get subtitles(){
+            return this.config.subtitles;
         }
 
 
@@ -339,10 +355,12 @@
             Events(el, this);
             this.on('loaded', e => {
                 e.stopPropagation();
-                let tt = this.textTrack, cues = this.config.cues;
-                if (Array.isArray(cues) && cues.length > 0) {
-                    if (tt.cues.length !== cues.length) {
-                        cues.forEach(entry => tt.addCue(entry));
+                let tt = this.textTrack, subs = this.config.subtitles;
+                if (Array.isArray(subs) && subs.length > 0) {
+                    if (tt.cues.length !== subs.length) {
+                        subs
+                                .map(entry => new VTTCue(entry.start / 1000, entry.end / 1000, entry.text))
+                                .forEach(entry => tt.addCue(entry));
                     }
                 }
             });
@@ -364,14 +382,8 @@
                                 parsed = Subtitle.parse(text);
 
                         if (Array.isArray(parsed) && parsed.length > 0) {
-                            this.config.cues = parsed.map(entry => {
-                                return new VTTCue(entry.start / 1000, entry.end / 1000, entry.text);
-                            });
-                            let vtt = Subtitle.stringifyVtt(parsed);
-                            if (gettype(vtt, s) && vtt.length > 0) {
-                                this.config.vtt = vtt;
-                                this.trigger('loaded');
-                            }
+                            this.config.subtitles = parsed;
+                            this.trigger('loaded');
                         }
                     })
                     .catch(err => {
@@ -423,9 +435,6 @@
                     //this.tracks.forEach(track => track.element.remove());
                 }
                 this.data.set('src', newsource.src);
-                /*this.tracks.forEach(track => {
-                    if (track.element.parentElement === null) this.video.appendChild(track.element);
-                });*/
                 newsource.attach(newsource);
 
                 //store prefs
@@ -451,16 +460,14 @@
             if (gettype(title, s)) {
                 this.elements.title.innerHTML = title;
                 this.data.set('title', title);
-                this.elements.toolbar.classList.remove('hidden');
             } else if (title === null) {
                 this.elements.title.innerHTML = "";
                 this.data.remove('title');
-                this.elements.toolbar.classList.add('hidden');
             }
         }
 
         get title(){
-            return this.data('title') || "";
+            return this.data.get('title') || "";
         }
 
         set currentTime(float){
@@ -484,7 +491,6 @@
             if (track instanceof PlyrPlayerCaption) {
                 return track.textTrack;
             }
-
         }
 
         get ready(){
@@ -577,6 +583,8 @@
                     return false;
                 },
                 quality(e){
+                    e.preventDefault();
+                    e.stopPropagation();
                     let target = e.target.closest('button');
                     player.trigger('qualitychange', {
                         detail: {
@@ -606,7 +614,6 @@
 
                 player: {
                     trackchange(e){
-                        console.debug(e);
                         let {track} = e.detail;
                         let cttcues = track.textTrack.cues;
 
@@ -615,8 +622,6 @@
                                 if (cttcues.length === 0) track.trigger('loaded');
                             } else track.load();
                         }
-
-                        //console.debug(track.textTrack);
                     }
                 },
 
@@ -669,15 +674,19 @@
                     player.elements.toolbar.hidden = true;
                 },
                 controlsshown(){
+                    if (player.title) this.elements.toolbar.classList.remove('hidden');
+                    else this.elements.toolbar.classList.add('hidden');
                     player.elements.toolbar.hidden = null;
                 },
                 download(e){
                     let track = player.currentTrack;
+                    console.debug(track);
                     if (track instanceof PlyrPlayerCaption && gettype(track.vtt, s)) {
                         let file = data.get('filename') || data.get('title') || "subtitles";
                         file = sanitizeFileName(file, ' ');
                         file += '.' + track.srclang + '.srt';
-                        Text2File(track.text, filename);
+                        console.debug(file);
+                        //Text2File(track.vtt, file);
                     }
                 }
             };
@@ -784,7 +793,20 @@
 
         reset(){
 
-
+            if (!this.video.paused) {
+                this.video.pause();
+            }
+            if (this.currentTime > 0) this.currentTime = 0;
+            let source = this.sources[this.currentSource];
+            if (source instanceof PlyrPlayerSource) {
+                source.detach(source);
+            }
+            this.title = null;
+            this.data.clear();
+            this.video.poster = null;
+            this.tracks = [];
+            this.sources = [];
+            this.video.innerHTML = "";
         }
 
 
@@ -799,6 +821,8 @@
                         btn.disabled = true;
                         if (this.sources.map(x => x.label).includes(btn.value)) btn.disabled = null;
                     });
+
+                    this.video.parentElement.appendChild(this.elements.toolbar);
 
                     let
                             quality = player.storage.get('quality') || null,
