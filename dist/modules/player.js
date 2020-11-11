@@ -1189,10 +1189,8 @@
             });
 
             button.title = title;
-
-
-
             this.elements.areas.right.insertBefore(button, this.elements.areas.right.firstChildElement);
+            return button;
         }
 
         /**
