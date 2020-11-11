@@ -931,7 +931,7 @@
                                 if (r.text && r.text.length > 0) {
                                     if (cache.enabled === true) cache.saveItem(key, r.text);
                                     elem.innerHTML = r.text;
-                                    this.player.trigger(etype);
+                                    this.trigger(etype);
                                 } else throw new Error('Invalid Response');
 
                             })
@@ -940,7 +940,7 @@
                                 PlyrToolbar.loading = false;
                             });
 
-                } else this.player.trigger(etype);
+                } else this.trigger(etype);
 
             }
 
@@ -980,7 +980,7 @@
             return new Promise(resolve => {
 
                 if (!this.isReady) {
-                    this.player.on('toolbar.ready', () => {
+                    this.on('toolbar.ready', () => {
                         resolve(this);
                     });
 
@@ -998,7 +998,7 @@
                 elements: {
                     enmerable: false, configurable: true, writable: true,
                     value: {
-                        root: '<div class="plyr-toolbar"/>',
+                        root: '<div class="plyr-toolbar hidden"/>',
                         title: '<span class="plyr-title"/>',
                         icon: '<svg><use xlink:href="#gm-film"></use></svg>',
                         areas: {
@@ -1065,11 +1065,7 @@
 
             const
                     listeners = {
-                        toolbar: {
-                            ready(){
-                                this.isReady = true;
-                            }
-                        },
+
 
                         player: {
                             title(e){
@@ -1085,9 +1081,13 @@
 
                     },
                     internals = {
-
+                        toolbar: {
+                            ready(){
+                                this.isReady = true;
+                                this.root.classList.remove('hidden');
+                            }
+                        },
                         click(e){
-                            console.debug(e);
                             let target = e.target.closest('.plyr-toolbar-btn');
                             if (target instanceof Element) {
                                 e.preventDefault();
@@ -1099,7 +1099,6 @@
                             }
                         },
                         contextmenu(e){
-                            console.debug(e);
                             let target = e.target.closest('.plyr-toolbar-btn');
                             if (target instanceof Element) {
                                 e.preventDefault();
@@ -1153,11 +1152,11 @@
             assert(/^\w+$/.test(name), 'Invalid Argument name.');
             assert(gettype(title, s), 'Invalid Argument title.');
             assert(Object.keys(this.icons).includes(icon), 'Invalid Argument icon (available: %s).', Object.keys(this.icons).join(', '));
-            assert(gettype(onclick, f), 'Invalid Argument onClick.');
+            assert(gettype(onClick, f), 'Invalid Argument onClick.');
 
             let
                     button = html2element('<span class="plyr-toolbar-btn"/>'),
-                    icon_el = html2element(sprintf('<svg><use xlink:href="%d"></use></svg>', this.icons[icon])),
+                    icon_el = html2element(sprintf('<svg><use xlink:href="%s"></use></svg>', this.icons[icon])),
                     title_el = doc.createElement('span');
 
 
@@ -1167,9 +1166,26 @@
             button.appendChild(title_el);
             button.appendChild(icon_el);
             this.elements.buttons[name] = button;
-            this.listeners.buttons.click[name] = onclick;
+            this.listeners.buttons.click[name] = onClick;
             if (gettype(onContext)) this.listeners.buttons.contextmenu[name] = onContext;
-            this.elements.area.right.insertBefore(button, this.elements.area.firstChildElement);
+            this.elements.areas.right.insertBefore(button, this.elements.areas.right.firstChildElement);
+        }
+
+        /**
+         * Removes a button from the toolbar
+         * @param {string} name
+         */
+        removeButton(name){
+            assert(/^\w+$/.test(name), 'Invalid Argument name.');
+
+            if (this.elements.buttons[name] instanceof Element) {
+                this.elements.buttons[name].remove();
+                ['click', 'contextmenu'].forEach(type => {
+                    if (gettype(this.listeners.buttons[type][name], f)) delete this.listeners.buttons[type][name];
+                });
+                delete this.elements.buttons[name];
+            }
+
         }
 
 
