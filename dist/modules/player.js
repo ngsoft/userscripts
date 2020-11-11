@@ -779,6 +779,9 @@
 
                     }
             );
+
+            this.toolbar = new PlyrToolbar(this);
+
         }
 
 
@@ -843,7 +846,6 @@
 
                 this.ready.then(player => {
 
-                    if (this.toolbar === null) this.toolbar = new PlyrToolbar(this);
 
                     this.root.querySelectorAll('button[data-plyr="quality"][value]').forEach(btn => {
                         btn.disabled = true;
@@ -987,9 +989,6 @@
             });
         }
 
-
-
-
         constructor(player){
 
 
@@ -1059,14 +1058,10 @@
             this.elements.areas.left.appendChild(this.elements.buttons.title);
             this.root.appendChild(this.elements.areas.left);
             this.root.appendChild(this.elements.areas.right);
-            player.video.parentElement.appendChild(this.root);
 
             Events(this.root, this);
 
             this.loadSprite();
-
-            this.title = data.get('title');
-
 
             const
                     listeners = {
@@ -1137,7 +1132,12 @@
             deep(this, internals);
             this.loadSprite();
 
-            //console.debug(html2element('<svg><use xlink:href="#gm-film"></use></svg>'));
+
+            player.ready.then(() => {
+                player.video.parentElement.appendChild(this.root);
+                this.title = data.get('title');
+            });
+
 
         }
 
@@ -1162,14 +1162,14 @@
 
 
             button.dataset.name = name;
+            button.title = title;
             title_el.innerHTML = title;
             button.appendChild(title_el);
             button.appendChild(icon_el);
             this.elements.buttons[name] = button;
-            this.elements.area.right.appendChild(button);
             this.listeners.buttons.click[name] = onclick;
             if (gettype(onContext)) this.listeners.buttons.contextmenu[name] = onContext;
-
+            this.elements.area.right.insertBefore(button, this.elements.area.firstChildElement);
         }
 
 
