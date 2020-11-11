@@ -14,15 +14,41 @@
 .plyr-toolbar{
     position: absolute; top: 0 ; left: 0 ; right: 0;padding: 0; margin: 0;
     background: linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));z-index: 9999;
-    transition: opacity .4s ease-in-out,transform .4s ease-in-out;
-    text-align: center;font-size: 16px; color:#FFF;line-height: 1.5;text-decoration: none;
+    transition: opacity .4s ease-in-out,transform .4s ease-in-out;text-decoration: none;
+    text-align: center;font-size: 24px; color:#FFF;line-height: 1.2;
 }
-.plyr-toolbar *{
-    text-align: center;font-size: 16px; color:#FFF;line-height: 1.5;text-decoration: none;cursor: pointer;
-    background: linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));
-    transition: opacity .4s ease-in-out,transform .4s ease-in-out;
+
+.plyr-toolbar{
+    display: flex; margin: 0;padding: 0;font-family: "Noto Sans", Arial, Helvetica, sans-serif;
+    text-rendering: optimizeLegibility;
+    
 }
-.plyr-toolbar > *:hover{transform: scale(1.1);}
+.plyr-toolbar-left,.plyr-toolbar-right {
+    display: flex;
+    width: 50%;margin: 0;padding: 32px;
+    
+}
+
+.plyr-toolbar-btn{
+    cursor: pointer;;box-sizing: border-box;
+    transition: all 0.2s ease-out 0s;
+    font-weight: 700;line-height: 1; text-rendering: optimizeLegibility;
+}
+
+
+.plyr-toolbar-btn svg{
+    height: 32px; width: 32px; margin: 0 16px;
+}
+.plyr-toolbar-left svg{
+    float: left;
+    
+}
+.plyr-toolbar-right svg{
+    float: right;
+    
+}
+
+.plyr-toolbar > plyr-toolbar-btn:hover {transform: scale(1.1);font-size: 40px;}
 
 
 @media (min-width: 768px) {

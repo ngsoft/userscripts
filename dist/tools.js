@@ -94,7 +94,15 @@
     let usecache = headers.usecache === true;
     //dev mode local file with FF60ESR @dev    
     if (dev === true) root = "http://127.0.0.1:8092/dist";
-    root += '/modules/';
+
+    let paths = {
+        root: root + '/',
+        modules: root + '/modules/',
+        images: root + '/img/',
+        styles: root + '/css/'
+    };
+
+    root = paths.root;
 
 
 
@@ -145,6 +153,12 @@
      */
     function isPlainObject(v){
         return v instanceof Object && Object.getPrototypeOf(v) === Object.prototype;
+    }
+
+
+    // Get a nested value in an object
+    function getDeep(object, path){
+        return path.split('.').reduce((obj, key) => obj && obj[key], object);
     }
 
 
@@ -239,15 +253,25 @@
 
     class Cache {
 
+        static expiresAt(time){
+            if (typeof time === n) time += this.ttl;
+            else time = 0;
+            return time;
+        }
+
         get entries(){
-            let entries = localStorage.getItem(this.prefix + 'CacheEntries');
+            let entries;
+            if (this.supported) entries = localStorage.getItem(this.prefix + 'CacheEntries');
             if (typeof entries === s) entries = JSON.parse(entries);
             else entries = {};
             return entries;
         }
         set entries(entries){
-            if (this.enabled) localStorage.setItem(this.prefix + 'CacheEntries', JSON.stringify(entries));
-            else localStorage.removeItem(this.prefix + 'CacheEntries');
+             if (this.supported){
+                if (this.enabled) localStorage.setItem(this.prefix + 'CacheEntries', JSON.stringify(entries));
+                else localStorage.removeItem(this.prefix + 'CacheEntries');
+             }
+
         }
 
         get now(){
@@ -267,12 +291,14 @@
             return config.get('cache').ttl;
         }
 
+
         saveItem(module, code){
             if (!this.enabled) return false;
             let
                     key = this.prefix + module,
                     entries = this.entries;
-            entries[key] = this.now + this.ttl;
+            entries[key] = this.now;
+
             try {
                 localStorage.setItem(key, code);
                 this.entries = entries;
@@ -287,13 +313,16 @@
             if (!this.enabled) return null;
             let
                     key = this.prefix + module,
-                    expire = this.entries[key] || 0;
+                    created = this.entries[key] || 0,
+                    expire = created > 0 ? Cache.expireAt(created) : 0;
             if (this.now > expire) {
                 localStorage.removeItem(key);
                 return null;
             }
             return localStorage.getItem(key);
         }
+
+
 
         clear(){
 
@@ -322,11 +351,13 @@
                 let entries = this.entries;
                 //detects expired entries
                 Object.keys(entries).forEach(key => {
-                    if (this.now > entries[key]) {
+                    let
+                            created = entries[key],
+                            expire = Cache.expireAt(created);
+                    if (this.now > expire) {
                         localStorage.removeItem(key);
                         delete entries[key];
                     }
-
                 });
                 this.entries = entries;
             }
@@ -553,12 +584,13 @@
 
     const config = new Configuration();
     config.set({
-        root, dev,
+        root, dev, paths,
         cache: {
             enabled: usecache,
             ttl: 30 * minute,
             prefix: 'GMCache:'
         }
+
     });
 
     const cache = new Cache();

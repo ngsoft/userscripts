@@ -98,6 +98,9 @@
      * @type {Class}
      */
     class DataStore extends Iface {
+        constructor(){
+            super();
+        }
         /**
          * Gets a value from the storage
          * @param {string|undefined} key if not using key all the storage will be returned

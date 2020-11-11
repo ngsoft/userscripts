@@ -371,7 +371,7 @@
         return dialog;
     }
 
-    loadcss(config.get('root') + 'css/gmstyles.css');
+    loadcss(config.get('paths.styles') + 'gmstyles.css');
 
     return {
         gmDialog, confirm: ask, alert

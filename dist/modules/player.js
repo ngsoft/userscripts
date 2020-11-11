@@ -462,15 +462,17 @@
 
         set title(title){
             if (gettype(title, s)) {
-                // this.elements.title.innerHTML = title;
                 this.data.set('title', title);
-                // this.elements.toolbar.classList.remove('hidden');
-
             } else if (title === null) {
-                // this.elements.title.innerHTML = "";
                 this.data.remove('title');
-                // this.elements.toolbar.classList.add('hidden');
             }
+
+            this.trigger('player.title', {
+                detail: {
+                    plyr: this.plyr,
+                    title: this.data.get('title') || ""
+                }
+            });
         }
 
         get title(){
@@ -536,6 +538,10 @@
                     enmerable: false, configurable: true, writable: true,
                     value: {}
                 },
+                toolbar: {
+                    enmerable: false, configurable: true, writable: true,
+                    value: null
+                },
                 data: {
                     enmerable: false, configurable: true, writable: true,
                     value: null
@@ -577,8 +583,6 @@
                     data = this.data = new DataSet(video);
 
             root.appendChild(video);
-            // this.elements.toolbar = html2element('<div class="plyr-toolbar hidden"><span class="plyr-title"></span></div>');
-            // this.elements.title = this.elements.toolbar.querySelector('.plyr-title');
 
             Events(video, this);
 
@@ -676,14 +680,6 @@
                         video.play();
                     }
                     position = 0;
-                },
-                controlshidden(){
-                    // player.elements.toolbar.hidden = true;
-                },
-                controlsshown(){
-                    /*if (player.title) player.elements.toolbar.classList.remove('hidden');
-                    else player.elements.toolbar.classList.add('hidden');
-                    player.elements.toolbar.hidden = null;*/
                 },
                 download(e){
                     let track = player.currentTrack;
@@ -822,14 +818,12 @@
 
                 this.ready.then(player => {
 
+                    if (this.toolbar === null) this.toolbar = new PlyrToolbar(this);
+
                     this.root.querySelectorAll('button[data-plyr="quality"][value]').forEach(btn => {
                         btn.disabled = true;
                         if (this.sources.map(x => x.label).includes(btn.value)) btn.disabled = null;
                     });
-
-                    /*  this.video.parentElement.appendChild(this.elements.toolbar);
-                    if (this.title) this.elements.toolbar.classList.remove('hidden');
-                    else this.elements.toolbar.classList.add('hidden');*/
 
                     let
                             quality = player.storage.get('quality') || null,
@@ -871,6 +865,20 @@
 
     class PlyrToolbar {
 
+        static loadSprite(){
+            if (this.loaded !== false) {
+
+
+
+
+
+
+
+
+            }
+        }
+
+
         get root(){
             return this.elements.root;
         }
@@ -889,19 +897,41 @@
             }
         }
 
+        get hidden(){
+            return this.root.hidden === true;
+        }
 
-        constructor(){
+        set hidden(flag){
+            if (gettype(flag, b)) this.root.hidden = flag === true ? true : null;
+
+        }
+
+
+
+
+        constructor(player){
+
+
+            assert(player instanceof PlyrPlayer, 'Invalid argument player.');
 
             Object.defineProperties(this, {
                 elements: {
                     enmerable: false, configurable: true, writable: true,
                     value: {
                         root: '<div class="plyr-toolbar"/>',
-                        title: '<div class="plyr-title" data-placement="left"/>',
+
+
+                        title: '<span class="plyr-title"/>',
+                        icon: '<svg><use xlink:href="#gm-film"></use></svg>',
+                        sprite: '<div id="sprite-plyr-player" />',
+
                         areas: {
                             left: '<div class="plyr-toolbar-left"/>',
-                            center: '<div class="plyr-toolbar-left"/>',
-                            right: '<div class="plyr-toolbar-left"/>'
+                            center: '<div class="plyr-toolbar-center"/>',
+                            right: '<div class="plyr-toolbar-right"/>'
+                        },
+                        buttons: {
+                            title: '<span class="plyr-toolbar-btn"/>'
                         }
                     }
                 },
@@ -919,7 +949,7 @@
                 },
                 player: {
                     enmerable: false, configurable: true, writable: true,
-                    value: null
+                    value: player
                 },
                 isReady: {
                     enmerable: true, configurable: true, writable: true,
@@ -927,26 +957,59 @@
                 }
             });
 
-            const H2EL = function(obj){
+            const
+                    H2EL = function(obj){
 
-                if (isPlainObject(obj)) {
-                    Object.keys(obj).forEach(key => {
-                        if (gettype(obj[key], s)) obj[key] = html2element(obj[key]);
-                        else if (isPlainObject(obj[key])) H22L(obj[key]);
-                    });
+                        if (isPlainObject(obj)) {
+                            Object.keys(obj).forEach(key => {
+                                if (gettype(obj[key], s)) obj[key] = html2element(obj[key]);
+                                else if (isPlainObject(obj[key])) H2EL(obj[key]);
+                            });
+                        }
+                    },
+                    pdata = player.data,
+                    toolbar = this;
+                    
+
+            H2EL(this.elements);
+            this.elements.buttons.title.appendChild(this.elements.icon);
+            this.elements.buttons.title.appendChild(this.elements.title);
+            this.elements.areas.left.appendChild(this.elements.buttons.title);
+            this.root.appendChild(this.elements.areas.left);
+            this.root.appendChild(this.elements.areas.center);
+            this.root.appendChild(this.elements.areas.right);
+            player.video.parentElement.appendChild(this.root);
+
+            this.title = pdata.get('title');
+
+
+            const listeners = {
+                player: {
+                    title(e){
+                        toolbar.title = e.detail.title;
+                    }
+                },
+                controlshidden(){
+                    toolbar.hidden = true;
+                },
+                controlsshown(){
+                    toolbar.hidden = false;
                 }
-
 
             };
 
+            Object.keys(listeners).forEach(type => {
+                if (gettype(listeners[type], f)) player.on(type, listeners[type]);
+                else if (isPlainObject(listeners[type])) {
+                    Object.keys(listeners[type]).forEach(t => {
+                        if (gettype(listeners[type][t], f)) {
+                            player.on(type + '.' + t, listeners[type][t]);
+                        }
+                    });
+                }
+            });
 
-            H2EL(this.elements);
 
-
-
-
-            //this.elements.toolbar = html2element('<div class="plyr-toolbar hidden"><span class="plyr-title"></span></div>');
-            // this.elements.title = this.elements.toolbar.querySelector('.plyr-title');
 
 
 

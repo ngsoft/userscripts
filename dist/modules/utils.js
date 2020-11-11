@@ -23,12 +23,16 @@
     const
 
             // Scallar types
-            s = "string",
-            b = "boolean",
+            s = string ="string",
+            b = bool ="boolean",
             f = "function",
-            o = "object",
+            o = object ="object",
             u = "undefined",
-            n = "number",
+            n = number = "number",
+            int = 'int',
+            float='float',
+            array='array',
+            
             //time
             second = 1000,
             minute = 60 * second,
@@ -68,6 +72,39 @@
         if (typeof compare === s) return type === compare;
         return type;
     }
+
+    // Deep extend destination object with N more objects
+    function extend(target = {}, ...sources) {
+        if (!sources.length) {
+            return target;
+        }
+
+        const source = sources.shift();
+
+        if (!gettype(source, o)) {
+            return target;
+        }
+
+        Object.keys(source).forEach(key => {
+            if (gettype(source[key], o)) {
+                if (!Object.keys(target).includes(key)) {
+                    Object.assign(target, {[key]: {}});
+                }
+
+                extend(target[key], source[key]);
+            } else {
+                Object.assign(target, {[key]: source[key]});
+            }
+        });
+
+        return extend(target, ...sources);
+    }
+
+
+
+
+
+
 
 
     /**
@@ -1438,9 +1475,9 @@
 
 
     return Object.assign( {
-        s, b, f, o, u, n,
-        second, minute, hour, day, week, year, month,
-        uniqid, html2element, html2doc, copyToClipboard, Text2File, doc, ON, isValidSelector, Timer,
+        s, b, f, o, u, n, string, bool, object, number, int, float,
+        second, minute, hour, day, week, year, month, doc, global, extend,
+        uniqid, html2element, html2doc, copyToClipboard, Text2File, ON, isValidSelector, Timer,
         addstyle, loadjs, addscript, loadcss, isValidUrl, getURL, sanitizeFileName, ResizeSensor, NodeFinder,
         Events, trigger, rfetch, assert, isPlainObject, gettype, sprintf, vsprintf, DataSet, siblings, prequire
     });

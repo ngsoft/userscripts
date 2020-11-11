@@ -5,4 +5,5 @@
 /libs.dev/
 /nbproject/*/
 *.dev.*
+*.dev
 */*.bak.*
