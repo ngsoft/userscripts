@@ -371,6 +371,7 @@
         return dialog;
     }
 
+
     loadcss(config.get('paths.styles') + 'gmstyles.css');
 
     return {

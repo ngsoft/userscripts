@@ -8,7 +8,7 @@
             dependencies = [
                 'require',
 
-                'utils', 'config', 'storage', 'isocode', 'Request',
+                'utils', 'config', 'storage', 'cache', 'isocode', 'Request',
                         'Plyr', 'Subtitle', 'Hls'
                         //, 'dashjs'
             ];
@@ -27,10 +27,14 @@
         };
         root["player"] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(require, utils, config, storage){
+}(typeof self !== 'undefined' ? self : this, function h27jb09534f10ckayj3dt(require){
 
 
     const
+            utils = require('utils'),
+            config = require('config'),
+            storage = require('storage'),
+            cache = require('cache'),
             Request = require('Request'),
             isocode = require('isocode'),
             Subtitle = require('Subtitle'),
@@ -52,72 +56,86 @@
     //, Plyr, Subtitle, Hls;
 
 
-    const options = {
+    const
+            options = {
 
-        captions: {active: false, language: 'auto', update: true},
-        settings: ['captions', 'quality'],
-        keyboard: {focused: true, global: true},
-        tooltips: {controls: true, seek: true},
-        controls: [
-            'play-large',
-            // 'restart',
-            // 'rewind',
-            'play',
-            // 'fast-forward',
-            'progress',
-            'current-time',
-            'duration',
-            'mute',
-            'volume',
-            'captions',
-            'settings',
-            //'pip',
-            //'airplay',
-            'download',
-            'fullscreen'
-        ],
-        /*listeners: {
-            //  seek(e){},
-            //  play(e){},
-            // pause(e){},
-            // restart(e){},
-            //  rewind(e){},
-            //  fastForward(e){},
-            //  mute(e){},
-            // volume(e){},
-            // captions(e){},
-            //download(e){},
-            // fullscreen(e){},
-            // pip(e){},
-            // airplay(e){},
-            // speed(e){},
-            // loop(e){},
-            // language(e){},
-        },*/
-        quality: {
-            default: null,
-            // The options to display in the UI, if available for the source media
-            options: ['adaptive', '4320p', '2880p', '2160p', '1440p', '1080p', '720p', '540p', '480p', '360p', '240p', '144p'],
-            forced: true,
-            onChange: x => x
-        },
+                captions: {active: false, language: 'auto', update: true},
+                settings: ['captions', 'quality'],
+                keyboard: {focused: true, global: true},
+                tooltips: {controls: true, seek: true},
+                controls: [
+                    'play-large',
+                    // 'restart',
+                    // 'rewind',
+                    'play',
+                    // 'fast-forward',
+                    'progress',
+                    'current-time',
+                    'duration',
+                    'mute',
+                    'volume',
+                    'captions',
+                    'settings',
+                    //'pip',
+                    //'airplay',
+                    'download',
+                    'fullscreen'
+                ],
+                /*listeners: {
+                 //  seek(e){},
+                 //  play(e){},
+                 // pause(e){},
+                 // restart(e){},
+                 //  rewind(e){},
+                 //  fastForward(e){},
+                 //  mute(e){},
+                 // volume(e){},
+                 // captions(e){},
+                 //download(e){},
+                 // fullscreen(e){},
+                 // pip(e){},
+                 // airplay(e){},
+                 // speed(e){},
+                 // loop(e){},
+                 // language(e){},
+                 },*/
+                quality: {
+                    default: null,
+                    // The options to display in the UI, if available for the source media
+                    options: ['adaptive', '4320p', '2880p', '2160p', '1440p', '1080p', '720p', '540p', '480p', '360p', '240p', '144p'],
+                    forced: true,
+                    onChange: x => x
+                },
 
-        i18n: {
-            qualityBadge: {
-                '4320p': '8K',
-                '2880p': '4K',
-                '2160p': '4K',
-                '1440p': 'HD',
-                '1080p': 'HD',
-                '720p': 'HD',
-                '540p': 'SD',
-                '480p': 'SD'
-            }
-        }
-        
-        
+                i18n: {
+                    qualityBadge: {
+                        '4320p': '8K',
+                        '2880p': '4K',
+                        '2160p': '4K',
+                        '1440p': 'HD',
+                        '1080p': 'HD',
+                        '720p': 'HD',
+                        '540p': 'SD',
+                        '480p': 'SD'
+                    }
+                }
 
-    };
+
+
+            },
+            //svg icons
+            icons = {
+                cog: '#gm-cog',
+                clipboard: 'gm-clipboard',
+                code: '#gm-code',
+                cc: '#gm-cc',
+                popcorn: '#gm-popcorn',
+                film: '#gm-film',
+                tvalt: '#gm-tvalt',
+                tvretro: '#gm-tvretro',
+                arrowright: '#gm-arrowright',
+                arrowleft: '#gm-arrowleft'
+            };
 
     class PlyrPlayerType {
 
@@ -692,16 +710,23 @@
                 }
             };
 
-            Object.keys(listeners).forEach(type => {
-                if (gettype(listeners[type], f)) this.on(type, listeners[type]);
-                else if (isPlainObject(listeners[type])) {
-                    Object.keys(listeners[type]).forEach(t => {
-                        if (gettype(listeners[type][t], f)) {
-                            this.on(type + '.' + t, listeners[type][t]);
-                        }
-                    });
-                }
-            });
+            const deep = function(obj, prefix = ''){
+
+                let type;
+                Object.keys(obj).forEach(key => {
+                    type = prefix + key;
+                    if (gettype(obj[key], f)) {
+                        player.on(type, obj[key]);
+                    } else if (isPlainObject(obj[key])) {
+                        deep(obj[key], type + '.');
+                    }
+                });
+            };
+
+
+            deep(listeners);
+
+
 
 
             ["webm", "mp4", "ogg"].forEach(type => {
@@ -865,17 +890,60 @@
 
     class PlyrToolbar {
 
-        static loadSprite(){
-            if (this.loaded !== false) {
+        get sprite(){
+            if (!PlyrToolbar._sprite)
+                PlyrToolbar._sprite = doc.querySelector('#plyr-player-sprite') || html2element('<div id="plyr-player-sprite" hidden/>');
+            if (PlyrToolbar._sprite.parentElement === null) doc.body.insertBefore(PlyrToolbar._sprite, doc.body.firstElementChild);
+            return PlyrToolbar._sprite;
+        }
 
 
+        loadSprite(){
+            if (PlyrToolbar.loading !== true) {
+                PlyrToolbar.loading = true;
+                let
+                        hit = false,
+                        loaded = false,
+                        key = 'toolbar.svg',
+                        url = config.get('paths.images') + key,
+                        elem = this.sprite,
+                        etype = 'toolbar.ready';
+
+                if (elem.innerHTML !== "") loaded = true;
 
 
+                if (cache.enabled) {
+                    if (loaded === false) {
+                        let xml = cache.loadItem(key);
+                        if (gettype(xml, s) && xml.length > 0) {
+                            elem.innerHTML = xml;
+                            hit = true;
+                        }
+                    } else hit = true;
 
+                }
+                if (hit === false) {
+                    (new Request(url))
+                            .fetch()
+                            .then(r => {
+                                if (r.text && r.text.length > 0) {
+                                    if (cache.enabled === true) cache.saveItem(key, r.text);
+                                    elem.innerHTML = r.text;
+                                    this.player.trigger(etype);
+                                } else throw new Error('Invalid Response');
 
+                            })
+                            .catch(err => {
+                                console.warn('Cannot get Sprite at', url, err);
+                                PlyrToolbar.loading = false;
+                            });
 
+                } else this.player.trigger(etype);
 
             }
+
+
+
         }
 
 
@@ -906,6 +974,19 @@
 
         }
 
+        get ready(){
+            return new Promise(resolve => {
+
+                if (!this.isReady) {
+                    this.player.on('toolbar.ready', () => {
+                        resolve(this);
+                    });
+
+                } else resolve(this);
+
+            });
+        }
+
 
 
 
@@ -919,33 +1000,33 @@
                     enmerable: false, configurable: true, writable: true,
                     value: {
                         root: '<div class="plyr-toolbar"/>',
-
-
                         title: '<span class="plyr-title"/>',
                         icon: '<svg><use xlink:href="#gm-film"></use></svg>',
-                        sprite: '<div id="sprite-plyr-player" />',
-
                         areas: {
                             left: '<div class="plyr-toolbar-left"/>',
-                            center: '<div class="plyr-toolbar-center"/>',
                             right: '<div class="plyr-toolbar-right"/>'
                         },
                         buttons: {
-                            title: '<span class="plyr-toolbar-btn"/>'
+                            title: '<span class="plyr-toolbar-btn" data-name="title"/>'
                         }
                     }
                 },
+                listeners: {
+                    enmerable: false, configurable: true, writable: true,
+                    value: {
+                        buttons: {
+                            click: {},
+                            contextmenu: {}
+                        }
+                    }
+                },
+                icons: {
+                    enmerable: false, configurable: true, writable: true,
+                    value: icons
+                },
                 data: {
                     enmerable: false, configurable: true, writable: true,
-                    value: null
-                },
-                options: {
-                    enmerable: false, configurable: true, writable: true,
-                    value: Object.assign({}, options)
-                },
-                storage: {
-                    enmerable: true, configurable: true, writable: false,
-                    value: new exStore(new xStore(localStorage), 'plyr')
+                    value: player.data
                 },
                 player: {
                     enmerable: false, configurable: true, writable: true,
@@ -967,64 +1048,136 @@
                             });
                         }
                     },
-                    pdata = player.data,
+                    data = this.data,
                     toolbar = this;
                     
 
             H2EL(this.elements);
-            this.elements.buttons.title.appendChild(this.elements.icon);
+
             this.elements.buttons.title.appendChild(this.elements.title);
+            this.elements.buttons.title.appendChild(this.elements.icon);
             this.elements.areas.left.appendChild(this.elements.buttons.title);
             this.root.appendChild(this.elements.areas.left);
-            this.root.appendChild(this.elements.areas.center);
             this.root.appendChild(this.elements.areas.right);
             player.video.parentElement.appendChild(this.root);
 
-            this.title = pdata.get('title');
+            Events(this.root, this);
+
+            this.loadSprite();
+
+            this.title = data.get('title');
 
 
-            const listeners = {
-                player: {
-                    title(e){
-                        toolbar.title = e.detail.title;
-                    }
-                },
-                controlshidden(){
-                    toolbar.hidden = true;
-                },
-                controlsshown(){
-                    toolbar.hidden = false;
-                }
+            const
+                    listeners = {
+                        toolbar: {
+                            ready(){
+                                this.isReady = true;
+                            }
+                        },
 
-            };
-
-            Object.keys(listeners).forEach(type => {
-                if (gettype(listeners[type], f)) player.on(type, listeners[type]);
-                else if (isPlainObject(listeners[type])) {
-                    Object.keys(listeners[type]).forEach(t => {
-                        if (gettype(listeners[type][t], f)) {
-                            player.on(type + '.' + t, listeners[type][t]);
+                        player: {
+                            title(e){
+                                toolbar.title = e.detail.title;
+                            }
+                        },
+                        controlshidden(){
+                            toolbar.hidden = true;
+                        },
+                        controlsshown(){
+                            toolbar.hidden = false;
                         }
-                    });
-                }
-            });
+
+                    },
+                    internals = {
+
+                        click(e){
+                            console.debug(e);
+                            let target = e.target.closest('.plyr-toolbar-btn');
+                            if (target instanceof Element) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                let name = target.dataset.name;
+                                let callback = toolbar.listeners.buttons[e.type][name];
+                                if (gettype(callback, f)) callback.call(player, e);
+                                toolbar.trigger(name + '.click');
+                            }
+                        },
+                        contextmenu(e){
+                            console.debug(e);
+                            let target = e.target.closest('.plyr-toolbar-btn');
+                            if (target instanceof Element) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                let name = target.dataset.name;
+                                let callback = toolbar.listeners.buttons[e.type][name];
+                                if (gettype(callback, f)) callback.call(player, e);
+                                toolbar.trigger(name + '.context');
+                            }
+
+                        }
 
 
+                    };
 
 
+            const deep = function(target, obj, prefix = ''){
+
+                let type;
+                Object.keys(obj).forEach(key => {
+                    type = prefix + key;
+                    if (gettype(obj[key], f)) {
+                        target.on(type, obj[key]);
+                    } else if (isPlainObject(obj[key])) {
+                        deep(target, obj[key], type + '.');
+                    }
+                });
+            };
+            deep(player, listeners);
+            deep(this, internals);
+            this.loadSprite();
+
+            //console.debug(html2element('<svg><use xlink:href="#gm-film"></use></svg>'));
 
         }
 
+        /**
+         * Adds a button to the toolbar
+         * @param {string} name
+         * @param {string} title
+         * @param {string} icon
+         * @param {function} onClick
+         * @param {function|undefined} [onContext]
+         */
+        addButton(name, title, icon, onClick, onContext){
+            assert(/^\w+$/.test(name), 'Invalid Argument name.');
+            assert(gettype(title, s), 'Invalid Argument title.');
+            assert(Object.keys(this.icons).includes(icon), 'Invalid Argument icon (available: %s).', Object.keys(this.icons).join(', '));
+            assert(gettype(onclick, f), 'Invalid Argument onClick.');
+
+            let
+                    button = html2element('<span class="plyr-toolbar-btn"/>'),
+                    icon_el = html2element(sprintf('<svg><use xlink:href="%d"></use></svg>', this.icons[icon])),
+                    title_el = doc.createElement('span');
 
 
+            button.dataset.name = name;
+            title_el.innerHTML = title;
+            button.appendChild(title_el);
+            button.appendChild(icon_el);
+            this.elements.buttons[name] = button;
+            this.elements.area.right.appendChild(button);
+            this.listeners.buttons.click[name] = onclick;
+            if (gettype(onContext)) this.listeners.buttons.contextmenu[name] = onContext;
 
+        }
 
 
     }
 
 
     loadcss(sprintf(cfg.path, cfg.version) + '.css');
-    loadcss(config.get('root') + 'css/player.css');
+    loadcss(config.get('paths.styles') + 'player.css');
     return {PlyrPlayer, PlyrPlayerType, PlyrPlayerSource, PlyrPlayerCaption};
 }));
 

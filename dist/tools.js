@@ -102,7 +102,7 @@
         styles: root + '/css/'
     };
 
-    root = paths.root;
+    root = paths.modules;
 
 
 
@@ -220,7 +220,10 @@
 
         get(key){
             if (typeof key === u) return Object.assign({}, this.config);
-            else if (typeof key === s) return this.config[key];
+            else if (typeof key === s) {
+                if (key.indexOf('.') !== -1) return getDeep(this.config, key);
+                return this.config[key];
+            }
         }
 
         set(key, value){
@@ -253,7 +256,7 @@
 
     class Cache {
 
-        static expiresAt(time){
+        expiresAt(time){
             if (typeof time === n) time += this.ttl;
             else time = 0;
             return time;
@@ -314,7 +317,7 @@
             let
                     key = this.prefix + module,
                     created = this.entries[key] || 0,
-                    expire = created > 0 ? Cache.expireAt(created) : 0;
+                    expire = created > 0 ? this.expireAt(created) : 0;
             if (this.now > expire) {
                 localStorage.removeItem(key);
                 return null;
@@ -337,6 +340,10 @@
 
         }
 
+        exec(code){
+            return global.executeGMCode(code);
+        }
+
         constructor(){
             if (this.supported) {
 
@@ -353,7 +360,7 @@
                 Object.keys(entries).forEach(key => {
                     let
                             created = entries[key],
-                            expire = Cache.expireAt(created);
+                            expire = this.expireAt(created);
                     if (this.now > expire) {
                         localStorage.removeItem(key);
                         delete entries[key];
