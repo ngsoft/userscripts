@@ -462,13 +462,14 @@
 
         set title(title){
             if (gettype(title, s)) {
-                this.elements.title.innerHTML = title;
+                // this.elements.title.innerHTML = title;
                 this.data.set('title', title);
-                this.elements.toolbar.classList.remove('hidden');
+                // this.elements.toolbar.classList.remove('hidden');
+
             } else if (title === null) {
-                this.elements.title.innerHTML = "";
+                // this.elements.title.innerHTML = "";
                 this.data.remove('title');
-                this.elements.toolbar.classList.add('hidden');
+                // this.elements.toolbar.classList.add('hidden');
             }
         }
 
@@ -576,8 +577,8 @@
                     data = this.data = new DataSet(video);
 
             root.appendChild(video);
-            this.elements.toolbar = html2element('<div class="plyr-toolbar hidden"><span class="plyr-title"></span></div>');
-            this.elements.title = this.elements.toolbar.querySelector('.plyr-title');
+            // this.elements.toolbar = html2element('<div class="plyr-toolbar hidden"><span class="plyr-title"></span></div>');
+            // this.elements.title = this.elements.toolbar.querySelector('.plyr-title');
 
             Events(video, this);
 
@@ -677,12 +678,12 @@
                     position = 0;
                 },
                 controlshidden(){
-                    player.elements.toolbar.hidden = true;
+                    // player.elements.toolbar.hidden = true;
                 },
                 controlsshown(){
-                    if (player.title) player.elements.toolbar.classList.remove('hidden');
+                    /*if (player.title) player.elements.toolbar.classList.remove('hidden');
                     else player.elements.toolbar.classList.add('hidden');
-                    player.elements.toolbar.hidden = null;
+                    player.elements.toolbar.hidden = null;*/
                 },
                 download(e){
                     let track = player.currentTrack;
@@ -826,9 +827,9 @@
                         if (this.sources.map(x => x.label).includes(btn.value)) btn.disabled = null;
                     });
 
-                    this.video.parentElement.appendChild(this.elements.toolbar);
+                    /*  this.video.parentElement.appendChild(this.elements.toolbar);
                     if (this.title) this.elements.toolbar.classList.remove('hidden');
-                    else this.elements.toolbar.classList.add('hidden');
+                    else this.elements.toolbar.classList.add('hidden');*/
 
                     let
                             quality = player.storage.get('quality') || null,
@@ -846,9 +847,7 @@
                         });
 
                     }
-                    
 
-                    console.debug(player);
 
                 });
                 this.loaded.then(()=>{
