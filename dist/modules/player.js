@@ -274,7 +274,7 @@
 
         get vtt(){
             let result;
-            if (Array.isArray(this.config.subtitles) && this.config.subtitles.length > 0) {
+            if (this.loaded) {
                 result = Subtitle.stringifyVtt(this.config.subtitles);
             }
             return result;
@@ -282,7 +282,7 @@
 
         get srt(){
             let result;
-            if (Array.isArray(this.config.subtitles) && this.config.subtitles.length > 0) {
+            if (this.loaded) {
                 result = Subtitle.stringify(this.config.subtitles);
             }
             return result;
@@ -290,6 +290,10 @@
 
         get subtitles(){
             return this.config.subtitles;
+        }
+
+        get loaded(){
+            return Array.isArray(this.subtitles) && this.subtitles.length > 0;
         }
 
 
@@ -355,8 +359,8 @@
             Events(el, this);
             this.on('loaded', e => {
                 e.stopPropagation();
-                let tt = this.textTrack, subs = this.config.subtitles;
-                if (Array.isArray(subs) && subs.length > 0) {
+                if (this.loaded) {
+                    let tt = this.textTrack, subs = this.subtitles;
                     if (tt.cues.length !== subs.length) {
                         subs
                                 .map(entry => new VTTCue(entry.start / 1000, entry.end / 1000, entry.text))
@@ -369,7 +373,7 @@
 
         load(src){
 
-            if (gettype(this.vtt, s)) return;
+            if (this.loaded) return;
 
             if (src instanceof URL) src = src.href;
             let url = /^http/.test(src) ? src : this.src;
@@ -460,9 +464,11 @@
             if (gettype(title, s)) {
                 this.elements.title.innerHTML = title;
                 this.data.set('title', title);
+                this.elements.toolbar.classList.remove('hidden');
             } else if (title === null) {
                 this.elements.title.innerHTML = "";
                 this.data.remove('title');
+                this.elements.toolbar.classList.add('hidden');
             }
         }
 
@@ -618,7 +624,7 @@
                         let cttcues = track.textTrack.cues;
 
                         if (cttcues instanceof TextTrackCueList) {
-                            if (gettype(track.vtt, s)) {
+                            if (track.loaded) {
                                 if (cttcues.length === 0) track.trigger('loaded');
                             } else track.load();
                         }
@@ -674,19 +680,17 @@
                     player.elements.toolbar.hidden = true;
                 },
                 controlsshown(){
-                    if (player.title) this.elements.toolbar.classList.remove('hidden');
-                    else this.elements.toolbar.classList.add('hidden');
+                    if (player.title) player.elements.toolbar.classList.remove('hidden');
+                    else player.elements.toolbar.classList.add('hidden');
                     player.elements.toolbar.hidden = null;
                 },
                 download(e){
                     let track = player.currentTrack;
-                    console.debug(track);
-                    if (track instanceof PlyrPlayerCaption && gettype(track.vtt, s)) {
+                    if (track instanceof PlyrPlayerCaption && track.loaded) {
                         let file = data.get('filename') || data.get('title') || "subtitles";
                         file = sanitizeFileName(file, ' ');
                         file += '.' + track.srclang + '.srt';
-                        console.debug(file);
-                        //Text2File(track.vtt, file);
+                        Text2File(track.srt, file);
                     }
                 }
             };
@@ -823,6 +827,8 @@
                     });
 
                     this.video.parentElement.appendChild(this.elements.toolbar);
+                    if (this.title) this.elements.toolbar.classList.remove('hidden');
+                    else this.elements.toolbar.classList.add('hidden');
 
                     let
                             quality = player.storage.get('quality') || null,

@@ -725,8 +725,6 @@
                 if (typeof contents === s && contents.length > 0) {
                     executeGMCode(script);
                     context.completeLoad(moduleName);
-                    //let blob = new Blob([contents], {type: "text/javascript"});
-                    //load(context, moduleName, URL.createObjectURL(blob));
                     hit = true;
                 }
             }
@@ -735,21 +733,12 @@
                 (new Request(url.href, false, false))
                         .fetch()
                         .then(response => {
-                            console.debug(moduleName, response.status);
                             let script = response.text;
                             if (typeof script === s && script.length > 0) {
-
                                 script = transform(script, url);
-                                //let blob = new Blob([script], {type: "text/javascript"});
                                 if (cache.enabled) cache.saveItem(moduleName, response.text);
-                                //return load(context, moduleName, URL.createObjectURL(blob));
-
-                                console.debug(context.defined[moduleName]);
                                 executeGMCode(script);
-                                console.debug(context.defined[moduleName]);
-                                console.debug(context);
                                 context.completeLoad(moduleName);
-                                console.debug(context.defined[moduleName]);
                                 return;
                             }
                             throw new Error('Fetch Failed');
