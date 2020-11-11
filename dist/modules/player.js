@@ -948,6 +948,10 @@
 
         }
 
+        get buttons(){
+            return this.elements.buttons;
+        }
+
 
         get root(){
             return this.elements.root;
@@ -1161,13 +1165,33 @@
 
 
             button.dataset.name = name;
-            button.title = title;
-            title_el.innerHTML = title;
+
             button.appendChild(title_el);
             button.appendChild(icon_el);
             this.elements.buttons[name] = button;
             this.listeners.buttons.click[name] = onClick;
             if (gettype(onContext)) this.listeners.buttons.contextmenu[name] = onContext;
+
+            Object.defineProperty(button, 'title', {
+                configurable: true, enumerable: false,
+                get(){
+
+                    return this.getAttribute('title') !== null;
+                },
+                set(val){
+                    this.removeAttribute('title');
+                    title_el.innerHTML = "";
+                    if (gettype(val, s)) {
+                        title_el.innerHTML = val;
+                        this.setAttribute('title', val);
+                    }
+                }
+            });
+
+            button.title = title;
+
+
+
             this.elements.areas.right.insertBefore(button, this.elements.areas.right.firstChildElement);
         }
 
