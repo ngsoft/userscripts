@@ -880,8 +880,6 @@
 
 
                 this.ready.then(player => {
-
-
                     this.root.querySelectorAll('button[data-plyr="quality"][value]').forEach(btn => {
                         btn.disabled = true;
                         if (this.sources.map(x => x.label).includes(btn.value)) btn.disabled = null;
@@ -893,7 +891,6 @@
                     if (index === -1 && player.sources.length > 0) index = 0;
 
                     if (index !== -1) {
-
                         player.trigger('qualitychange', {
                             detail: {
                                 quality: player.sources[index].label,
@@ -901,10 +898,7 @@
                                 init: true
                             }
                         });
-
                     }
-
-
                 });
                 this.loaded.then(()=>{
                     if (this.root.parentElement !== root) {

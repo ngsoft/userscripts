@@ -81,19 +81,24 @@
 
         const source = sources.shift();
 
-        if (!gettype(source, o)) {
+        if (!isPlainObject(source)) {
             return target;
         }
 
         Object.keys(source).forEach(key => {
-            if (gettype(source[key], o)) {
+
+            if (isPlainObject(source[key])) {
                 if (!Object.keys(target).includes(key)) {
-                    Object.assign(target, {[key]: {}});
+                    Object.assign(target, {
+                        [key]: {}
+                    });
                 }
 
                 extend(target[key], source[key]);
             } else {
-                Object.assign(target, {[key]: source[key]});
+                Object.assign(target, {
+                    [key]: source[key]
+                });
             }
         });
 
@@ -879,11 +884,19 @@
                 });
             }
             
+            if(!target.hasOwnProperty('__Events__')){
+                Object.defineProperty(target, '__Events__', {
+                    enumerable: false, configurable: true, writable: true,
+                    value: []
+                });
+            }
+            
             Object.assign(this, {
                 target: target,
                 binding: binding,
-                events: []
+                events: target.__Events__
             });
+
             return this;
         } else if ((target instanceof EventTarget)) return new Events(...arguments);
 
@@ -964,13 +977,14 @@
                 }
                 type.split(/\s+/).forEach(type => {
                     self.events = self.events.filter(evt => {
+                        console.debug(evt);
                         if (typeof callback === f) {
-                            if (type === evt.type && params.capture === evt.params.capture && callback === evt.listener) {
+                            if (type === evt.type && params.capture === evt.options.capture && callback === evt.listener) {
                                 self.target.removeEventListener(type, evt.handler, params.capture);
                                 return false;
                             }
                         } else if (type === evt.type) {
-                            self.target.removeEventListener(type, evt.handler, evt.params.capture);
+                            self.target.removeEventListener(type, evt.handler, evt.options.capture);
                             return false;
                         }
                         return true;

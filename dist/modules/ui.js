@@ -2,7 +2,7 @@
     /* globals define, require, module, self, innerWidth */
     const
             name = "ui",
-            dependencies = ['utils', 'config', 'GM'];
+            dependencies = ['require', 'utils', 'config', 'GM'];
     if (typeof define === 'function' && define.amd) {
         define(dependencies, factory);
     } else if (typeof exports === 'object' && module.exports) {
@@ -18,14 +18,20 @@
         };
         root[name] = factory(...dependencies.map(dep => require(dep)));/*jshint ignore:line */
     }
-}(typeof self !== 'undefined' ? self : this, function(utils, config, GM, undef){
+}(typeof self !== 'undefined' ? self : this, function(require){
 
+    let undef;
+
+
+    const utils = require('utils'),
+            config = require('config'),
+            GM = require('GM');
 
     const {
-        doc, f, s, n, u, b,
+        doc, f, s, n, u, b, int, gettype,
         uniqid, html2element, isPlainObject, isValidSelector,
         ResizeSensor, loadcss, NodeFinder,
-        Events, trigger, rfetch
+        Events, trigger, extend, assert
     } = utils;
 
     const {GMinfo} = GM;
@@ -65,6 +71,10 @@
 
         get isClosed(){
             return this.root.parentElement === null;
+        }
+
+        get parent(){
+            return this.config.parent;
         }
 
 
@@ -141,7 +151,6 @@
             settings = settings || {};
             if (!(parent instanceof Element)) parent = doc.body;
             Object.assign(this, {
-                parent: parent,
                 root: html2element('<div class="gm-dialog-overlay" />'),
                 elements: {
                     dialog: html2element('<div class="gm-dialog" />'),
@@ -156,6 +165,7 @@
                     }
                 },
                 config: Object.assign({
+                    parent: parent,
                     overlayclickclose: true,
                     closebutton: true,
                     fullscreen: false,
@@ -370,6 +380,289 @@
         dialog.open();
         return dialog;
     }
+
+
+    const
+            template = `<dialog class="gm-dialog">
+                            <div class="gm-dialog-header">
+                                <h1 class="gm-dialog-title"></h1>
+                                <span class="gm-btn gm-btn-close" data-name="close">&times;</span>
+                            </div>
+                            <div class="gm-dialog-body"></div>
+                            <div class="gm-dialog-footer">
+                                <span class="gm-btn gm-btn-yes" data-name="confirm">Yes</span>
+                                <span class="gm-btn gm-btn-no" data-name="dismiss">No</span>
+                            </div>
+                    </dialog>`,
+            overlay = '<div class="gm-dialog-overlay"/>',
+            dialogSettings = {
+                title: GMinfo.script.name,
+                body: "You are using " + GMinfo.scriptHandler + " version " + GMinfo.version,
+                container: null,
+                
+                settings: {
+                    overlayclickclose: true,
+                    fullscreen: false,
+                    removeOnClose: true,
+
+                    width: null,
+                    height: null,
+                    position: {
+                        top: null,
+                        right: null,
+                        bottom: null,
+                        left: null,
+                        center: true
+                    }
+                },
+                buttons: {
+                    confirm: "Yes",
+                    dismiss: "No"
+                },
+                events: {},
+                prefix: 'gmdialog',
+                animate:{
+                    enabled: true,
+                    start:{
+                        classes:"fadeIn",
+                        duration: 750,
+                        enabled: true
+                    },
+                    end:{
+                        classes:"fadeOut",
+                        duration: 750,
+                        enabled: true
+                    }
+                }
+                
+                
+            },
+            dialogEvents = {
+
+            };
+
+
+    /**
+     * Older firefox scroll hack 63-
+     */
+    function getScrollbarWidth(){
+        let scrollbarSize = 0;
+        //mozilla firefox scroll hack
+        //on a up to date version document.documentElement.style["scrollbar-width"] is a string (so CSS is working)
+        if (/firefox/i.test(navigator.userAgent) ? document.documentElement.style["scrollbar-width"] === undef : false) {
+
+            //small css trick to get the scrollbar width (must be 17px but cannot be sure)
+
+            let
+                    scrollable = doc.createElement('div'),
+                    contents = doc.createElement('div'),
+                    scrollablestyle, contentsstyle;
+
+            scrollable.appendChild(contents);
+            scrollablestyle = contentsstyle = "width: 100%;padding:0;margin:0;display:block;overflow: unset;height:auto;";
+            scrollablestyle += "overflow-y: scroll;opacity:0;z-index:-1;";
+            contentsstyle += "height: 1px;";
+            scrollable.style = scrollablestyle;
+            contents.style = contentsstyle;
+            doc.body.appendChild(scrollable);
+            scrollbarSize = scrollable.offsetWidth - contents.offsetWidth;
+            doc.body.removeChild(scrollable);
+        }
+        return scrollbarSize;
+    }
+
+
+
+
+
+    function animateElement(elem, classes, duration, eventEnd = null){
+        if (elem instanceof Element === false) throw new Error('animate invalid argument elem');
+        if (typeof classes !== s) throw new Error('animate invalid argument classes');
+        if (typeof duration !== n) throw new Error('animate invalid argument duration');
+        if (typeof eventEnd !== s ? eventEnd !== null : false) throw new Error('animate invalid argument eventEnd');
+
+        classes = classes.split(/\s+/);
+        elem.classList.remove(...classes);
+        elem.style["animation-duration"] = duration + "ms";
+        elem.classList.add(...classes);
+        setTimeout(() => {
+            elem.classList.remove(...classes);
+            elem.style["animation-duration"] = null;
+            if (eventEnd !== null) trigger(elem, eventEnd);
+        }, duration + 10);
+
+    }
+
+
+
+    /**
+     * auto resize dialog
+     */
+    function setSize(target){
+
+        const body = target.body;
+
+        body.style["max-height"] = body.style.height = null; //reset style
+        let
+                max = target.overlay.offsetHeight,
+                dialogHeight = target.dialog.offsetHeight,
+                minus = target.header.offsetHeight + target.footer.offsetHeight + 16,
+                available = max - minus - 1,
+                current = body.offsetHeight;
+
+        if (current > available) body.style["max-height"] = available + "px";
+        if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || target.dialog.classList.contains('gm-fullscreen')) {
+            body.style.height = available + "px";
+        }
+
+    }
+
+
+
+   function setListeners(target, obj, prefix = ''){
+       
+       assert(!(target instanceof EventTarget),'Invalid Argument target.' );
+        assert(!isPlainObject(obj), 'Invalid Argument obj.');
+        assert(!!gettype(prefix, s), 'Invalid Argument prefix.');
+
+        let type;
+        Object.keys(obj).forEach(key => {
+            type = prefix + key;
+
+            if (gettype(obj[key], f)) {
+                Events(target).on(type, obj[key]);
+            } else if (isPlainObject(obj[key])) {
+                setListeners(target, obj[key], type + '.');
+            }
+        });
+    };
+
+
+
+
+
+
+
+
+    class Dialog {
+        get dialog(){
+            return this.elements.dialog;
+        }
+
+        constructor(options){
+
+            Object.defineProperties(this, {
+                elements: {
+                    enumerable: false, configurable: true, writable: true,
+                    value: {
+                        dialog: html2element(template),
+                        buttons: {}
+                    }
+                },
+                options: {
+                    enumerable: false, configurable: true, writable: true,
+                    value: null
+                },
+
+                isReady: {
+                    enumerable: true, configurable: true, writable: true,
+                    value: false
+                }
+            });
+
+
+
+            ['header', 'body', 'footer'].forEach(cls => {
+                let
+                        className = 'gm-dialog-' + cls,
+                        elem = this.dialog.querySelector('.' + className);
+                this.elements[cls] = elem;
+            });
+
+            this.dialog.querySelectorAll('[data-name].gm-btn').forEach(elem => {
+                let name = elem.getAttribute('data-name');
+                if (name.length > 0) this.elements.buttons[name] === elem;
+            });
+
+
+            let params = Object.assign({}, dialogSettings);
+
+            if (isPlainObject(options)) params = extend(params, options);
+            this.options = params;
+
+            const dialog = this.dialog;
+
+            //fix dialog firefox 53+ dom.dialog_element.enabled=false
+            if (dialog.open === undef) {
+                Object.defineProperties(dialog, {
+                    open: {
+                        configurable: true, enumerable: false,
+                        get(){
+                            return this.getAttribute('open') !== null;
+                        },
+                        set(flag){
+
+                            this.setAttribute('open', '');
+
+
+
+
+                            if (flag === null ? true : flag === false) this.removeAttribute('open');
+                        }
+                    }
+                });
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     loadcss(config.get('paths.styles') + 'gmstyles.css');
