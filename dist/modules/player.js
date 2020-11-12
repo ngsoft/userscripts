@@ -161,11 +161,11 @@
 
             Object.defineProperties(this, {
                 config: {
-                    enmerable: false, configurable: true, writable: false,
+                    enumerable: false, configurable: true, writable: false,
                     value: {type, attach, detach}
                 },
                 player: {
-                    enmerable: false, configurable: true, writable: false,
+                    enumerable: false, configurable: true, writable: false,
                     value: player
                 }
             });
@@ -239,11 +239,11 @@
 
             Object.defineProperties(this, {
                 element: {
-                    enmerable: true, configurable: true, writable: true,
+                    enumerable: true, configurable: true, writable: true,
                     value: doc.createElement('source')
                 },
                 config: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: {
                         src,
                         type,
@@ -254,7 +254,7 @@
                     }
                 },
                 player: {
-                    enmerable: false, configurable: true, writable: false,
+                    enumerable: false, configurable: true, writable: false,
                     value: player
                 }
             });
@@ -353,17 +353,17 @@
 
             Object.defineProperties(this, {
                 element: {
-                    enmerable: true, configurable: true, writable: true,
+                    enumerable: true, configurable: true, writable: true,
                     value: el
                 },
                 config: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: {
                         src, lang, srclang, label, id, vtt: null
                     }
                 },
                 player: {
-                    enmerable: false, configurable: true, writable: false,
+                    enumerable: false, configurable: true, writable: false,
                     value: player
                 }
             });
@@ -553,43 +553,43 @@
 
             Object.defineProperties(this, {
                 elements: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: {}
                 },
                 toolbar: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: null
                 },
                 data: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: null
                 },
                 plyr: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: null
                 },
                 options: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: Object.assign({}, options)
                 },
                 storage: {
-                    enmerable: true, configurable: true, writable: false,
+                    enumerable: true, configurable: true, writable: false,
                     value: new exStore(new xStore(localStorage), 'plyr')
                 },
                 sources: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: []
                 },
                 tracks: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: []
                 },
                 types: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: {}
                 },
                 isReady: {
-                    enmerable: true, configurable: true, writable: true,
+                    enumerable: true, configurable: true, writable: true,
                     value: false
                 }
             });
@@ -813,6 +813,7 @@
                 let track = new PlyrPlayerCaption(this, src, srclang, label);
                 this.tracks.push(track);
                 this.video.appendChild(track.element);
+
                 return true;
             }
             return false;
@@ -836,6 +837,7 @@
             this.tracks = [];
             this.sources = [];
             this.video.innerHTML = "";
+            this.isReady = false;
         }
 
 
@@ -878,7 +880,12 @@
                     }
                     if (this.plyr === null) {
                         this.plyr = new Plyr(this.video, this.options);
-                    }
+                    } else setTimeout(() => {
+                            //load subs (populate)
+                            this.trigger('ready');
+
+                        }, 1000);
+
                 });
 
 
@@ -984,7 +991,7 @@
             return new Promise(resolve => {
 
                 if (!this.isReady) {
-                    this.on('toolbar.ready', () => {
+                    this.one('toolbar.ready', () => {
                         resolve(this);
                     });
 
@@ -1000,7 +1007,7 @@
 
             Object.defineProperties(this, {
                 elements: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: {
                         root: '<div class="plyr-toolbar hidden"/>',
                         title: '<span class="plyr-title"/>',
@@ -1015,7 +1022,7 @@
                     }
                 },
                 listeners: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: {
                         buttons: {
                             click: {},
@@ -1024,19 +1031,19 @@
                     }
                 },
                 icons: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: icons
                 },
                 data: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: player.data
                 },
                 player: {
-                    enmerable: false, configurable: true, writable: true,
+                    enumerable: false, configurable: true, writable: true,
                     value: player
                 },
                 isReady: {
-                    enmerable: true, configurable: true, writable: true,
+                    enumerable: true, configurable: true, writable: true,
                     value: false
                 }
             });

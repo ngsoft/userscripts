@@ -608,13 +608,13 @@
             super();
 
             Object.defineProperties(this, {
-                root: {value: root, enmerable: false, configurable: true, writable: false},
-                selector: {value: selector, enmerable: false, configurable: true, writable: false},
-                callback: {value: callback, enmerable: false, configurable: true, writable: false},
-                observer: {value: callback, enmerable: false, configurable: true, writable: true},
-                limit: {value: limit, enmerable: false, configurable: true, writable: false},
-                started: {value: false, enmerable: false, configurable: true, writable: true},
-                NodeFinder: {value: finder, enmerable: false, configurable: true, writable: false}
+                root: {value: root, enumerable: false, configurable: true, writable: false},
+                selector: {value: selector, enumerable: false, configurable: true, writable: false},
+                callback: {value: callback, enumerable: false, configurable: true, writable: false},
+                observer: {value: callback, enumerable: false, configurable: true, writable: true},
+                limit: {value: limit, enumerable: false, configurable: true, writable: false},
+                started: {value: false, enumerable: false, configurable: true, writable: true},
+                NodeFinder: {value: finder, enumerable: false, configurable: true, writable: false}
             });
 
 
@@ -674,8 +674,8 @@
         if (typeof root === s) root = doc.querySelector(root);
         if (root instanceof EventTarget ? typeof root.querySelectorAll === f : false) {
             Object.defineProperties(this, {
-                root: {value: root, enmerable: false, configurable: true, writable: false},
-                observers: {value: [], enmerable: false, configurable: true, writable: false}
+                root: {value: root, enumerable: false, configurable: true, writable: false},
+                observers: {value: [], enumerable: false, configurable: true, writable: false}
             });
             NodeFinder.instances.push(this);
             return this;
@@ -855,6 +855,7 @@
 
 
 
+
     /**
      * Small Event Wrapper
      * @param {EventTarget} target
@@ -877,6 +878,7 @@
                     };
                 });
             }
+            
             Object.assign(this, {
                 target: target,
                 binding: binding,

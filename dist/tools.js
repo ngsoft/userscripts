@@ -317,7 +317,7 @@
             let
                     key = this.prefix + module,
                     created = this.entries[key] || 0,
-                    expire = created > 0 ? this.expireAt(created) : 0;
+                    expire = created > 0 ? this.expiresAt(created) : 0;
             if (this.now > expire) {
                 localStorage.removeItem(key);
                 return null;
@@ -360,7 +360,7 @@
                 Object.keys(entries).forEach(key => {
                     let
                             created = entries[key],
-                            expire = this.expireAt(created);
+                            expire = this.expiresAt(created);
                     if (this.now > expire) {
                         localStorage.removeItem(key);
                         delete entries[key];
