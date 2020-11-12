@@ -734,7 +734,7 @@
                 url.searchParams.set('tt', +new Date()); // get a fresh version
                 let contents = cache.loadItem(moduleName);
                 if (typeof contents === s && contents.length > 0) {
-                    executeGMCode(script);
+                    executeGMCode(contents);
                     context.completeLoad(moduleName);
                     hit = true;
                 }
@@ -747,7 +747,7 @@
                             let script = response.text;
                             if (typeof script === s && script.length > 0) {
                                 script = transform(script, url);
-                                if (cache.enabled) cache.saveItem(moduleName, response.text);
+                                if (cache.enabled) cache.saveItem(moduleName, script);
                                 executeGMCode(script);
                                 context.completeLoad(moduleName);
                                 return;

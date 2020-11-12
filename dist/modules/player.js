@@ -380,6 +380,7 @@
                 if (this.loaded) {
                     let tt = this.textTrack, subs = this.subtitles;
                     if (tt.cues.length !== subs.length) {
+                        console.debug('Creating Track Cue for', this.lang, 'track.');
                         subs
                                 .map(entry => new VTTCue(entry.start / 1000, entry.end / 1000, entry.text))
                                 .forEach(entry => tt.addCue(entry));
@@ -392,6 +393,9 @@
         load(src){
 
             if (this.loaded) return;
+            if (this.loading === true) return;
+            this.loading = true;
+            console.debug('Loads', this.lang, 'subtitle track', this.src);
 
             if (src instanceof URL) src = src.href;
             let url = /^http/.test(src) ? src : this.src;
@@ -405,6 +409,7 @@
 
                         if (Array.isArray(parsed) && parsed.length > 0) {
                             this.config.subtitles = parsed;
+                            this.loading = false;
                             this.trigger('loaded');
                         }
                     })
@@ -412,6 +417,7 @@
                         console.warn(err);
                         if (gettype(src, u)) {
                             src = "https://cors-anywhere.herokuapp.com/" + this.src;
+                            this.loading = false;
                             this.load(src);
                         }
                     });
@@ -683,6 +689,25 @@
                     let {plyr} = e.detail;
                     plyr.elements.buttons.download.hidden = true;
                 },
+                progress(e){
+
+
+                    //save position(pause will be better)
+
+
+
+                    //check subtitles loaded
+                    let track = this.currentTrack, enabled = this.plyr.captions.active;
+                    if (track instanceof PlyrPlayerCaption && enabled === true) {
+                        let cttcues = track.textTrack.cues;
+                        if (cttcues instanceof TextTrackCueList) {
+                            if (track.loaded) {
+                                if (cttcues.length === 0) track.trigger('loaded');
+                            } else track.load();
+                        }
+                    }
+
+                },
                 loadedmetadata(){
                     if (player.currentTrack instanceof PlyrPlayerCaption) {
                         player.trigger('player.trackchange', {
@@ -701,11 +726,20 @@
                 },
                 download(e){
                     let track = player.currentTrack;
-                    if (track instanceof PlyrPlayerCaption && track.loaded) {
+                    if (track instanceof PlyrPlayerCaption ) {
                         let file = data.get('filename') || data.get('title') || "subtitles";
                         file = sanitizeFileName(file, ' ');
                         file += '.' + track.srclang + '.srt';
-                        Text2File(track.srt, file);
+                        
+                        if(!track.loaded){
+                            track.one('loaded', ev=>{
+                                Text2File(track.srt, file);
+                            });
+                            track.load();
+                        } else Text2File(track.srt, file);
+                        
+                        
+
                     }
                 }
             };
@@ -813,7 +847,6 @@
                 let track = new PlyrPlayerCaption(this, src, srclang, label);
                 this.tracks.push(track);
                 this.video.appendChild(track.element);
-
                 return true;
             }
             return false;
@@ -880,11 +913,7 @@
                     }
                     if (this.plyr === null) {
                         this.plyr = new Plyr(this.video, this.options);
-                    } else setTimeout(() => {
-                            //load subs (populate)
-                            this.trigger('ready');
-
-                        }, 1000);
+                    } this.trigger('ready');
 
                 });
 
@@ -918,7 +947,7 @@
                         elem = this.sprite,
                         etype = 'toolbar.ready';
 
-                if (elem.innerHTML !== "") loaded = true;
+                //if (elem.innerHTML !== "") loaded = true;
 
 
                 if (cache.enabled) {
@@ -983,7 +1012,7 @@
         }
 
         set hidden(flag){
-            if (gettype(flag, b)) this.root.hidden = flag === true ? true : null;
+            this.root.hidden = flag === true ? true : null;
 
         }
 
@@ -1072,7 +1101,7 @@
 
             Events(this.root, this);
 
-            this.loadSprite();
+
 
             const
                     listeners = {
@@ -1094,8 +1123,8 @@
                     internals = {
                         toolbar: {
                             ready(){
-                                this.isReady = true;
-                                this.root.classList.remove('hidden');
+                                toolbar.isReady = true;
+                                toolbar.root.classList.remove('hidden');
                             }
                         },
                         click(e){
