@@ -35,7 +35,7 @@
     const
             template = `<dialog class="gm-dialog fadeIn">
                             <header class="gm-dialog-header">
-                                <h1 class="gm-dialog-title">Title</h1>
+                                <h1 class="gm-dialog-title">My big title to test my app</h1>
                                 <span class="gm-btn" data-name="close">&times;</span>
                             </header>
                             <form method="dialog" class="gm-dialog-body">
@@ -49,7 +49,10 @@
                                 <span class="gm-btn error" data-name="dismiss">No</span>
                                 <span class="gm-btn primary" data-name="confirm">Yes</span>
                             </footer>
-                        </dialog>`;
+                        </dialog>`,
+
+            // sense the current window size
+            sensor = doc.createElement('div');
 
 
 
@@ -88,18 +91,34 @@
      */
     function setSize(target){
 
-        const body = target.body;
+        if(!doc.body.contains(target.dialog)) return ;
 
+        let dialog = target.dialog, root = target.elements, body = root.body;
         body.style["max-height"] = body.style.height = null; //reset style
+
+        if (!doc.body.contains(sensor)) {
+            sensor.class = "gm-sensor";
+            doc.body.appendChild(sensor);
+        }
+
         let
-                max = target.overlay.offsetHeight,
-                dialogHeight = target.dialog.offsetHeight,
-                minus = target.header.offsetHeight + target.footer.offsetHeight + 16,
-                available = max - minus - 1,
+                //rect = dialog.getBoundingClientRect(),
+                // top = Math.round(rect.top),
+                max = sensor.offsetHeight,
+                dialogHeight = dialog.offsetHeight,
+                headerHeight = root.header.offsetHeight < 64 ? 64 : root.header.offsetHeight,
+                footerHeight = root.footer.offsetHeight < 64 ? 64 : root.footer.offsetHeight,
+                minus = headerHeight + footerHeight,
+                available = dialogHeight - minus,
                 current = body.offsetHeight;
 
+        console.debug({
+            max, dialogHeight, headerHeight, footerHeight, minus, available
+        });
+
         if (current > available) body.style["max-height"] = available + "px";
-        if ((dialogHeight > max) || (max < 640) || (innerWidth < 950) || target.dialog.classList.contains('fullscreen')) {
+        if ((dialogHeight > available) || (max < 640) || (innerWidth < 950) || target.dialog.classList.contains('fullscreen')) {
+            available--;
             body.style.height = available + "px";
         }
 
@@ -136,6 +155,10 @@
 
         get open(){
             return this.dialog.open;
+        }
+
+        get isModal(){
+            return this.dialog.matches('[modal]');
         }
 
         show(container){
@@ -220,7 +243,7 @@
                 try {
                     showModal.call(dialog, ...args);
                     dialog.setAttribute('modal', '');
-                    dialog.dispatchEvent(new Event('showmodal', {
+                    dialog.dispatchEvent(new Event('show', {
                         bubbles: false,
                         cancelable: true
                     }));
@@ -248,13 +271,35 @@
                 return EventTarget.prototype.dispatchEvent.call(dialog, ...args);
             };
             
-            
+            const resize = e => {
+                setSize(this);
+            };
 
 
             this.root.appendChild(this.dialog);
             Events(dialog, this)
-                    .on('close cancel', () => {
+                    .on('close cancel', e => {
                         dialog.removeAttribute('modal');
+                        if (e.type === 'close') removeEventListener('resize', resize);
+                    })
+                    .on('show', e => {
+
+                        if (e.target === dialog) {
+
+                            if (this.isModal) dialog.style.top = null;
+
+
+                            addEventListener('resize', resize);
+                            ResizeSensor(this.body, e => {
+                                setSize(this);
+                            });
+                            setTimeout(()=>{
+                                setSize(this);
+                            }, 1500);
+
+
+                        }
+
                     })
                     .on('click', e => {
                         let target = e.target.closest('[data-name].gm-btn, [name].gm-btn');
@@ -272,30 +317,16 @@
                                     this.close(false);
                                 } else if (name === 'confirm') {
                                     Events(this.body).trigger('submit');
-                                    //this.body.submit();
                                 }
                                 
                             }
                         }
-                        /* target = e.target.closest('dialog');
-                        if (target !== dialog) {
 
-                            console.debug('overlay click close');
-
-                        }*/
-
-                    })
-                    .on('focus blur', e => {
-                        console.debug(e);
                     });
 
             Events(this.body).on('submit', e => {
-                //e.preventDefault();
                 let form = e.target.closest('form');
                 this.dialog.returnValue = new FormData(form);
-
-                //console.debug(Object.fromEntries(data.entries()));
-                
             });
             
             let scrollbarSize = getScrollbarWidth();
@@ -303,6 +334,9 @@
                 this.body.style["margin-right"] = `-${ 50 + scrollbarSize }px`; //adds the scrollbar size
                 this.body.style["padding-right"] = "50px"; // do not add the scrollbar size to prevent layout gap
             }
+
+
+
 
             console.debug(this);
 

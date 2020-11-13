@@ -52,7 +52,21 @@
 
 }
 
+[class*="gm-"] {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
 
+.gm-sensor {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    z-index: -1;
+    opacity: 0;
+}
 
 /**
  * From Dialog Polyfill
@@ -72,8 +86,8 @@
     margin: auto;
     border: solid;
     padding: 1em;
-    background: white;
-    color: black;
+    background: var(--white);
+    color: var(--dark);
     display: block;
 
 }
@@ -83,29 +97,34 @@
     overflow: hidden;
     min-width: 256px;
     width: 60%;
-    background-color: #FFF;
+    background-color: var(--white);
     padding: 0;
     margin: 0 auto;
 
 }
 
-.pure dialog:not([modal]) {
+.pure dialog {
     top: 10%;
 }
 
-.gm-dialog {
+dialog.gm-dialog {
     border: var(--border) var(--transparent) !important;
     border-radius: 4px;
+    padding: 4em 0;
 }
 
-.gm-dialog .gm-dialog-header,
-.gm-dialog .gm-dialog-footer {
-    min-height: 4em;
+.gm-dialog-header,
+.gm-dialog-footer {
+    height: 4em;
     padding: .75em;
     clear: both;
     background-color: rgba(0, 0, 0, .03);
     display: block;
-    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    right: 0;
 }
 
 h1.gm-dialog-title {
@@ -113,9 +132,17 @@ h1.gm-dialog-title {
     font-weight: normal;
     text-decoration: none;
     margin: 0;
-    padding: .25em 0 0 .75em;
-    white-space: nowrap;
+    padding: 0;
     display: inline-block;
+    white-space: nowrap;
+    position: absolute;
+    top: 50%;
+    left: .75em;
+    transform: translate(0, -50%);
+    overflow: hidden;
+    line-height: 2;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 4em);
 }
 
 .gm-dialog-header>[data-name="close"].gm-btn {
@@ -136,6 +163,7 @@ h1.gm-dialog-title {
     overflow-y: scroll;
     scrollbar-width: none;
     ms-overflow-style: none;
+    border: none;
 }
 
 .gm-dialog .gm-dialog-body::-webkit-scrollbar {
@@ -143,14 +171,26 @@ h1.gm-dialog-title {
     height: 0;
 }
 
-.gm-dialog-header,
-.gm-dialog-body {
+.gm-dialog-header {
+    top: 0;
     border: none;
     border-bottom: 1px solid rgba(0, 0, 0, .125);
 }
 
-.gm-dialog .gm-dialog-footer {
+
+.gm-dialog-footer {
     text-align: right;
+    bottom: 0;
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, .125);
+}
+
+.gm-dialog-footer .gm-btn {
+    min-width: 6em;
+}
+
+.gm-dialog-footer .gm-btn+.gm-btn {
+    margin-left: 1em;
 }
 
 
@@ -187,7 +227,7 @@ h1.gm-dialog-title {
 
 @media (max-height: 640px),
 (max-width: 950px) {
-    .gm-dialog {
+    dialog.gm-dialog {
         left: .375em;
         right: .375em;
         top: .375em;
@@ -198,7 +238,7 @@ h1.gm-dialog-title {
     }
 }
 
-.gm-dialog.fullscreen {
+dialog.gm-dialog.fullscreen {
     left: .375em !important;
     right: .375em !important;
     top: .375em !important;
@@ -218,16 +258,13 @@ h1.gm-dialog-title {
     font-family: "Noto Sans", Arial, Helvetica, sans-serif;
 }
 
+
 .pure [class*="border-"] {
     border: var(--border) !important;
     border-color: var(--dark);
 }
 
-[class*="gm-"] {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-}
+
 
 
 /**
