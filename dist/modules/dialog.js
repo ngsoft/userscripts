@@ -34,14 +34,14 @@
 
     const
             template = `<dialog class="">
-                            <header class="">
-                                <h1 class=""></h1>
-                                <span class="gm-btn gm-btn-close" data-name="close">&times;</span>
+                            <header class="gm-dialog-header">
+                                <h1 class="gm-dialog-title"></h1>
+                                <span class="gm-btn xs" data-name="close">&times;</span>
                             </header>
-                            <form method="dialog" class=""></form>
-                            <footer class="">
-                                <span class="gm-btn gm-btn-yes" data-name="confirm">Yes</span>
-                                <span class="gm-btn gm-btn-no" data-name="dismiss">No</span>
+                            <form method="dialog" class="gm-dialog-body"></form>
+                            <footer class="gm-dialog-footer">
+                                <span class="gm-btn primary" data-name="confirm">Yes</span>
+                                <span class="gm-btn error" data-name="dismiss">No</span>
                             </footer>
                         </dialog>`;
 
@@ -58,7 +58,7 @@
         }
 
         open(){
-            if (this.dialog.parentElement === null) doc.body.appendChild(this.dialog);
+            if (this.root.parentElement === null) doc.body.appendChild(this.root);
             this.dialog.showModal();
             return this;
         }
@@ -110,6 +110,7 @@
             };
 
 
+            this.root.appendChild(this.dialog);
 
 
 
@@ -134,6 +135,7 @@
 
     utils.loadcss(config.get('paths.styles') + 'reset.css');
     utils.loadcss(config.get('paths.styles') + 'dialog.css');
+    utils.loadcss(config.get('paths.styles') + 'main.css');
 
     return Dialog;
 }));

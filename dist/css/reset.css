@@ -265,7 +265,7 @@
 }
 
 .pure [hidden] {
-    display: none;
+    display: none !important;
 }
 
 .pure {
@@ -277,8 +277,15 @@
     display: none !important;
 }
 
+.pure .disabled,
+.pure [disabled]{
+   
+
+}
+
 .pure .pure-img {
     max-width: 100%;
     height: auto;
     display: block;
 }
+
