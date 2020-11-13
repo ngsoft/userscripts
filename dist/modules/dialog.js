@@ -33,7 +33,7 @@
 
 
     const
-            template = `<dialog class="">
+            template = `<dialog class="gm-dialog">
                             <header class="gm-dialog-header">
                                 <h1 class="gm-dialog-title"></h1>
                                 <span class="gm-btn xs" data-name="close">&times;</span>
@@ -50,6 +50,7 @@
     class Dialog {
 
         get dialog(){
+            if (!this.container.contains(this.root)) this.container.appendChild(this.root);
             return this.elements.dialog;
         }
 
@@ -57,10 +58,32 @@
             return this.elements.root;
         }
 
+        get container(){
+            return this.options.container || doc.body;
+        }
+
         open(){
-            if (this.root.parentElement === null) doc.body.appendChild(this.root);
-            this.dialog.showModal();
+
+            console.debug(this.dialog.showModal());
+            //this.dialog.show();
             return this;
+        }
+
+        show(container){
+            if (container instanceof Element) this.options.container = container;
+            return this.dialog.show();
+
+        }
+        showModal(container){
+            if (container instanceof Element) this.options.container = container;
+            return this.dialog.showModal();
+        }
+
+        close(returnValue){
+            if (this.dialog.open === true) {
+                this.dialog.close(returnValue);
+            }
+
         }
 
         constructor(options){
@@ -78,7 +101,7 @@
                 },
                 options: {
                     enumerable: false, configurable: true, writable: true,
-                    value: null
+                    value: {}
                 },
 
                 isReady: {
@@ -134,7 +157,7 @@
 
 
     utils.loadcss(config.get('paths.styles') + 'reset.css');
-    utils.loadcss(config.get('paths.styles') + 'dialog.css');
+    // utils.loadcss(config.get('paths.styles') + 'dialog.css');
     utils.loadcss(config.get('paths.styles') + 'main.css');
 
     return Dialog;

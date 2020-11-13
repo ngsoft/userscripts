@@ -46,10 +46,90 @@
     --border: 1px solid;
     --transparent: rgba(0, 0, 0, 0);
     --btn-box-shadow: 1px 1px 8px 1px rgba(0, 0, 0, 0.3);
+    --overlay: rgba(0, 0, 0, 0.4);
 
 
 
 }
+
+
+
+/**
+ * From Dialog Polyfill
+ * @link https://github.com/GoogleChrome/dialog-polyfill
+ */
+
+.pure dialog {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: -moz-fit-content;
+    width: -webkit-fit-content;
+    width: fit-content;
+    height: -moz-fit-content;
+    height: -webkit-fit-content;
+    height: fit-content;
+    margin: auto;
+    border: solid;
+    padding: 1em;
+    background: white;
+    color: black;
+    display: block;
+
+}
+
+/* Reset Style */
+.pure dialog {
+    overflow: hidden;
+    min-width: 256px;
+    width: 60%;
+    background-color: #FFF;
+    border: var(--border) var(--transparent);
+    padding: 0;
+    margin: 0 auto;
+}
+
+
+
+.pure dialog:not([open]),
+.pure:empty,
+.pure [hidden],
+.pure .hidden {
+    display: none !important;
+}
+
+.pure dialog+.backdrop {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: var(--overlay);
+}
+
+.pure ._dialog_overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.pure dialog.fixed {
+    position: fixed;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+
+
+
+
+
+
+
+
+
 
 .pure {
     font-family: "Noto Sans", Arial, Helvetica, sans-serif;
@@ -201,375 +281,464 @@
 .pure .border-white {
     border-color: var(--white);
 }
+
 .pure .border-black {
     border-color: var(--black);
 }
+
 .pure .border-light {
     border-color: var(--light);
 }
+
 .pure .border-snow {
     border-color: var(--snow);
 }
+
 .pure .border-dark {
     border-color: var(--dark);
 }
+
 .pure .border-grey {
     border-color: var(--grey);
 }
+
 .pure .border-greylight {
     border-color: var(--grey-light);
 }
+
 .pure .border-greylighter {
     border-color: var(--grey-lighter);
 }
+
 .pure .border-greydark {
     border-color: var(--grey-dark);
 }
+
 .pure .border-greydarker {
     border-color: var(--grey-darker);
 }
+
 .pure .bg-white {
     background: var(--white);
 }
+
 .pure .bg-black {
     background: var(--black);
 }
+
 .pure .bg-light {
     background: var(--light);
 }
+
 .pure .bg-snow {
     background: var(--snow);
 }
+
 .pure .bg-dark {
     background: var(--dark);
 }
+
 .pure .bg-grey {
     background: var(--grey);
 }
+
 .pure .bg-greylight {
     background: var(--grey-light);
 }
+
 .pure .bg-greylighter {
     background: var(--grey-lighter);
 }
+
 .pure .bg-greydark {
     background: var(--grey-dark);
 }
+
 .pure .bg-greydarker {
     background: var(--grey-darker);
 }
+
 .pure .white {
     color: var(--white);
 }
+
 .pure .black {
     color: var(--black);
 }
+
 .pure .light {
     color: var(--light);
 }
+
 .pure .snow {
     color: var(--snow);
 }
+
 .pure .dark {
     color: var(--dark);
 }
+
 .pure .grey {
     color: var(--grey);
 }
+
 .pure .greylight {
     color: var(--grey-light);
 }
+
 .pure .greylighter {
     color: var(--grey-lighter);
 }
+
 .pure .greydark {
     color: var(--grey-dark);
 }
+
 .pure .greydarker {
     color: var(--grey-darker);
 }
-.pure .border-red, 
-.gm-btn.red, 
-.pure .message.red, 
-.pure .border-error, 
-.gm-btn.error, 
+
+.pure .border-red,
+.gm-btn.red,
+.pure .message.red,
+.pure .border-error,
+.gm-btn.error,
 .pure .message.error {
     border-color: var(--red);
 }
-.pure .border-red.reverse, 
+
+.pure .border-red.reverse,
 .pure .border-error.reverse {
     border-color: var(--red-l);
 }
-.pure .border-pink, 
-.gm-btn.pink, 
+
+.pure .border-pink,
+.gm-btn.pink,
 .pure .message.pink {
     border-color: var(--pink);
 }
+
 .pure .border-pink.reverse {
     border-color: var(--pink-l);
 }
-.pure .border-orange, 
-.gm-btn.orange, 
-.pure .message.orange, 
-.pure .border-warning, 
-.gm-btn.warning, 
+
+.pure .border-orange,
+.gm-btn.orange,
+.pure .message.orange,
+.pure .border-warning,
+.gm-btn.warning,
 .pure .message.warning {
     border-color: var(--orange);
 }
-.pure .border-orange.reverse, 
+
+.pure .border-orange.reverse,
 .pure .border-warning.reverse {
     border-color: var(--orange-l);
 }
-.pure .border-yellow, 
-.gm-btn.yellow, 
+
+.pure .border-yellow,
+.gm-btn.yellow,
 .pure .message.yellow {
     border-color: var(--yellow);
 }
+
 .pure .border-yellow.reverse {
     border-color: var(--yellow-l);
 }
-.pure .border-purple, 
-.gm-btn.purple, 
+
+.pure .border-purple,
+.gm-btn.purple,
 .pure .message.purple {
     border-color: var(--purple);
 }
+
 .pure .border-purple.reverse {
     border-color: var(--purple-l);
 }
-.pure .border-green, 
-.gm-btn.green, 
-.pure .message.green, 
-.pure .border-success, 
-.gm-btn.success, 
+
+.pure .border-green,
+.gm-btn.green,
+.pure .message.green,
+.pure .border-success,
+.gm-btn.success,
 .pure .message.success {
     border-color: var(--green);
 }
-.pure .border-green.reverse, 
+
+.pure .border-green.reverse,
 .pure .border-success.reverse {
     border-color: var(--green-l);
 }
-.pure .border-olive, 
-.gm-btn.olive, 
+
+.pure .border-olive,
+.gm-btn.olive,
 .pure .message.olive {
     border-color: var(--olive);
 }
+
 .pure .border-olive.reverse {
     border-color: var(--olive-l);
 }
-.pure .border-blue, 
-.gm-btn.blue, 
-.pure .message.blue, 
-.pure .border-primary, 
-.gm-btn.primary, 
+
+.pure .border-blue,
+.gm-btn.blue,
+.pure .message.blue,
+.pure .border-primary,
+.gm-btn.primary,
 .pure .message.primary {
     border-color: var(--blue);
 }
-.pure .border-blue.reverse, 
+
+.pure .border-blue.reverse,
 .pure .border-primary.reverse {
     border-color: var(--blue-l);
 }
-.pure .border-cyan, 
-.gm-btn.cyan, 
-.pure .message.cyan, 
-.pure .border-secondary, 
-.gm-btn.secondary, 
+
+.pure .border-cyan,
+.gm-btn.cyan,
+.pure .message.cyan,
+.pure .border-secondary,
+.gm-btn.secondary,
 .pure .message.secondary {
     border-color: var(--cyan);
 }
-.pure .border-cyan.reverse, 
+
+.pure .border-cyan.reverse,
 .pure .border-secondary.reverse {
     border-color: var(--cyan-l);
 }
-.pure .border-brown, 
-.gm-btn.brown, 
+
+.pure .border-brown,
+.gm-btn.brown,
 .pure .message.brown {
     border-color: var(--brown);
 }
+
 .pure .border-brown.reverse {
     border-color: var(--brown-l);
 }
-.pure .bg-red, 
-.gm-btn.red.reverse, 
-.pure .bg-error, 
+
+.pure .bg-red,
+.gm-btn.red.reverse,
+.pure .bg-error,
 .gm-btn.error.reverse {
     background: var(--red);
 }
-.pure .bg-red.reverse, 
-.gm-btn.red, 
-.pure .message.red, 
-.pure .bg-error.reverse, 
-.gm-btn.error, 
+
+.pure .bg-red.reverse,
+.gm-btn.red,
+.pure .message.red,
+.pure .bg-error.reverse,
+.gm-btn.error,
 .pure .message.error {
     background: var(--red-l);
 }
-.pure .bg-pink, 
+
+.pure .bg-pink,
 .gm-btn.pink.reverse {
     background: var(--pink);
 }
-.pure .bg-pink.reverse, 
-.gm-btn.pink, 
+
+.pure .bg-pink.reverse,
+.gm-btn.pink,
 .pure .message.pink {
     background: var(--pink-l);
 }
-.pure .bg-orange, 
-.gm-btn.orange.reverse, 
-.pure .bg-warning, 
+
+.pure .bg-orange,
+.gm-btn.orange.reverse,
+.pure .bg-warning,
 .gm-btn.warning.reverse {
     background: var(--orange);
 }
-.pure .bg-orange.reverse, 
-.gm-btn.orange, 
-.pure .message.orange, 
-.pure .bg-warning.reverse, 
-.gm-btn.warning, 
+
+.pure .bg-orange.reverse,
+.gm-btn.orange,
+.pure .message.orange,
+.pure .bg-warning.reverse,
+.gm-btn.warning,
 .pure .message.warning {
     background: var(--orange-l);
 }
-.pure .bg-yellow, 
+
+.pure .bg-yellow,
 .gm-btn.yellow.reverse {
     background: var(--yellow);
 }
-.pure .bg-yellow.reverse, 
-.gm-btn.yellow, 
+
+.pure .bg-yellow.reverse,
+.gm-btn.yellow,
 .pure .message.yellow {
     background: var(--yellow-l);
 }
-.pure .bg-purple, 
+
+.pure .bg-purple,
 .gm-btn.purple.reverse {
     background: var(--purple);
 }
-.pure .bg-purple.reverse, 
-.gm-btn.purple, 
+
+.pure .bg-purple.reverse,
+.gm-btn.purple,
 .pure .message.purple {
     background: var(--purple-l);
 }
-.pure .bg-green, 
-.gm-btn.green.reverse, 
-.pure .bg-success, 
+
+.pure .bg-green,
+.gm-btn.green.reverse,
+.pure .bg-success,
 .gm-btn.success.reverse {
     background: var(--green);
 }
-.pure .bg-green.reverse, 
-.gm-btn.green, 
-.pure .message.green, 
-.pure .bg-success.reverse, 
-.gm-btn.success, 
+
+.pure .bg-green.reverse,
+.gm-btn.green,
+.pure .message.green,
+.pure .bg-success.reverse,
+.gm-btn.success,
 .pure .message.success {
     background: var(--green-l);
 }
-.pure .bg-olive, 
+
+.pure .bg-olive,
 .gm-btn.olive.reverse {
     background: var(--olive);
 }
-.pure .bg-olive.reverse, 
-.gm-btn.olive, 
+
+.pure .bg-olive.reverse,
+.gm-btn.olive,
 .pure .message.olive {
     background: var(--olive-l);
 }
-.pure .bg-blue, 
-.gm-btn.blue.reverse, 
-.pure .bg-primary, 
+
+.pure .bg-blue,
+.gm-btn.blue.reverse,
+.pure .bg-primary,
 .gm-btn.primary.reverse {
     background: var(--blue);
 }
-.pure .bg-blue.reverse, 
-.gm-btn.blue, 
-.pure .message.blue, 
-.pure .bg-primary.reverse, 
-.gm-btn.primary, 
+
+.pure .bg-blue.reverse,
+.gm-btn.blue,
+.pure .message.blue,
+.pure .bg-primary.reverse,
+.gm-btn.primary,
 .pure .message.primary {
     background: var(--blue-l);
 }
-.pure .bg-cyan, 
-.gm-btn.cyan.reverse, 
-.pure .bg-secondary, 
+
+.pure .bg-cyan,
+.gm-btn.cyan.reverse,
+.pure .bg-secondary,
 .gm-btn.secondary.reverse {
     background: var(--cyan);
 }
-.pure .bg-cyan.reverse, 
-.gm-btn.cyan, 
-.pure .message.cyan, 
-.pure .bg-secondary.reverse, 
-.gm-btn.secondary, 
+
+.pure .bg-cyan.reverse,
+.gm-btn.cyan,
+.pure .message.cyan,
+.pure .bg-secondary.reverse,
+.gm-btn.secondary,
 .pure .message.secondary {
     background: var(--cyan-l);
 }
-.pure .bg-brown, 
+
+.pure .bg-brown,
 .gm-btn.brown.reverse {
     background: var(--brown);
 }
-.pure .bg-brown.reverse, 
-.gm-btn.brown, 
+
+.pure .bg-brown.reverse,
+.gm-btn.brown,
 .pure .message.brown {
     background: var(--brown-l);
 }
-.pure .red, 
+
+.pure .red,
 .pure .error {
     color: var(--red);
 }
-.pure .red.reverse, 
+
+.pure .red.reverse,
 .pure .error.reverse {
     color: var(--red-l);
 }
+
 .pure .pink {
     color: var(--pink);
 }
+
 .pure .pink.reverse {
     color: var(--pink-l);
 }
-.pure .orange, 
+
+.pure .orange,
 .pure .warning {
     color: var(--orange);
 }
-.pure .orange.reverse, 
+
+.pure .orange.reverse,
 .pure .warning.reverse {
     color: var(--orange-l);
 }
+
 .pure .yellow {
     color: var(--yellow);
 }
+
 .pure .yellow.reverse {
     color: var(--yellow-l);
 }
+
 .pure .purple {
     color: var(--purple);
 }
+
 .pure .purple.reverse {
     color: var(--purple-l);
 }
-.pure .green, 
+
+.pure .green,
 .pure .success {
     color: var(--green);
 }
-.pure .green.reverse, 
+
+.pure .green.reverse,
 .pure .success.reverse {
     color: var(--green-l);
 }
+
 .pure .olive {
     color: var(--olive);
 }
+
 .pure .olive.reverse {
     color: var(--olive-l);
 }
-.pure .blue, 
+
+.pure .blue,
 .pure .primary {
     color: var(--blue);
 }
-.pure .blue.reverse, 
+
+.pure .blue.reverse,
 .pure .primary.reverse {
     color: var(--blue-l);
 }
-.pure .cyan, 
+
+.pure .cyan,
 .pure .secondary {
     color: var(--cyan);
 }
-.pure .cyan.reverse, 
+
+.pure .cyan.reverse,
 .pure .secondary.reverse {
     color: var(--cyan-l);
 }
+
 .pure .brown {
     color: var(--brown);
 }
+
 .pure .brown.reverse {
     color: var(--brown-l);
 }

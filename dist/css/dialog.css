@@ -18,10 +18,14 @@
   background: white;
   color: black;
   display: block;
+  
 }
 
+
+
+
 .pure dialog:not([open]) {
-  display: none;
+  display: none !important;
 }
 
 .pure dialog + .backdrop {
