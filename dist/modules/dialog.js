@@ -28,37 +28,39 @@
             polyfill = require('dialogpolyfill'),
             utils = require('utils');
 
-    const {int, n, f, s, u, b, html2element, doc, Events, gettype, ResizeSensor} = utils;
+    const {int, n, f, s, u, b, html2element, doc, Events, gettype, ResizeSensor, sprintf, addstyle, assert} = utils;
 
-    let undef;
+    let undef, scrollBarStyles = false, zindex = 300000, isReady = false, listener = new Events();
 
     const
             template = `<dialog class="gm-dialog">
-                            <header class="gm-dialog-header">
-                                <h1 class="gm-dialog-title">My big title to test my app</h1>
-                                <span class="gm-btn" data-name="close">&times;</span>
-                            </header>
-                            <section class="gm-dialog-body">
-                                <form method="dialog" class="gm-dialog-form">
-                                    <fieldset>
-                                        <legend>Body</legend>
-                                        <label>Name</label><input type="text" name="name">
-                                    </fieldset>
-                                    <fieldset>
-                                        <legend>Select Box</legend>
-                                        <label>Servers</label>
-                                        <select name="sel">
-                                            <option value="1">four</option>
-                                            <option value="2">My long string to test the select box</option>
-                                        </select>
-                                    </fieldset>
+                            <div class="gm-modal">
+                                <div class="gm-dialog-header">
+                                    <h1 class="gm-dialog-title">My big title to test my app</h1>
+                                    <span class="gm-btn" data-name="close">&times;</span>
+                                </div>
+                                <div class="gm-dialog-body">
+                                    <form method="dialog" class="gm-dialog-form">
+                                        <fieldset>
+                                            <legend>Body</legend>
+                                            <label>Name</label><input type="text" name="name">
+                                        </fieldset>
+                                        <fieldset>
+                                            <legend>Select Box</legend>
+                                            <label>Servers</label>
+                                            <select name="sel">
+                                                <option value="1">four</option>
+                                                <option value="2">My long string to test the select box</option>
+                                            </select>
+                                        </fieldset>
 
-                                </form>
-                            </section>
-                            <footer class="gm-dialog-footer">
-                                <span class="gm-btn error" data-name="dismiss">No</span>
-                                <span class="gm-btn primary" data-name="confirm">Yes</span>
-                            </footer>
+                                    </form>
+                                </div>
+                                <div class="gm-dialog-footer">
+                                    <span class="gm-btn error" data-name="dismiss">No</span>
+                                    <span class="gm-btn primary" data-name="confirm">Yes</span>
+                                </div>
+                            </div>
                         </dialog>`;
 
 
@@ -96,36 +98,109 @@
     /**
      * auto resize dialog
      */
-    function setSize(target){
+    function setSize(target, init = false){
 
         if(!doc.body.contains(target.dialog)) return ;
 
-        let dialog = target.dialog, root = target.elements, body = root.body;
+        let dialog = target.modal, root = target.elements, body = root.body;
         body.style["max-height"] = body.style.height = body.style["min-height"] = null; //reset style
 
         let
-                //rect = dialog.getBoundingClientRect(),
+                rect = dialog.getBoundingClientRect(),
                 // top = Math.round(rect.top),
                 max = innerHeight,
                 dialogHeight = dialog.offsetHeight,
                 headerHeight = root.header.offsetHeight < 64 ? 64 : root.header.offsetHeight,
                 footerHeight = root.footer.offsetHeight < 64 ? 64 : root.footer.offsetHeight,
-                minus = headerHeight + footerHeight,
+                minus = headerHeight + footerHeight + 2,
                 available = dialogHeight - minus,
-                current = body.offsetHeight;
+                current = body.offsetHeight,
+                free = max - (dialogHeight + rect.top);
 
-        console.debug({
-            max, dialogHeight, headerHeight, footerHeight, minus, available, current
-        });
+
+
+
+        /*console.debug({
+            max, dialogHeight, headerHeight, footerHeight, minus, available, current, free, rect, calc: Math.floor((free / 2) + available)
+        });*/
 
         if (current > available) body.style["max-height"] = available + "px";
+        else if (current === available && free > 16) {
+            body.style["min-height"] = Math.floor((free / 2) + available) + "px";
+
+        }
+
         if ((dialogHeight > available) || (max < 640) || (innerWidth < 950) || target.dialog.classList.contains('fullscreen')) {
             available--;
             body.style.height = available + "px";
-            body.style["min-height"] = "0";
+            //body.style["min-height"] = "0";
         }
 
     }
+
+    /**
+     * show / hide events
+     * using animated
+     */
+    const animate = (function(){
+
+        const
+                def = 'fadeIn',
+                classList = "bounce flash pulse rubberBand shake headShake swing tada wobble jello bounceIn bounceInDown bounceInLeft bounceInRight bounceInUp bounceOut bounceOutDown bounceOutLeft bounceOutRight bounceOutUp fadeIn fadeInDown fadeInDownBig fadeInLeft fadeInLeftBig fadeInRight fadeInRightBig fadeInUp fadeInUpBig fadeOut fadeOutDown fadeOutDownBig fadeOutLeft fadeOutLeftBig fadeOutRight fadeOutRightBig fadeOutUp fadeOutUpBig flipInX flipInY flipOutX flipOutY lightSpeedIn lightSpeedOut rotateIn rotateInDownLeft rotateInDownRight rotateInUpLeft rotateInUpRight rotateOut rotateOutDownLeft rotateOutDownRight rotateOutUpLeft rotateOutUpRight hinge jackInTheBox rollIn rollOut zoomIn zoomInDown zoomInLeft zoomInRight zoomInUp zoomOut zoomOutDown zoomOutLeft zoomOutRight zoomOutUp slideInDown slideInLeft slideInRight slideInUp slideOutDown slideOutLeft slideOutRight slideOutUp animated",
+                type = (function(el){
+                    var animations = {
+                        animation: 'animationend',
+                        OAnimation: 'oAnimationEnd',
+                        MozAnimation: 'mozAnimationEnd',
+                        WebkitAnimation: 'webkitAnimationEnd'
+                    };
+                    for (var t in animations) {
+                        if (el.style[t] !== undefined) {
+                            return animations[t];
+                        }
+                    }
+                })(document.createElement('div'));
+
+
+
+
+        function load(elem, animation, callback){
+
+            return new Promise(resolve => {
+                if (!(elem instanceof  Element)) throw new Error('Invalid Argument element.');
+
+                if (typeof animation === "function") {
+                    callback = animation;
+                    animation = undef;
+                }
+                animation = animation || def;
+                if (typeof animation === 'string') {
+                    elem.classList.remove(...classList.split(/\s+/));
+                    if (typeof callback === "function") {
+                        elem.addEventListener(type, callback, {
+                            once: true,
+                            capture: false
+                        });
+                    }
+                    elem.addEventListener(type, e => {
+                        elem.classList.remove(...classList.split(/\s+/));
+                        resolve(e);
+                    }, {once: true, capture: false});
+
+                    if (elem.hidden === true) elem.hidden = false;
+                    else if (elem.classList.contains('hidden')) {
+                        elem.classList.remove('hidden');
+                    }
+                    elem.classList.add('animated', ...animation.split(/\s+/));
+
+                } else throw new Error('Invalid Argument animation.');
+            });
+        }
+
+
+        return load;
+
+    })();
 
 
 
@@ -146,13 +221,17 @@
             return this.elements.dialog;
         }
 
+        get modal(){
+            return this.elements.modal;
+        }
+
 
         get body(){
             return this.elements.body;
         }
 
         get form(){
-            return this.options.form;
+            return this.elements.form;
         }
         
 
@@ -166,6 +245,17 @@
 
         get isModal(){
             return this.dialog.matches('[modal]');
+        }
+
+        get ready(){
+            return new Promise(resolve => {
+
+                if (isReady) resolve(this);
+                else listener.one('css.ready', () => {
+                        resolve(this);
+                    });
+
+            });
         }
 
         show(container){
@@ -200,6 +290,7 @@
                     value: {
                         root: html2element('<div class="pure"/>'),
                         dialog: html2element(template),
+                        modal: null,
                         buttons: {}
                     }
                 },
@@ -221,9 +312,12 @@
 
             const
                     dialog = this.dialog,
-                    $this = this;
+                    $this = this,
+                    modal = this.elements.modal = dialog.querySelector('.gm-modal');
 
-            ['header', 'body', 'footer'].forEach(cls => {
+
+
+            ['header', 'body', 'footer', 'form'].forEach(cls => {
                 let
                         className = 'gm-dialog-' + cls,
                         elem = dialog.querySelector('.' + className);
@@ -247,33 +341,36 @@
 
             
             dialog.showModal = (...args) => {
-                dialog.classList.remove('fadeIn', 'fadeOut');
-                try {
-                    dialog.classList.add('fadeIn');
-                    showModal.call(dialog, ...args);
-                    dialog.setAttribute('modal', '');
-                    dialog.dispatchEvent(new Event('show', {
-                        bubbles: false,
-                        cancelable: true
-                    }));
-                } catch (e) {
-                    throw e;
-                }
+                this.ready.then(()=>{
+                    try {
+                        showModal.call(dialog, ...args);
+                        dialog.setAttribute('modal', '');
+                        dialog.dispatchEvent(new Event('show', {
+                            bubbles: false,
+                            cancelable: true
+                        }));
+                    } catch (e) {
+                        throw e;
+                    }
+                });
+                
+
 
 
             };
 
             dialog.show = (...args) => {
-                dialog.classList.remove('fadeIn', 'fadeOut');
-                if (!dialog.open) {
-                    dialog.classList.add('fadeIn');
-                    show.call(dialog, ...args);
-                    dialog.dispatchEvent(new Event('show', {
-                        bubbles: false,
-                        cancelable: true
-                    }));
-                    
-                }
+                this.ready.then(()=>{
+                    if (!dialog.open) {
+                        show.call(dialog, ...args);
+                        dialog.dispatchEvent(new Event('show', {
+                            bubbles: false,
+                            cancelable: true
+                        }));
+
+                    }
+                });
+
             };
             
             const resize = e => {
@@ -288,33 +385,36 @@
                         removeEventListener('resize', resize);
                         if (doc.querySelector('dialog.gm-dialog[open]') === null) {
                             doc.body.classList.remove('no-scroll');
-                            console.debug('all dialogs closed');
                         }
                     })
                     .on('show', e => {
+                        if (this.open) {
 
-                        if (e.target === dialog) {
-                            if (this.open) {
-                                doc.body.classList.add('no-scroll');
-                                if (this.isModal) dialog.style.top = null;
+                            doc.body.classList.add('no-scroll');
+
+                            modal.style['z-index'] = zindex++;
+                            animate(modal, 'fadeIn').then(e => {
+                                console.debug(e);
                                 addEventListener('resize', resize);
                                 ResizeSensor(this.body, e => {
                                     setSize(this);
                                 });
                                 setSize(this);
-                            }
+                            });
 
                         }
+
 
                     })
                     .on('confirm dismiss', e => {
                         let arg;
                         if (e.type === 'dismiss') arg = false;
-                        dialog.classList.remove('fadeIn', 'fadeOut');
-                        dialog.classList.add('fadeOut');
-                        setTimeout(() => {
+                        animate(modal, 'fadeOut').then(e => {
+                            console.debug(e);
                             this.close(arg);
-                        }, 750);
+                        });
+                        
+                        
 
                     })
                     .on('click', e => {
@@ -336,6 +436,8 @@
                                 }
                                 
                             }
+                        } else if (e.target.closest('.gm-modal') === null) {
+                            console.debug('overlay click close');
                         }
 
                     });
@@ -349,8 +451,16 @@
             
             let scrollbarSize = getScrollbarWidth();
             if (scrollbarSize > 0) {
-                this.body.style["margin-right"] = `-${ 50 + scrollbarSize }px`; //adds the scrollbar size
-                this.body.style["padding-right"] = "50px"; // do not add the scrollbar size to prevent layout gap
+                if(!scrollBarStyles){
+                    let
+                            margin = 50 + scrollbarSize,
+                            style = sprintf('.gm-scrollbar{padding-right: 50px; margin-right: -%dpx; }', margin);
+                    addstyle(style);
+                    scrollBarStyles = true;
+
+                }
+                this.body.classList.add('gm-scrollbar');
+
             }
 
 
@@ -379,7 +489,11 @@
 
     utils.loadcss(config.get('paths.styles') + 'reset.css');
     // utils.loadcss(config.get('paths.styles') + 'dialog.css');
-    utils.loadcss(config.get('paths.styles') + 'main.css');
+    utils.loadcss(config.get('paths.styles') + 'main.css')
+            .then(() => {
+                isReady = true;
+                listener.trigger('css.ready');
+            });
 
     return Dialog;
 }));
