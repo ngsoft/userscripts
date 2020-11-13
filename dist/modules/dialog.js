@@ -33,26 +33,33 @@
     let undef;
 
     const
-            template = `<dialog class="gm-dialog fadeIn">
+            template = `<dialog class="gm-dialog">
                             <header class="gm-dialog-header">
                                 <h1 class="gm-dialog-title">My big title to test my app</h1>
                                 <span class="gm-btn" data-name="close">&times;</span>
                             </header>
-                            <form method="dialog" class="gm-dialog-body">
-                                <fieldset>
-                                    <legend>Body</legend>
-                                    <label>Name</label><input type="text" name="name">
-                                </fieldset>
+                            <section class="gm-dialog-body">
+                                <form method="dialog" class="gm-dialog-form">
+                                    <fieldset>
+                                        <legend>Body</legend>
+                                        <label>Name</label><input type="text" name="name">
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Select Box</legend>
+                                        <label>Servers</label>
+                                        <select name="sel">
+                                            <option value="1">four</option>
+                                            <option value="2">My long string to test the select box</option>
+                                        </select>
+                                    </fieldset>
 
-                            </form>
+                                </form>
+                            </section>
                             <footer class="gm-dialog-footer">
                                 <span class="gm-btn error" data-name="dismiss">No</span>
                                 <span class="gm-btn primary" data-name="confirm">Yes</span>
                             </footer>
-                        </dialog>`,
-
-            // sense the current window size
-            sensor = doc.createElement('div');
+                        </dialog>`;
 
 
 
@@ -94,17 +101,12 @@
         if(!doc.body.contains(target.dialog)) return ;
 
         let dialog = target.dialog, root = target.elements, body = root.body;
-        body.style["max-height"] = body.style.height = null; //reset style
-
-        if (!doc.body.contains(sensor)) {
-            sensor.class = "gm-sensor";
-            doc.body.appendChild(sensor);
-        }
+        body.style["max-height"] = body.style.height = body.style["min-height"] = null; //reset style
 
         let
                 //rect = dialog.getBoundingClientRect(),
                 // top = Math.round(rect.top),
-                max = sensor.offsetHeight,
+                max = innerHeight,
                 dialogHeight = dialog.offsetHeight,
                 headerHeight = root.header.offsetHeight < 64 ? 64 : root.header.offsetHeight,
                 footerHeight = root.footer.offsetHeight < 64 ? 64 : root.footer.offsetHeight,
@@ -113,13 +115,14 @@
                 current = body.offsetHeight;
 
         console.debug({
-            max, dialogHeight, headerHeight, footerHeight, minus, available
+            max, dialogHeight, headerHeight, footerHeight, minus, available, current
         });
 
         if (current > available) body.style["max-height"] = available + "px";
         if ((dialogHeight > available) || (max < 640) || (innerWidth < 950) || target.dialog.classList.contains('fullscreen')) {
             available--;
             body.style.height = available + "px";
+            body.style["min-height"] = "0";
         }
 
     }
@@ -146,6 +149,10 @@
 
         get body(){
             return this.elements.body;
+        }
+
+        get form(){
+            return this.options.form;
         }
         
 
@@ -240,7 +247,9 @@
 
             
             dialog.showModal = (...args) => {
+                dialog.classList.remove('fadeIn', 'fadeOut');
                 try {
+                    dialog.classList.add('fadeIn');
                     showModal.call(dialog, ...args);
                     dialog.setAttribute('modal', '');
                     dialog.dispatchEvent(new Event('show', {
@@ -255,7 +264,9 @@
             };
 
             dialog.show = (...args) => {
-                if(!dialog.open){
+                dialog.classList.remove('fadeIn', 'fadeOut');
+                if (!dialog.open) {
+                    dialog.classList.add('fadeIn');
                     show.call(dialog, ...args);
                     dialog.dispatchEvent(new Event('show', {
                         bubbles: false,
@@ -263,12 +274,6 @@
                     }));
                     
                 }
-            };
-
-            dialog.dispatchEvent = function(...args){
-                console.debug(...args);
-
-                return EventTarget.prototype.dispatchEvent.call(dialog, ...args);
             };
             
             const resize = e => {
@@ -280,25 +285,36 @@
             Events(dialog, this)
                     .on('close cancel', e => {
                         dialog.removeAttribute('modal');
-                        if (e.type === 'close') removeEventListener('resize', resize);
+                        removeEventListener('resize', resize);
+                        if (doc.querySelector('dialog.gm-dialog[open]') === null) {
+                            doc.body.classList.remove('no-scroll');
+                            console.debug('all dialogs closed');
+                        }
                     })
                     .on('show', e => {
 
                         if (e.target === dialog) {
-
-                            if (this.isModal) dialog.style.top = null;
-
-
-                            addEventListener('resize', resize);
-                            ResizeSensor(this.body, e => {
+                            if (this.open) {
+                                doc.body.classList.add('no-scroll');
+                                if (this.isModal) dialog.style.top = null;
+                                addEventListener('resize', resize);
+                                ResizeSensor(this.body, e => {
+                                    setSize(this);
+                                });
                                 setSize(this);
-                            });
-                            setTimeout(()=>{
-                                setSize(this);
-                            }, 1500);
-
+                            }
 
                         }
+
+                    })
+                    .on('confirm dismiss', e => {
+                        let arg;
+                        if (e.type === 'dismiss') arg = false;
+                        dialog.classList.remove('fadeIn', 'fadeOut');
+                        dialog.classList.add('fadeOut');
+                        setTimeout(() => {
+                            this.close(arg);
+                        }, 750);
 
                     })
                     .on('click', e => {
@@ -312,11 +328,11 @@
                                 let callback = this.options.events.buttons[name];
                                 if (gettype(callback, f)) callback.call(target, e);
                                 else if (name === 'close') {
-                                    this.close(false);
+                                    this.trigger('dismiss');
                                 } else if (name === 'dismiss') {
-                                    this.close(false);
+                                    this.trigger('dismiss');
                                 } else if (name === 'confirm') {
-                                    Events(this.body).trigger('submit');
+                                    Events(this.form).trigger('submit');
                                 }
                                 
                             }
@@ -324,9 +340,11 @@
 
                     });
 
-            Events(this.body).on('submit', e => {
+            Events(this.form).on('submit', e => {
                 let form = e.target.closest('form');
                 this.dialog.returnValue = new FormData(form);
+                e.preventDefault();
+                this.trigger('confirm');
             });
             
             let scrollbarSize = getScrollbarWidth();

@@ -15,11 +15,11 @@
     --snow: rgba(255, 250, 250, 1);
     --dark: rgba(54, 54, 54, 1);
 
-    --grey: rgba(119, 136, 153, 1);
-    --grey-light: rgba(211, 211, 211, 1);
-    --grey-lighter: rgba(245, 245, 245, 1);
-    --grey-dark: rgba(112, 128, 144, 1);
-    --grey-darker: rgba(105, 105, 105, 1);
+    --gray: rgba(119, 136, 153, 1);
+    --gray-light: rgba(211, 211, 211, 1);
+    --gray-lighter: rgba(245, 245, 245, 1);
+    --gray-dark: rgba(112, 128, 144, 1);
+    --gray-darker: rgba(105, 105, 105, 1);
 
     --red: rgba(220, 20, 60, 1);
     --pink: rgba(238, 130, 238, 1);
@@ -58,15 +58,6 @@
     margin: 0;
 }
 
-.gm-sensor {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    z-index: -1;
-    opacity: 0;
-}
 
 /**
  * From Dialog Polyfill
@@ -95,7 +86,7 @@
 /* Reset Style */
 .pure dialog {
     overflow: hidden;
-    min-width: 256px;
+    min-width: 16em;
     width: 60%;
     background-color: var(--white);
     padding: 0;
@@ -108,8 +99,8 @@
 }
 
 dialog.gm-dialog {
-    border: var(--border) var(--transparent) !important;
-    border-radius: 4px;
+    border: var(--border) var(--overlay);
+    border-radius: .25em;
     padding: 4em 0;
 }
 
@@ -264,6 +255,164 @@ dialog.gm-dialog.fullscreen {
     border-color: var(--dark);
 }
 
+/**
+ * Forms
+ */
+
+.pure form {
+    display: block;
+    position: relative;
+}
+
+.pure form:before {
+    content: "";
+    display: block;
+    clear: both;
+    width: 0;
+    height: 1px;
+    visibility: hidden;
+}
+
+.pure input,
+.pure textarea,
+.pure select {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 1em;
+}
+
+
+
+
+
+.pure input,
+.pure select,
+.pure textarea {
+    width: 100%;
+    padding: .375em .625em;
+    margin: .25em 0;
+    box-sizing: border-box;
+    border-radius: .25em;
+    background-color: var(--gray-lighter);
+    border: 1px solid var(--gray-light);
+    -moz-appearance: textfield;
+    -webkit-appearance: none;
+    -o-appearance: none;
+    text-align: center;
+}
+
+.pure select {
+    background-image: linear-gradient(45deg, transparent 50%, var(--gray) 50%), linear-gradient(135deg, var(--gray) 50%, transparent 50%), linear-gradient(to right, var(--gray-light), var(--gray-light));
+    background-position: calc(100% - 1.25em) .825em, calc(100% - .9375em) .825em, calc(100% - 2.5em) .25em;
+    background-size: 5px 5px, 5px 5px, 1px calc(100% - .5em);
+    background-repeat: no-repeat;
+}
+
+.pure input:not(:valid),
+.pure input[required]:placeholder-shown,
+.pure input.error {
+    border-color: var(--red);
+}
+
+.pure input:focus,
+.pure select:focus,
+.pure textarea:focus {
+    border: 1px solid var(--cyan);
+}
+
+.pure .placeholder,
+.pure ::placeholder {
+    color: var(--gray);
+}
+
+.pure fieldset {
+    text-align: left;
+    padding: .5em 0;
+    margin: 0;
+    border: none;
+    font-size: 1em;
+    font-weight: 600;
+    min-width: 0;
+    display: table-cell;
+}
+
+.pure fieldset legend {
+    display: table;
+    width: 100%;
+    max-width: 100%;
+    padding: .5em 0;
+    margin: .5em 0 1em;
+    position: relative;
+    font-size: 1.5em;
+    line-height: 1.5;
+    color: var(--dark);
+    white-space: normal;
+    font-weight: 500;
+}
+
+
+.pure legend:before {
+    background: var(--gray-light);
+    position: absolute;
+    width: 100%;
+    bottom: -8px;
+    display: block;
+    content: "";
+    height: 1px;
+}
+
+.pure label {
+    display: block;
+    margin: 0;
+    font-size: 1.125em;
+    padding: .5em 0 .25em;
+}
+
+.pure label+input {
+    margin-top: 0;
+}
+
+.gm-dialog-body h1,
+.gm-dialog-body h2 {
+    display: block;
+    font-size: 2em;
+    text-align: left;
+    padding: 1em 0;
+    margin: 0;
+    border: 0;
+    font-weight: 500;
+}
+
+.gm-dialog-body h2 {
+    font-size: 1.5em;
+    position: relative;
+    padding: .5em 0 1em;
+    margin: 0 0 1em;
+}
+
+.gm-dialog-body h2:before {
+    background: var(--gray-light);
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    display: block;
+    content: "";
+    height: 1px;
+}
+
+.gm-dialog-body a {
+    color: var(--blue);
+    text-decoration: none;
+}
+
+.gm-dialog-body a:hover {
+    color: var(--cyan);
+}
+
+
+
 
 
 
@@ -318,7 +467,7 @@ dialog.gm-dialog.fullscreen {
     transition-duration: 0.4s;
     text-decoration: none;
     border-radius: 2px;
-    background-color: var(--grey-lighter);
+    background-color: var(--gray-lighter);
     color: var(--dark);
     border: var(--border) var(--transparent);
 }
@@ -328,7 +477,7 @@ dialog.gm-dialog.fullscreen {
 .gm-btn:focus,
 .gm-btn:hover {
     box-shadow: var(--btn-box-shadow);
-    background: var(--grey-light);
+    background: var(--gray-light);
     border-color: var(--dark);
 }
 
@@ -338,7 +487,7 @@ dialog.gm-dialog.fullscreen {
 
 .gm-btn:active {
     border-color: var(--black);
-    box-shadow: var(--btn-box-shadow) inset;
+    box-shadow: inset var(--btn-box-shadow);
 }
 
 
@@ -396,8 +545,6 @@ dialog.gm-dialog.fullscreen {
 /**
  * Colors
  */
-
-
 .pure .border-white {
     border-color: var(--white);
 }
@@ -418,24 +565,24 @@ dialog.gm-dialog.fullscreen {
     border-color: var(--dark);
 }
 
-.pure .border-grey {
-    border-color: var(--grey);
+.pure .border-gray {
+    border-color: var(--gray);
 }
 
-.pure .border-greylight {
-    border-color: var(--grey-light);
+.pure .border-graylight {
+    border-color: var(--gray-light);
 }
 
-.pure .border-greylighter {
-    border-color: var(--grey-lighter);
+.pure .border-graylighter {
+    border-color: var(--gray-lighter);
 }
 
-.pure .border-greydark {
-    border-color: var(--grey-dark);
+.pure .border-graydark {
+    border-color: var(--gray-dark);
 }
 
-.pure .border-greydarker {
-    border-color: var(--grey-darker);
+.pure .border-graydarker {
+    border-color: var(--gray-darker);
 }
 
 .pure .bg-white {
@@ -458,24 +605,24 @@ dialog.gm-dialog.fullscreen {
     background: var(--dark);
 }
 
-.pure .bg-grey {
-    background: var(--grey);
+.pure .bg-gray {
+    background: var(--gray);
 }
 
-.pure .bg-greylight {
-    background: var(--grey-light);
+.pure .bg-graylight {
+    background: var(--gray-light);
 }
 
-.pure .bg-greylighter {
-    background: var(--grey-lighter);
+.pure .bg-graylighter {
+    background: var(--gray-lighter);
 }
 
-.pure .bg-greydark {
-    background: var(--grey-dark);
+.pure .bg-graydark {
+    background: var(--gray-dark);
 }
 
-.pure .bg-greydarker {
-    background: var(--grey-darker);
+.pure .bg-graydarker {
+    background: var(--gray-darker);
 }
 
 .pure .white {
@@ -498,24 +645,24 @@ dialog.gm-dialog.fullscreen {
     color: var(--dark);
 }
 
-.pure .grey {
-    color: var(--grey);
+.pure .gray {
+    color: var(--gray);
 }
 
-.pure .greylight {
-    color: var(--grey-light);
+.pure .graylight {
+    color: var(--gray-light);
 }
 
-.pure .greylighter {
-    color: var(--grey-lighter);
+.pure .graylighter {
+    color: var(--gray-lighter);
 }
 
-.pure .greydark {
-    color: var(--grey-dark);
+.pure .graydark {
+    color: var(--gray-dark);
 }
 
-.pure .greydarker {
-    color: var(--grey-darker);
+.pure .graydarker {
+    color: var(--gray-darker);
 }
 
 .pure .border-red,
@@ -912,6 +1059,7 @@ dialog.gm-dialog.fullscreen {
     justify-content: center !important;
 }
 
+.gm-dialog *:not(input):not(textarea),
 .no-select {
     -webkit-touch-callout: none !important;
     -webkit-user-select: none !important;
