@@ -40,8 +40,8 @@
                             </header>
                             <form method="dialog" class="gm-dialog-body"></form>
                             <footer class="gm-dialog-footer">
-                                <span class="gm-btn primary" data-name="confirm">Yes</span>
                                 <span class="gm-btn error" data-name="dismiss">No</span>
+                                <span class="gm-btn primary" data-name="confirm">Yes</span>
                             </footer>
                         </dialog>`;
 
