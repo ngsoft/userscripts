@@ -134,6 +134,10 @@
             return this.dialog.returnValue;
         }
 
+        get open(){
+            return this.dialog.open;
+        }
+
         show(container){
             if (!this.dialog.open) {
             if (container instanceof Element) this.options.container = container;
@@ -209,23 +213,33 @@
                     showModal = dialog.showModal,
                     show = dialog.show;
 
+
+
+            
             dialog.showModal = (...args) => {
-                dialog.setAttribute('modal', '');
-                showModal.call(dialog, ...args);
-                dialog.dispatchEvent(new Event('showmodal', {
-                    bubbles: false,
-                    cancelable: true
-                }));
+                try {
+                    showModal.call(dialog, ...args);
+                    dialog.setAttribute('modal', '');
+                    dialog.dispatchEvent(new Event('showmodal', {
+                        bubbles: false,
+                        cancelable: true
+                    }));
+                } catch (e) {
+                    throw e;
+                }
+
+
             };
 
             dialog.show = (...args) => {
-                show.call(dialog, ...args);
-
-                dialog.dispatchEvent(new Event('show', {
-                    bubbles: false,
-                    cancelable: true
-                }));
-
+                if(!dialog.open){
+                    show.call(dialog, ...args);
+                    dialog.dispatchEvent(new Event('show', {
+                        bubbles: false,
+                        cancelable: true
+                    }));
+                    
+                }
             };
 
             dialog.dispatchEvent = function(...args){
