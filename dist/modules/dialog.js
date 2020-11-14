@@ -52,6 +52,28 @@
                                                 <option value="1">four</option>
                                                 <option value="2">My long string to test the select box</option>
                                             </select>
+
+                                                <div class="ui checkbox">
+                                                  <input type="checkbox" name="example">
+                                                  <label>Make my profile visible</label>
+                                                </div>
+
+                                                <div class="ui radio checkbox">
+                                                  <input type="radio" name="radio" checked="checked">
+                                                  <label>Radio choice</label>
+                                                </div>
+                                                <div class="ui toggle checkbox">
+                                                  <input type="checkbox" name="public">
+                                                  <label>Subscribe to weekly newsletter</label>
+                                                </div>
+                                                <div class="switch">
+                                                    <input title="Enabled" type="checkbox" name="server-enabled">
+                                                    <span class="slider"></span>
+                                                </div>
+
+
+
+
                                         </fieldset>
                                         <h1>Test h1 title</h1>
                                         <p>

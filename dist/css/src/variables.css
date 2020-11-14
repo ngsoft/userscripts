@@ -51,10 +51,3 @@
     --btn-border: rgba(0, 0, 0, 0.2);
 
 }
-
-/* defaults styles */
-.pure, .pure * {
-    font-family: "Noto Sans", Arial, Helvetica, sans-serif;
-    font-size: 1em;
-}
-

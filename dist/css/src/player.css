@@ -1,0 +1,157 @@
+.plyr-player video{object-fit: fill;}
+.plyr-player{position: absolute;top: 0;right: 0;left: 0;bottom: 0;}
+.plyr__poster {background-size: cover;}
+.plyr__caption{
+    -webkit-touch-callout: none;-webkit-user-select: none;-moz-user-select: none;user-select: none;
+     font-weight: 600; text-shadow: 5px 5px 5px #000; min-width: 90%; display: inline-block;
+     background: rgba(0,0,0,.1);transform: translate(0, 10%);font-size: 16px;
+}
+.plyr--captions-enabled video::cue{
+   color: rgba(255,255,255,0); background-color: rgba(255,255,255,0);
+    display: none; text-shadow: none;
+}
+
+.plyr-toolbar{
+    position: absolute; top: 0 ; left: 0 ; right: 0;padding: 0; margin: 0;
+    background: linear-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));z-index: 9999;
+    transition: opacity .4s ease-in-out,transform .4s ease-in-out;
+    text-align: center;line-height: 1.2;
+}
+
+.plyr-toolbar{
+    display: flex; margin: 0;padding: 0;
+    font-family: "Noto Sans", Arial, Helvetica, sans-serif !important;
+    text-rendering: optimizeLegibility;font-size: 20px; color:#FFF;
+}
+.plyr-toolbar-left, .plyr-toolbar-right {
+    display: flex;white-space: nowrap;
+    width: 50%;margin: 0;padding: 16px;
+}
+
+.plyr-toolbar-left {
+    width: 40%;justify-content: flex-start;text-align: left;
+}
+
+.plyr-toolbar-right {
+    width: 60%;justify-content: flex-end; text-align: right;
+}
+
+
+
+.plyr-toolbar-btn{
+    cursor: pointer;;box-sizing: border-box;position: relative;padding: 0;
+    transition: all 0.2s ease-out 0s;text-decoration: none;margin: 0;
+    font-weight: 700;line-height: 1; text-rendering: optimizeLegibility;
+    white-space: nowrap;
+}
+
+
+.plyr-toolbar-btn svg{
+    height: 24px; width: 24px;
+    position: absolute;top:0;
+}
+
+.plyr-toolbar-btn:after, .plyr-toolbar-btn:before{
+    display: inline-block; width: 24px;
+}
+
+.plyr-toolbar-left .plyr-toolbar-btn:before, .plyr-toolbar-right .plyr-toolbar-btn:after{
+    content: ""; 
+}
+
+.plyr-toolbar-left .plyr-toolbar-btn svg{
+    left: 0;
+}
+
+.plyr-toolbar-right .plyr-toolbar-btn svg{
+    right: 0;
+}
+
+.plyr-toolbar-btn span{
+    vertical-align: baseline;
+    line-height: 1.2; display: inline-block;
+}
+
+
+.plyr-toolbar-left .plyr-toolbar-btn span{
+    margin-left: 8px;
+}
+
+.plyr-toolbar-btn + .plyr-toolbar-btn{
+       margin-left: 16px;
+}
+
+.plyr-toolbar-right .plyr-toolbar-btn span{
+    margin-right: 8px;
+}
+
+
+
+.plyr-toolbar-right .plyr-toolbar-btn:not(:hover):not(:focus):not(:active)  span{
+    display: none;
+}
+
+.plyr-toolbar-btn:hover,  .plyr-toolbar-btn:hover svg{transform: scale(1.1);}
+
+
+
+@media (min-width: 768px) {
+    .plyr__caption, .plyr-toolbar{font-size: 24px;}
+    .plyr-toolbar-left, .plyr-toolbar-right {
+        padding: 24px;
+    }
+    .plyr-toolbar-btn svg{
+        height: 32px; width: 32px;
+    }
+    
+    .plyr-toolbar-left .plyr-toolbar-btn span{
+        margin-left: 16px;
+    }
+    .plyr-toolbar-btn + .plyr-toolbar-btn{
+        margin-left: 24px;
+    }
+
+    .plyr-toolbar-right .plyr-toolbar-btn span{
+        margin-right: 16px;
+    }
+    
+    .plyr-toolbar-btn:after, .plyr-toolbar-btn:before{
+        width: 32px;
+    }
+    
+    
+}
+@media (min-width: 992px) {
+    .plyr__caption, .plyr-toolbar{font-size: 32px;}
+     .plyr-toolbar-left, .plyr-toolbar-right {
+        padding: 32px;
+    }
+    .plyr-toolbar-btn svg{
+        height: 40px; width: 40px;
+    }
+    .plyr-toolbar-left .plyr-toolbar-btn span{
+        margin-left: 20px;
+    }
+    
+    .plyr-toolbar-btn + .plyr-toolbar-btn{
+        margin-left: 32px;
+    }
+
+    .plyr-toolbar-right .plyr-toolbar-btn span{
+        margin-right: 20px;
+    }
+    .plyr-toolbar-btn:after, .plyr-toolbar-btn:before{
+        width: 40px;
+    }
+    
+}
+.plyr-player [disabled], .plyr-player .disabled{pointer-events: none !important;}
+.plyr-player .hidden, .plyr-player .hidden *{
+    position: fixed !important; right: auto !important; bottom: auto !important; top:-100% !important; left: -100% !important;
+    height: 1px !important; width: 1px !important; opacity: 0 !important;max-height: 1px !important; max-width: 1px !important;
+    display: inline !important;z-index: -1 !important;
+}
+.plyr-player [hidden], .plyr-player button[data-plyr="quality"][disabled], .plyr-title:empty, .plyr-title:empty + svg{display: none !important;}
+.no-select{-webkit-touch-callout: none !important;-webkit-user-select: none !important;-moz-user-select: none !important;user-select: none !important;}
+
+
