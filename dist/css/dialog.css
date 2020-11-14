@@ -306,12 +306,4 @@ h1.gm-dialog-title {
     }
 }
 
-.gm-dialog.fullscreen .gm-modal {
-    left: .375em !important;
-    right: .375em !important;
-    top: .375em !important;
-    bottom: .375em !important;
-    height: auto !important;
-    max-height: calc(100% - .75em) !important;
-    width: calc(100% - .75em) !important;
-}
+

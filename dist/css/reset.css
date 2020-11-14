@@ -275,53 +275,10 @@
     display: block;
 }
 
-/* Some Additions */
-
 .pure .hidden,
 .pure [hidden] {
     display: none !important;
 }
 
-.pure .disabled,
-.pure [disabled]{
-    pointer-events: none !important;
-    opacity: .4 !important;
-    cursor: not-allowed !important;
-
-}
-
-.noscroll {
-    overflow: hidden !important;
-}
-
-@keyframes pureFadeIn {
-    from { opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes pureFadeOut {
-    from {
-        opacity: 1;
-    }
-
-    to {
-        opacity: 0;
-    }
-}
-
-.pure .fadeIn {
-    animation-name: pureFadeIn;
-    animation-duration: .75s;
-    animation-fill-mode: both;
-}
-
-.pure .fadeOut {
-    animation-name: pureFadeOut;
-    animation-duration: .75s;
-    animation-fill-mode: both;
-}
+/* Some Additions */
 

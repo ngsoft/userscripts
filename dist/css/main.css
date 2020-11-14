@@ -1,6 +1,44 @@
 /**
- * Main Styles and Overrides
+ * Main Styles (to load first)
  */
+
+
+
+
+@keyframes pureFadeIn {
+    from { opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pureFadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+.pure .fadeIn {
+    animation-name: pureFadeIn;
+    animation-duration: .75s;
+    animation-fill-mode: both;
+}
+
+.pure .fadeOut {
+    animation-name: pureFadeOut;
+    animation-duration: .75s;
+    animation-fill-mode: both;
+}
+
+
+
+
 
 [class*="gm-"] {
     box-sizing: border-box;
@@ -25,38 +63,4 @@
 }
 
 
-.screencenter {
-    top: 50% !important;
-    left: 50% !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: translate(-50%, -50%) !important;
-    position: absolute !important;
-}
-
-.fullscreen {
-    left: 0 !important;
-    right: 0 !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    max-height: 100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    transform: unset !important;
-    position: fixed !important;
-}
-
-.flex-center {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.gm-dialog *:not(input):not(textarea),
-.no-select {
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    user-select: none !important;
-}
 
