@@ -2,8 +2,7 @@
  * Forms
  */
 
-.pure form,
-.pure p {
+.pure form {
     display: block;
     position: relative;
     font-family: inherit;
@@ -13,9 +12,7 @@
     padding: 0 1em;
 }
 
-.pure p {
-    padding: 1em;
-}
+
 
 
 .pure form:before {

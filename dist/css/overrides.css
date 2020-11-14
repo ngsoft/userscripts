@@ -48,4 +48,8 @@
     user-select: none !important;
 }
 
+.pure [class*="border-"] {
+    border: var(--border) !important;
+    border-color: var(--dark);
+}
 

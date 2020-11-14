@@ -2,9 +2,6 @@
  * Main Styles (to load first)
  */
 
-
-
-
 @keyframes pureFadeIn {
     from { opacity: 0;
     }
@@ -37,9 +34,6 @@
 }
 
 
-
-
-
 [class*="gm-"] {
     box-sizing: border-box;
     padding: 0;
@@ -57,9 +51,14 @@
     text-decoration: underline;
 }
 
-.pure [class*="border-"] {
-    border: var(--border) !important;
-    border-color: var(--dark);
+.pure p {
+    display: block;
+    position: relative;
+    font-family: inherit;
+    font-size: 1.125em;
+    text-align: left;
+    color: var(--dark);
+    padding: 1em;
 }
 
 

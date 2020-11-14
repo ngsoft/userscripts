@@ -285,8 +285,6 @@ h1.gm-dialog-title {
     }
 }
 
-
-
 @media (max-height: 640px),
 (max-width: 767px) {
     .gm-dialog .gm-modal {
