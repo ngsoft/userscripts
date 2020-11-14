@@ -9,6 +9,7 @@
  */
 .pure {
 
+
     --white: rgba(255, 255, 255, 1);
     --black: rgba(10, 10, 10, 1);
     --light: rgba(255, 250, 240, 1);
@@ -46,7 +47,14 @@
     --border: 1px solid;
     --transparent: rgba(0, 0, 0, 0);
     --btn-box-shadow: 1px 1px 8px 1px rgba(0, 0, 0, 0.3);
-    --overlay: rgba(0, 0, 0, 0.4);
+    --overlay: rgba(0, 0, 0, 0.85);
+
+    --modal-border: 1px solid;
+    --modal-radius: .25em;
+    --modal-border-color: rgba(0, 0, 0, .125);
+    --modal-shadow-color: rgba(0, 0, 0, 0.2);
+    --modal-ui-color: rgba(0, 0, 0, .03);
+    --btn-border: rgba(0, 0, 0, 0.2);
 
 
 
@@ -70,7 +78,7 @@
  * @link https://github.com/GoogleChrome/dialog-polyfill
  */
 
-.pure dialog,
+.pure dialog:not(.gm-dialog),
 .gm-modal {
     position: absolute;
     left: 0;
@@ -83,7 +91,7 @@
     height: fit-content;
     margin: auto;
     border: solid;
-    padding: 1em;
+    padding: 0;
     background: var(--white);
     color: var(--dark);
     display: block;
@@ -115,16 +123,12 @@ dialog.gm-dialog:not([modal]) {
 }
 
 .gm-modal {
-    top: 10%;
     position: absolute;
     overflow: hidden;
     min-width: 16em;
     min-height: 16em;
     width: 60%;
-    background: var(--white);
     margin: 0 auto;
-    border: var(--border) var(--overlay);
-    border-radius: .25em;
     padding: 4em 0;
     z-index: 300000;
 }
@@ -135,14 +139,27 @@ dialog.gm-dialog:not([modal]) {
 .gm-dialog-footer {
     height: 4em;
     padding: .75em;
-    background-color: rgba(0, 0, 0, .03);
     display: block;
     white-space: nowrap;
     overflow: hidden;
     position: absolute;
     left: 0;
     right: 0;
+    border-radius: 0;
 }
+
+
+.gm-dialog-header {
+    top: 0;
+    border: none;
+}
+
+.gm-dialog-footer {
+    text-align: right;
+    bottom: 0;
+    border: none;
+}
+
 
 h1.gm-dialog-title {
     font-size: 2em;
@@ -181,26 +198,41 @@ h1.gm-dialog-title {
     scrollbar-width: none;
     ms-overflow-style: none;
     border: none;
+    max-height: calc(100% - 2px);
 }
 
-.gm-dialog .gm-dialog-body::-webkit-scrollbar {
+.gm-dialog-body::-webkit-scrollbar {
     width: 0;
     height: 0;
 }
 
-.gm-dialog-header {
-    top: 0;
-    border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, .125);
+.gm-modal {
+    border: var(--border) var(--modal-shadow-color);
+    border-radius: var(--modal-radius);
+    background: var(--white);
+    color: var(--dark);
+
+    -webkit-box-shadow: 1px 3px 3px 0px var(--modal-shadow-color),
+        1px 3px 15px 2px var(--modal-shadow-color);
+    box-shadow: 1px 3px 3px 0px var(--modal-shadow-color),
+        1px 3px 15px 2px var(--modal-shadow-color);
 }
 
+.gm-dialog-header {
+    background-color: var(--modal-ui-color);
+    border-bottom: var(--modal-border) var(--modal-border-color);
+    border-top-left-radius: var(--modal-radius);
+    border-top-right-radius: var(--modal-radius);
+}
 
 .gm-dialog-footer {
-    text-align: right;
-    bottom: 0;
-    border: none;
-    border-top: 1px solid rgba(0, 0, 0, .125);
+    background-color: var(--modal-ui-color);
+    border-top: var(--modal-border) var(--modal-border-color);
+    border-bottom-left-radius: var(--modal-radius);
+    border-bottom-right-radius: var(--modal-radius);
+
 }
+
 
 .gm-dialog-footer .gm-btn {
     min-width: 6em;
@@ -242,20 +274,116 @@ h1.gm-dialog-title {
 }
 
 
+.gm-modal {
+    width: 95%;
+    top: 10%;
+}
+
+
+.gm-dialog.center .gm-modal {
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+@media (min-width: 768px) {
+    .gm-dialog.mini .gm-modal {
+        width: 80%;
+    }
+
+    .gm-dialog.mini .gm-modal {
+        width: 35.2%;
+    }
+
+    .gm-dialog.tiny .gm-modal {
+        width: 52.8%;
+    }
+
+    .gm-dialog.small .gm-modal {
+        width: 70.4%;
+    }
+
+    .gm-dialog.large .gm-modal {
+        width: 88%;
+    }
+
+}
+
+@media (min-width: 992px) {
+    .gm-dialog.mini .gm-modal {
+        width: 340px;
+    }
+
+    .gm-dialog.tiny .gm-modal {
+        width: 510px;
+    }
+
+    .gm-dialog.small .gm-modal {
+        width: 680px;
+    }
+
+    .gm-dialog.large .gm-modal {
+        width: 1020px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .gm-dialog.mini .gm-modal {
+        width: 360px;
+    }
+
+    .gm-dialog.tiny .gm-modal {
+        width: 540px;
+    }
+
+    .gm-dialog.small .gm-modal {
+        width: 720px;
+    }
+
+    .gm-dialog.large .gm-modal {
+        width: 1080px;
+    }
+}
+
+@media (min-width: 1920px) {
+    .gm-dialog.mini .gm-modal {
+        width: 380px;
+    }
+
+    .gm-dialog.tiny .gm-modal {
+        width: 570px;
+    }
+
+    .gm-dialog.small .gm-modal {
+        width: 760px;
+    }
+
+    .gm-dialog.large .gm-modal {
+        width: 1140px;
+    }
+}
+
+
+
 @media (max-height: 640px),
-(max-width: 950px) {
-    .gm-modal {
+(max-width: 767px) {
+    .gm-dialog .gm-modal {
+        top: 1em !important;
+        width: 95% !important;
+        max-height: calc(100% - 2em);
+        height: calc(100% - 2em);
+        transform: unset !important;
+        /*
         left: .375em;
         right: .375em;
         top: .375em;
         bottom: .375em;
-        transform: unset;
-        max-height: calc(100% - .75em);
-        width: calc(100% - .75em);
+        transform: unset;*/
+        /*max-height: calc(100% - .75em);
+        width: calc(100% - .75em);*/
     }
 }
 
-dialog.gm-dialog.fullscreen {
+.gm-dialog.fullscreen .gm-modal {
     left: .375em !important;
     right: .375em !important;
     top: .375em !important;
@@ -272,22 +400,25 @@ dialog.gm-dialog.fullscreen {
 
 
 
-.pure [class*="border-"] {
-    border: var(--border) !important;
-    border-color: var(--dark);
-}
-
 /**
  * Forms
  */
 
-.pure form {
+.pure form,
+.pure p {
     display: block;
     position: relative;
     font-family: inherit;
-    font-size: 1em;
+    font-size: 1.125em;
+    text-align: left;
     color: var(--dark);
+    padding: 0 1em;
 }
+
+.pure p {
+    padding: 1em;
+}
+
 
 .pure form:before {
     content: "";
@@ -298,51 +429,56 @@ dialog.gm-dialog.fullscreen {
     visibility: hidden;
 }
 
-.gm-dialog-form {
-    padding: 0 1em;
-}
 
 /* Fix Fieldset */
 .pure fieldset {
     display: table-cell;
     min-width: 0;
-    padding: 0;
-    margin: 0;
     border: none;
+}
+
+.pure .fieldset {
+    display: block;
 }
 
 .pure legend {
     display: table;
     width: 100%;
     max-width: 100%;
-    padding: 0;
-    margin: 0;
-    position: relative;
-    white-space: normal;
 }
 
-.pure fieldset {
+.pure .legend {
+    display: block;
+}
+
+.pure fieldset,
+.pure .fieldset {
+    padding: 0;
+    margin: 0;
     text-align: left;
     font-size: 1em;
     font-weight: 600;
     padding-bottom: 1em;
-
 }
 
-.pure legend {
+.pure legend,
+.pure .legend,
+.pure form h1,
+.pure form h2 {
+    padding: 0;
+    margin: 0;
+    position: relative;
+    white-space: normal;
     padding: .5em 0;
-    font-size: 1.5em;
+    font-size: 1.75em;
     font-weight: 500;
 }
 
-.pure legend:before {
-    content: "";
-    display: inline-block;
-    width: 1em;
-}
-
 /* Small HR */
-.pure legend:after {
+.pure legend:after,
+.pure .legend:after,
+.pure form h1:after,
+.pure form h2:after {
     background: var(--gray-light);
     position: absolute;
     width: 100%;
@@ -352,16 +488,20 @@ dialog.gm-dialog.fullscreen {
     height: 1px;
 }
 
-.pure legend+* {
+.pure legend+*,
+.pure .legend+* {
     margin-top: .5em;
 }
 
-.pure fieldset+fieldset {
+.pure fieldset+fieldset,
+.pure .fieldset+.fieldset {
     margin-top: 1em;
 }
 
 
-
+.pure form h2 {
+    font-size: 1.5em;
+}
 
 .pure input,
 .pure textarea,
@@ -372,10 +512,6 @@ dialog.gm-dialog.fullscreen {
     color: var(--dark);
     font-size: 1em;
 }
-
-
-
-
 
 .pure input,
 .pure select,
@@ -394,9 +530,15 @@ dialog.gm-dialog.fullscreen {
 }
 
 .pure select {
-    background-image: linear-gradient(45deg, transparent 50%, var(--gray) 50%), linear-gradient(135deg, var(--gray) 50%, transparent 50%), linear-gradient(to right, var(--gray-light), var(--gray-light));
-    background-position: calc(100% - 20px) 14px, calc(100% - 15px) 14px, calc(100% - 40px) 4px;
-    background-size: 5px 5px, 5px 5px, 1px calc(100% - 8px);
+    background-image: linear-gradient(45deg, transparent 50%, var(--gray) 50%),
+        linear-gradient(135deg, var(--gray) 50%, transparent 50%),
+        linear-gradient(to right, var(--gray-light), var(--gray-light));
+    background-position: calc(100% - 20px) 50%,
+        calc(100% - 12px) 50%,
+        calc(100% - 40px) 4px;
+    background-size: 8px 8px,
+        8px 8px,
+        1px calc(100% - 8px);
     background-repeat: no-repeat;
 }
 
@@ -429,43 +571,18 @@ dialog.gm-dialog.fullscreen {
     margin-top: 0;
 }
 
-.gm-dialog-body h1,
-.gm-dialog-body h2 {
-    display: block;
-    font-size: 2em;
-    text-align: left;
-    padding: 1em 0;
-    margin: 0;
-    border: 0;
-    font-weight: 500;
-}
 
-.gm-dialog-body h2 {
-    font-size: 1.5em;
-    position: relative;
-    padding: .5em 0 1em;
-    margin: 0 0 1em;
-}
-
-.gm-dialog-body h2:before {
-    background: var(--gray-light);
-    position: absolute;
-    width: 100%;
-    bottom: 0;
-    display: block;
-    content: "";
-    height: 1px;
-}
-
-.gm-dialog-body a {
+.pure a:not(.gm-btn) {
     color: var(--blue);
     text-decoration: none;
 }
 
-.gm-dialog-body a:hover {
+.pure a:not(.gm-btn):hover,
+.pure a:not(.gm-btn):focus,
+.pure a:not(.gm-btn):active {
     color: var(--cyan);
+    text-decoration: underline;
 }
-
 
 
 
@@ -566,7 +683,7 @@ dialog.gm-dialog.fullscreen {
 .gm-btn-group .gm-btn {
     margin: 0;
     border-radius: 0;
-    border-right: var(--border) rgba(0, 0, 0, .2);
+    border-right: var(--border) var(--btn-border);
 }
 
 .gm-btn-group .gm-btn:first-child {
@@ -600,6 +717,14 @@ dialog.gm-dialog.fullscreen {
 /**
  * Colors
  */
+
+.pure [class*="border-"] {
+    border: var(--border) !important;
+    border-color: var(--dark);
+}
+
+
+
 .pure .border-white {
     border-color: var(--white);
 }
@@ -1087,7 +1212,7 @@ dialog.gm-dialog.fullscreen {
 
 
 
-.screencenter:not(.fullscreen) {
+.screencenter {
     top: 50% !important;
     left: 50% !important;
     right: auto !important;
@@ -1096,7 +1221,7 @@ dialog.gm-dialog.fullscreen {
     position: absolute !important;
 }
 
-.fullscreen:not(.gm-dialog) {
+.fullscreen {
     left: 0 !important;
     right: 0 !important;
     top: 0 !important;

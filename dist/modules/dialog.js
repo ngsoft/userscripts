@@ -33,7 +33,7 @@
     let undef, scrollBarStyles = false, zindex = 300000, isReady = false, listener = new Events();
 
     const
-            template = `<dialog class="gm-dialog">
+            template = `<dialog class="gm-dialog center">
                             <div class="gm-modal">
                                 <div class="gm-dialog-header">
                                     <h1 class="gm-dialog-title">My big title to test my app</h1>
@@ -53,7 +53,14 @@
                                                 <option value="2">My long string to test the select box</option>
                                             </select>
                                         </fieldset>
-
+                                        <h1>Test h1 title</h1>
+                                        <p>
+                                            here is a paragraph
+                                        </p>
+                                        <h2>Test h2 title</h2>
+                                        <p>
+                                            here is a paragraph
+                                        </p>
                                     </form>
                                 </div>
                                 <div class="gm-dialog-footer">
@@ -100,40 +107,37 @@
      */
     function setSize(target, init = false){
 
-        if(!doc.body.contains(target.dialog)) return ;
+        if (!doc.body.contains(target.dialog)) return;
+
 
         let dialog = target.modal, root = target.elements, body = root.body;
-        body.style["max-height"] = body.style.height = body.style["min-height"] = null; //reset style
+        body.style["max-height"] = body.style.height = body.style["min-height"] = dialog.style["top"] = dialog.style["bottom"] = dialog.style["transform"] = null; //reset style
 
         let
                 rect = dialog.getBoundingClientRect(),
-                // top = Math.round(rect.top),
+                top = Math.round(rect.top),
                 max = innerHeight,
                 dialogHeight = dialog.offsetHeight,
                 headerHeight = root.header.offsetHeight < 64 ? 64 : root.header.offsetHeight,
                 footerHeight = root.footer.offsetHeight < 64 ? 64 : root.footer.offsetHeight,
                 minus = headerHeight + footerHeight + 2,
-                available = dialogHeight - minus,
-                current = body.offsetHeight,
-                free = max - (dialogHeight + rect.top);
+                // available = dialogHeight - minus,
+                // current = body.offsetHeight,
+                free = Math.floor(max - (dialogHeight + top));
 
-
-
-
-        /*console.debug({
-            max, dialogHeight, headerHeight, footerHeight, minus, available, current, free, rect, calc: Math.floor((free / 2) + available)
+        /* console.debug({
+            max, top, dialogHeight, headerHeight, footerHeight, minus, available, current, free, rect, calc: Math.floor((free / 2) + available)
         });*/
 
-        if (current > available) body.style["max-height"] = available + "px";
-        else if (current === available && free > 16) {
-            body.style["min-height"] = Math.floor((free / 2) + available) + "px";
+        if ((max > 640) && (innerWidth > 767)) {
+            if (free < 16) {
+                dialog.style["bottom"] = (top > 16 ? top : 16) + "px";
+                dialog.style["top"] = (top > 16 ? top : 16) + "px";
+                if (target.dialog.classList.contains('center')) {
+                    dialog.style["transform"] = "unset";
+                }
 
-        }
-
-        if ((dialogHeight > available) || (max < 640) || (innerWidth < 950) || target.dialog.classList.contains('fullscreen')) {
-            available--;
-            body.style.height = available + "px";
-            //body.style["min-height"] = "0";
+            }
         }
 
     }
