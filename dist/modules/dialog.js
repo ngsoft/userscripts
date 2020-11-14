@@ -28,13 +28,13 @@
             polyfill = require('dialogpolyfill'),
             utils = require('utils');
 
-    const {int, n, f, s, u, b, html2element, doc, Events, gettype, ResizeSensor, sprintf, addstyle, assert} = utils;
+    const {int, n, f, s, u, b, html2element, doc, Events, gettype, ResizeSensor, sprintf, addstyle, assert, loadcss} = utils;
 
     let undef, scrollBarStyles = false, zindex = 300000, isReady = false, listener = new Events();
 
     const
-            template = `<dialog class="gm-dialog center">
-                            <div class="gm-modal">
+            template = `<dialog class="gm-dialog">
+                            <div class="gm-modal" style="z-index: -1;">
                                 <div class="gm-dialog-header">
                                     <h1 class="gm-dialog-title">My big title to test my app</h1>
                                     <span class="gm-btn" data-name="close">&times;</span>
@@ -150,7 +150,87 @@
 
         const
                 def = 'fadeIn',
-                classList = "bounce flash pulse rubberBand shake headShake swing tada wobble jello bounceIn bounceInDown bounceInLeft bounceInRight bounceInUp bounceOut bounceOutDown bounceOutLeft bounceOutRight bounceOutUp fadeIn fadeInDown fadeInDownBig fadeInLeft fadeInLeftBig fadeInRight fadeInRightBig fadeInUp fadeInUpBig fadeOut fadeOutDown fadeOutDownBig fadeOutLeft fadeOutLeftBig fadeOutRight fadeOutRightBig fadeOutUp fadeOutUpBig flipInX flipInY flipOutX flipOutY lightSpeedIn lightSpeedOut rotateIn rotateInDownLeft rotateInDownRight rotateInUpLeft rotateInUpRight rotateOut rotateOutDownLeft rotateOutDownRight rotateOutUpLeft rotateOutUpRight hinge jackInTheBox rollIn rollOut zoomIn zoomInDown zoomInLeft zoomInRight zoomInUp zoomOut zoomOutDown zoomOutLeft zoomOutRight zoomOutUp slideInDown slideInLeft slideInRight slideInUp slideOutDown slideOutLeft slideOutRight slideOutUp animated",
+                cssUrl = 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.compat.min.css',
+                listener = doc.createElement('div');
+                ignoreRequire = ['fadeIn', 'fadeOut'],
+                classList = ['bounce',
+                    'flash',
+                    'pulse',
+                    'rubberBand',
+                    'shake',
+                    'headShake',
+                    'swing',
+                    'tada',
+                    'wobble',
+                    'jello',
+                    'bounceIn',
+                    'bounceInDown',
+                    'bounceInLeft',
+                    'bounceInRight',
+                    'bounceInUp',
+                    'bounceOut',
+                    'bounceOutDown',
+                    'bounceOutLeft',
+                    'bounceOutRight',
+                    'bounceOutUp',
+                    'fadeIn',
+                    'fadeInDown',
+                    'fadeInDownBig',
+                    'fadeInLeft',
+                    'fadeInLeftBig',
+                    'fadeInRight',
+                    'fadeInRightBig',
+                    'fadeInUp',
+                    'fadeInUpBig',
+                    'fadeOut',
+                    'fadeOutDown',
+                    'fadeOutDownBig',
+                    'fadeOutLeft',
+                    'fadeOutLeftBig',
+                    'fadeOutRight',
+                    'fadeOutRightBig',
+                    'fadeOutUp',
+                    'fadeOutUpBig',
+                    'flipInX',
+                    'flipInY',
+                    'flipOutX',
+                    'flipOutY',
+                    'lightSpeedIn',
+                    'lightSpeedOut',
+                    'rotateIn',
+                    'rotateInDownLeft',
+                    'rotateInDownRight',
+                    'rotateInUpLeft',
+                    'rotateInUpRight',
+                    'rotateOut',
+                    'rotateOutDownLeft',
+                    'rotateOutDownRight',
+                    'rotateOutUpLeft',
+                    'rotateOutUpRight',
+                    'hinge',
+                    'jackInTheBox',
+                    'rollIn',
+                    'rollOut',
+                    'zoomIn',
+                    'zoomInDown',
+                    'zoomInLeft',
+                    'zoomInRight',
+                    'zoomInUp',
+                    'zoomOut',
+                    'zoomOutDown',
+                    'zoomOutLeft',
+                    'zoomOutRight',
+                    'zoomOutUp',
+                    'slideInDown',
+                    'slideInLeft',
+                    'slideInRight',
+                    'slideInUp',
+                    'slideOutDown',
+                    'slideOutLeft',
+                    'slideOutRight',
+                    'slideOutUp',
+                    'animated'
+                ],
                 type = (function(el){
                     var animations = {
                         animation: 'animationend',
@@ -164,8 +244,29 @@
                         }
                     }
                 })(document.createElement('div'));
+        let
+                loaded = false,
+                loading = false;
 
+        function ready(load = false){
+            return new Promise(resolve => {
+                if (loaded === true || load === false) resolve();
+                else if (loading === false) {
+                    console.debug('loading', cssUrl);
+                    loading = true;
+                    loadcss(cssUrl).then(() => {
+                        loaded = true;
+                        listener.dispatchEvent(new Event('ready'));
+                        resolve();
+                    });
 
+                } else {
+                    listener.addEventListener('ready', () => {
+                        resolve();
+                    });
+                }
+            });
+        }
 
 
         function load(elem, animation, callback){
@@ -178,25 +279,28 @@
                     animation = undef;
                 }
                 animation = animation || def;
+
                 if (typeof animation === 'string') {
-                    elem.classList.remove(...classList.split(/\s+/));
-                    if (typeof callback === "function") {
-                        elem.addEventListener(type, callback, {
-                            once: true,
-                            capture: false
-                        });
-                    }
-                    elem.addEventListener(type, e => {
-                        elem.classList.remove(...classList.split(/\s+/));
-                        resolve(e);
-                    }, {once: true, capture: false});
+                    let needLoadingCSS = !animation.split(/\s+/).every(x => ignoreRequire.includes(x));
+                    ready(needLoadingCSS).then(()=>{
+                        elem.classList.remove(...classList);
+                        if (typeof callback === "function") {
+                            elem.addEventListener(type, callback, {
+                                once: true,
+                                capture: false
+                            });
+                        }
+                        elem.addEventListener(type, e => {
+                            elem.classList.remove(...classList);
+                            resolve(e);
+                        }, {once: true, capture: false});
 
-                    if (elem.hidden === true) elem.hidden = false;
-                    else if (elem.classList.contains('hidden')) {
-                        elem.classList.remove('hidden');
-                    }
-                    elem.classList.add('animated', ...animation.split(/\s+/));
-
+                        if (elem.hidden === true) elem.hidden = false;
+                        else if (elem.classList.contains('hidden')) {
+                            elem.classList.remove('hidden');
+                        }
+                        elem.classList.add('animated', ...animation.split(/\s+/));
+                    });
                 } else throw new Error('Invalid Argument animation.');
             });
         }
@@ -357,9 +461,6 @@
                         throw e;
                     }
                 });
-                
-
-
 
             };
 
@@ -417,9 +518,6 @@
                             console.debug(e);
                             this.close(arg);
                         });
-                        
-                        
-
                     })
                     .on('click', e => {
                         let target = e.target.closest('[data-name].gm-btn, [name].gm-btn');
@@ -491,9 +589,9 @@
 
 
 
-    utils.loadcss(config.get('paths.styles') + 'reset.css');
-    // utils.loadcss(config.get('paths.styles') + 'dialog.css');
-    utils.loadcss(config.get('paths.styles') + 'main.css')
+    utils.loadcss(
+            config.get('paths.styles') + 'all.css'
+            )
             .then(() => {
                 isReady = true;
                 listener.trigger('css.ready');

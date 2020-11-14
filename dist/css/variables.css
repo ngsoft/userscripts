@@ -1,0 +1,60 @@
+/**
+ * Colors and other variables
+ */
+.pure {
+
+
+    --white: rgba(255, 255, 255, 1);
+    --black: rgba(10, 10, 10, 1);
+    --light: rgba(255, 250, 240, 1);
+    --snow: rgba(255, 250, 250, 1);
+    --dark: rgba(54, 54, 54, 1);
+
+    --gray: rgba(119, 136, 153, 1);
+    --gray-light: rgba(211, 211, 211, 1);
+    --gray-lighter: rgba(245, 245, 245, 1);
+    --gray-dark: rgba(112, 128, 144, 1);
+    --gray-darker: rgba(105, 105, 105, 1);
+
+    --red: rgba(220, 20, 60, 1);
+    --pink: rgba(238, 130, 238, 1);
+    --orange: rgba(255, 140, 0, 1);
+    --yellow: rgba(255, 215, 0, 1);
+    --purple: rgba(147, 112, 219, 1);
+    --green: rgba(72, 199, 116, 1);
+    --olive: rgba(138, 188, 30, 1);
+    --blue: rgba(50, 115, 220, 1);
+    --cyan: rgba(32, 156, 238, 1);
+    --brown: rgba(205, 133, 63, 1);
+
+    --red-l: rgba(255, 228, 225, 1);
+    --pink-l: rgba(255, 240, 245, 1);
+    --orange-l: rgba(250, 235, 215, 1);
+    --yellow-l: rgba(255, 255, 240, 1);
+    --purple-l: rgba(246, 231, 255, 1);
+    --olive-l: rgba(245, 245, 220, 1);
+    --green-l: rgba(240, 255, 240, 1);
+    --blue-l: rgba(240, 248, 255, 1);
+    --cyan-l: rgba(245, 255, 250, 1);
+    --brown-l: rgba(253, 245, 230, 1);
+
+    --border: 1px solid;
+    --transparent: rgba(0, 0, 0, 0);
+    --btn-box-shadow: 1px 1px 8px 1px rgba(0, 0, 0, 0.3);
+    --overlay: rgba(0, 0, 0, 0.85);
+
+    --modal-border: 1px solid;
+    --modal-radius: .25em;
+    --modal-border-color: rgba(0, 0, 0, .125);
+    --modal-shadow-color: rgba(0, 0, 0, 0.2);
+    --modal-ui-color: rgba(0, 0, 0, .03);
+    --btn-border: rgba(0, 0, 0, 0.2);
+
+}
+
+/* defaults styles */
+.pure, .pure * {
+    font-family: "Noto Sans", Arial, Helvetica, sans-serif;
+    font-size: 1em;
+}
+

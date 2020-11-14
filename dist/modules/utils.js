@@ -275,50 +275,97 @@
 
 
     /**
-     * Loads an external script
-     * @param {string} src
-     * @param {boolean} defer
+     * Loads an external script (or multiple)
+     * @param {string|URL} ...urls
+     * @param {boolean} [defer]
      * @returns {Promise}
      */
-    function loadjs(src, defer){
-        return new Promise((resolve, reject) => {
-            if (typeof src !== s) {
-                reject(new Error("Invalid argument src."));
-                return;
+    function loadjs(...urls){
+
+        let
+                defer = false,
+                args = Array.from(arguments).filter(x => {
+            if (typeof x === b) {
+                defer = x;
+                return false;
             }
-            let script = doc.createElement('script');
-            Object.assign(script, {
-                type: 'text/javascript',
-                onload: e => resolve(e.target),
-                onerror: e => loadRejectMessage(e,reject),
-                src: src
+            return true;
+        });
+
+
+        return new Promise((resolve, reject) => {
+
+            let
+                    count = 0,
+                    resolver = function(e){
+                        if (e.type === "error") {
+                            loadRejectMessage(e, reject);
+                            return;
+                        }
+                        count++;
+                        if (count === args.length) resolve(e.target);
+                    };
+            args.forEach(src => {
+                if (src instanceof URL) src = src.href;
+                if (typeof src !== s) {
+                    reject(new Error('Invalid argument src'));
+                    return;
+                }
+                let script = doc.createElement('script');
+                Object.assign(script, {
+                    type: 'text/javascript',
+                    onload: resolver,
+                    onerror: resolver,
+                    src: src
+                });
+                if (defer === true) script.defer = true;
+                document.head.appendChild(script);
+
             });
-            if (defer === true) script.defer = true;
-            document.head.appendChild(script);
+
         });
     }
 
     /**
-     * Loads an external CSS
-     * @param {string} src
+     * Loads an external CSS (or multiple)
+     * @param {string|URL} ...urls
      * @returns {Promise}
      */
-    function loadcss(src){
+    function loadcss(url){
+        
+        let args = Array.from(arguments);
 
         return new Promise((resolve, reject) => {
-            if (typeof src !== s) {
-                reject(new Error('Invalid argument src'));
-                return;
-            }
-            let style = doc.createElement('link');
-            Object.assign(style, {
-                rel: "stylesheet",
-                type: "text/css",
-                onload: e => resolve(e.target),
-                onerror: e => loadRejectMessage(e, reject),
-                href: src
+
+            let
+                    count = 0,
+                    resolver = function(e){
+                        if (e.type === "error") {
+                            loadRejectMessage(e, reject);
+                            return;
+                        }
+
+                        count++;
+                        if (count === args.length) resolve(e.target);
+                    };
+            args.forEach(src => {
+                if (src instanceof URL) src = src.href;
+                if (typeof src !== s) {
+                    reject(new Error('Invalid argument src'));
+                    return;
+                }
+                let style = doc.createElement('link');
+                Object.assign(style, {
+                    rel: "stylesheet",
+                    type: "text/css",
+                    onload: resolver,
+                    onerror: resolver,
+                    href: src
+                });
+                document.head.appendChild(style);
+
             });
-            document.head.appendChild(style);
+
         });
     }
 
