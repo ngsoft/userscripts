@@ -293,15 +293,5 @@ h1.gm-dialog-title {
         max-height: calc(100% - 2em);
         height: calc(100% - 2em);
         transform: unset !important;
-        /*
-        left: .375em;
-        right: .375em;
-        top: .375em;
-        bottom: .375em;
-        transform: unset;*/
-        /*max-height: calc(100% - .75em);
-        width: calc(100% - .75em);*/
     }
 }
-
-

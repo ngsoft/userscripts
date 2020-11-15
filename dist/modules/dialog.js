@@ -43,7 +43,7 @@
                                     <form method="dialog" class="gm-dialog-form">
                                         <fieldset>
                                             <legend>Body</legend>
-                                            <label>Name</label><input type="text" name="name">
+                                            <label>Name</label><input type="search" name="name">
                                         </fieldset>
                                         <fieldset>
                                             <legend>Select Box</legend>
@@ -53,26 +53,36 @@
                                                 <option value="2">My long string to test the select box</option>
                                             </select>
 
-                                                <div class="ui checkbox">
-                                                  <input type="checkbox" name="example">
+                                                <div class="checkbox block">
+                                                  <input type="radio" name="server-enabled">
                                                   <label>Make my profile visible</label>
                                                 </div>
 
-                                                <div class="ui radio checkbox">
-                                                  <input type="radio" name="radio" checked="checked">
+                                                <div class="checkbox block">
+                                                  <input type="radio" name="server-enabled">
                                                   <label>Radio choice</label>
                                                 </div>
-                                                <div class="ui toggle checkbox">
-                                                  <input type="checkbox" name="public">
+                                                <div class="toggle checkbox block">
+                                                  <input type="radio" name="server-enabled">
                                                   <label>Subscribe to weekly newsletter</label>
                                                 </div>
-                                                <div class="switch">
+                                                <div class="switch checkbox">
                                                     <input title="Enabled" type="checkbox" name="server-enabled">
-                                                    <span class="slider"></span>
+                                                    <label>Subscribe to monthly newsletter</label>
                                                 </div>
-
-
-
+                                                <div class="switch round checkbox">
+                                                    <input title="Enabled" type="radio" name="server-enabled">
+                                                    <label>Subscribe to monthly newsletter</label>
+                                                </div>
+                                                <div class="toggle checkbox">
+                                                    <input title="Enabled" type="radio" name="server-enabled">
+                                                    <label>Subscribe to monthly newsletter</label>
+                                                </div>
+                                                <div class="toggle round checkbox">
+                                                    <input title="Enabled" type="radio" name="server-enabled">
+                                                    <label>Subscribe to monthly newsletter</label>
+                                                </div>
+                                                <div class="message blue">This is a message box</div>
 
                                         </fieldset>
                                         <h1>Test h1 title</h1>
@@ -86,7 +96,7 @@
                                     </form>
                                 </div>
                                 <div class="gm-dialog-footer">
-                                    <span class="gm-btn error" data-name="dismiss">No</span>
+                                    <span class="gm-btn alert" data-name="dismiss">No</span>
                                     <span class="gm-btn primary" data-name="confirm">Yes</span>
                                 </div>
                             </div>

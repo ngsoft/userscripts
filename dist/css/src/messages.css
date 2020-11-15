@@ -1,0 +1,45 @@
+/**
+ * Messages
+ */
+
+.pure .message {
+    position: relative;
+    min-height: 1em;
+    margin: 1em 0em;
+    background: #F8F8F9;
+    padding: 1em 1.5em;
+    line-height: 1.4285em;
+    color: var(--black);
+    -webkit-transition: opacity 0.1s ease, color 0.1s ease, background 0.1s ease, -webkit-box-shadow 0.1s ease;
+    transition: opacity 0.1s ease, color 0.1s ease, background 0.1s ease, -webkit-box-shadow 0.1s ease;
+    transition: opacity 0.1s ease, color 0.1s ease, background 0.1s ease, box-shadow 0.1s ease;
+    transition: opacity 0.1s ease, color 0.1s ease, background 0.1s ease, box-shadow 0.1s ease, -webkit-box-shadow 0.1s ease;
+    border-radius: 0.28571429rem;
+    -webkit-box-shadow: 0px 0px 0px 1px var(--gray-light) inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+    box-shadow: 0px 0px 0px 1px var(--gray-light) inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+}
+
+.pure .message:first-child {
+    margin-top: 0em;
+}
+
+.pure .message:last-child {
+    margin-bottom: 0em;
+}
+
+
+.pure .message p {
+    opacity: 0.85;
+    margin: 0.75em 0em;
+}
+
+.pure .message p:first-child,
+.pure .message> :first-child,
+.pure .message p:last-child,
+.pure .message> :last-child {
+    margin-top: 0em;
+}
+
+.pure .compact.message {
+    display: inline-block;
+}

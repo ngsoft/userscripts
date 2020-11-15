@@ -2,6 +2,42 @@
  * Styles Overrides (to load last)
  */
 
+
+
+.pure .mini {
+    font-size: 0.78571429em;
+}
+
+.pure .tiny {
+    font-size: 0.85714286em;
+}
+
+.pure .small {
+    font-size: 0.92857143em;
+}
+
+.pure .large {
+    font-size: 1.14285714em;
+}
+
+.pure .big {
+    font-size: 1.28571429em;
+}
+
+.pure .huge {
+    font-size: 1.42857143em;
+}
+
+.pure .massive {
+    font-size: 1.71428571em;
+}
+
+
+
+
+
+
+
 .pure .screencenter {
     top: 50% !important;
     left: 50% !important;
@@ -24,17 +60,29 @@
 }
 
 
-.pure .flex-center {
+.pure .inline {
+    display: inline !important;
+}
+
+.pure .block {
+    display: block !important;
+}
+
+.pure .iblock {
+    display: inline-block !important;
+}
+
+
+.pure [class*="flex-"],
+.pure .flex {
     display: flex !important;
+}
+
+.pure .flex-center {
     align-items: center !important;
     justify-content: center !important;
 }
-.pure .disabled,
-.pure [disabled]{
-    pointer-events: none !important;
-    opacity: .4 !important;
-    cursor: not-allowed !important;
-}
+
 
 .noscroll {
     overflow: hidden !important;
@@ -53,3 +101,15 @@
     border-color: var(--dark);
 }
 
+
+.pure .disabled,
+.pure [disabled] {
+    pointer-events: none !important;
+    opacity: .4 !important;
+    cursor: default !important;
+}
+
+.pure .hidden,
+.pure [hidden] {
+    display: none !important;
+}
