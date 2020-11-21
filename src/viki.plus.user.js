@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.1
+// @version     3.1.1
 // @name        ViKi+
 // @description Download Subtitles on Viki + Watch Videos
 // @namespace   https://github.com/ngsoft/userscripts
@@ -19,6 +19,8 @@
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
+
+    const global = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
 
 
     function prequire(...variables){
@@ -50,7 +52,7 @@
             let result = {};
             const check = function(){
                 variables.forEach(v => {
-                    if (typeof self[v] !== u) result[v] = self[v];
+                    if (typeof global[v] !== u) result[v] = global[v];
                 });
                 if (variables.length === Object.keys(result).length) {
                     resolve(result);
@@ -306,7 +308,7 @@
             this.deps = true;
             prequire.sources('Plyr', [
                 'https://cdn.jsdelivr.net/npm/plyr@' + this.plyrVersion + '/dist/plyr.min.js',
-                'https://cdn.jsdelivr.net/npm/plyr@' + this.plyrVersion + '/dist/plyr.css'
+                'https://cdn.jsdelivr.net/npm/plyr@' + this.plyrVersion + '/dist/plyr.min.css'
             ]);
             prequire.sources('dashjs', 'https://cdn.dashjs.org/latest/dash.all.min.js');
             prequire.sources('Subtitle', 'https://cdn.jsdelivr.net/npm/subtitle@2.0.5/dist/subtitle.bundle.min.js');
@@ -813,6 +815,8 @@
                     let {Plyr} = exports;
                     PlyrPlayer.setStyles();
                     let plyr = this.plyr = new Plyr(this.video, this.options);
+                    console.debug(this);
+
                 });
             }
         }
@@ -1028,6 +1032,7 @@
         loadStreams(json, drm){
             return new Promise(resolve=>{
                 let src, label, size, type;
+                console.debug(json);
 
                 if (json.dash) {
                     //addSource(src, size, type, label, onload, onunload)
@@ -1178,8 +1183,13 @@
         getVideo(id){
             return new Promise(resolve => {
                 if ((typeof id !== s) || !(/^\d+v$/.test(id))) return;
-                let url = 'https://www.viki.com/api/videos/' + id;
-                this.call(url, new Headers({'x-viki-app-ver': this.appversion})).then(json => resolve(json)).catch(console.error);
+                let
+                        url = 'https://www.viki.com/api/videos/' + id,
+                        headers = new Headers({
+                            'x-viki-app-ver': this.appversion,
+                            'x-client-user-agent': navigator.userAgent
+                        });
+                this.call(url, headers).then(json => resolve(json)).catch(console.error);
             });
         }
 
