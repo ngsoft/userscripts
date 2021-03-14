@@ -940,6 +940,7 @@
                 }
 
             });
+            
 
             player.elements.next = html2element(`<span class="plyr-next"><span class="plyr-next-title"></span><i class="icon-arrow-right"></i></span>`);
             player.elements.nextTitle = player.elements.next.querySelector('.plyr-next-title');
@@ -973,6 +974,7 @@
             this.player.elements.nextTitle.innerHTML = "";
 
             this.api.getVideo(id).then(json => {
+                console.debug(json);
 
                 this.json = json;
                 let drm, player = this.player, video = player.video;
@@ -1062,6 +1064,43 @@
                                 });
                             });
                         });
+                        let source = this.player.sources[this.player.sources.length - 1].element;
+                        if(isPlainObject(drm)){
+                            source.setAttribute('data-licence', JSON.stringify({
+                                type: 'com.widevine.alpha',
+                                key: drm.dt3
+                            }));
+                        }
+
+
+
+                        /* fetch(drm.dt3, {
+                            body: "\x08\x04",
+                            method: "POST"
+
+                        })
+                                .then(r => r.text())
+                                .then(bin => {
+
+                                    source.setAttribute('data-licence', JSON.stringify({
+                                        type: 'com.widevine.alpha',
+                                        key: bin
+                                    }));
+
+
+
+
+                                })
+                                .catch(console.error);*/
+
+
+                       
+                        //    source.setAttribute('data-licence-type', "com.widevine.alpha");
+                        //   source.setAttribute('data-licence-key', drm.dt3);
+
+                        //  console.debug(drm);
+
+
                     } else this.player.addSource(src, size, type, label);
                 }
 

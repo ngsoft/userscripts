@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.2
+// @version      1.2.1
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -35,11 +35,6 @@
             btn.click();
         });
     }
-    if (/kissanime/.test(url.host)) {
-        // kissanime down permanently
-        location.replace('https://animekisa.tv/');
-    }
-
     /**
      * Some Alterations
      */
@@ -152,7 +147,6 @@
 
             if (self.container === null) {
                 return;
-                //throw new Error("Cannot insert submenu.");
             }
             if (self.container.querySelectorAll('a').length > 0) {
                 self.container.appendChild(doc.createTextNode("| "));
@@ -218,19 +212,18 @@
             },
             change(e){
                 let ckb = this.item.querySelector('[type="checkbox"]'),span = this.item.querySelector('span.server-name');
-                Settings.enabled = ckb.checked;
+                Settings.enabled = ckb.checked === true;
                 span.innerHTML = "";
                 if((Settings.enabled === true) && (Settings.name.length > 0)){
                     span.innerHTML = Settings.name;
                     //update all links
-                    find('a[href*="id="]', (a) => {
+                    NodeFinder.find('a[href*="id="]', a => {
                         let url = new URL(a.href);
                         url.searchParams.set('s', Settings.server);
                         a.href = url.href;
-
                     }, 5000);
 
-                    find('select#selectEpisode option', (opt) => {
+                    NodeFinder.find('select#selectEpisode option', opt => {
                         let url = new URL(getURL(opt.value));
                         url.searchParams.set('s', Settings.server);
                         let split = url.pathname.split('/'), newval = split.pop() + url.search;
@@ -247,17 +240,17 @@
                     this.trigger('change');
                 }
                 const self = this;
-                doc.querySelectorAll('select#selectServer').forEach((select) => {
-                    select.onchange = (evt) => {
+                doc.querySelectorAll('select#selectServer').forEach(select => {
+                    select.onchange = evt => {
                         evt.preventDefault();
+                        let selected = select.querySelector(`option[value="${select.value}"]`), url = new URL(getURL(selected.value));
                         if (Settings.enabled === true) {
-                            let selected = select.querySelector(`option[value="${select.value}"]`), url = new URL(getURL(selected.value));
                             Settings.server = url.searchParams.get('s');
                             Settings.name = selected.innerText.trim();
                             self.trigger("change");
                         }
 
-                        location.href = select.value;
+                        location.replace(url.href);
                     };
                 });
             }
@@ -266,10 +259,8 @@
 
     //KodiRPC Compat
     NodeFinder.find('video.vjs-tech', video => {
-        console.debug(video);
         let parent = video.closest('div[id]');
         vjs = videojs(parent.id);
-        console.debug(vjs);
         if (vjs.tech_ && vjs.tech_.currentSource_ && vjs.tech_.currentSource_.src) video.data('src', vjs.tech_.currentSource_.src);
         //html2element('<video preload="none" controls tabindex="-1" src="" class="altvideo" data-src=""></video>')
     });

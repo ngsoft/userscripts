@@ -637,6 +637,7 @@
                             if (typeof e.data.link === s) link = e.data.link;
                             servers = gmSettings.get('servers').map(data => new Server(data));
                             let sendto = servers.filter(s => s.enabled);
+                            console.debug(link);
                             try {
                                 sendto.forEach(server => server.client.send(link, success, error));
                             } catch (e) {
@@ -677,6 +678,31 @@
                 });
 
             };
+        }
+
+        static plugin(src, subtitles, licence, headers){
+
+            let
+                    u = new URL('plugin://plugin.video.rpcstream/'),
+                    request = {
+                        title: doc.title,
+                        referer: location.origin + location.pathname,
+                        useragent: navigator.userAgent,
+                        url: src
+                    };
+            if (typeof subtitles === s) request.subtitles = subtitles;
+            if (/^\{/.test(licence) && /\}$/.test(licence)) request.licence = licence;
+            if (isPlainObject(headers)) request.headers = headers;
+            u.searchParams.set('request', btoa(JSON.stringify(request)));
+            return this.action(u.href);
+
+            //u.searchParams.set('title', doc.title);
+            //u.searchParams.set('url', btoa(src));
+            //u.searchParams.set('url', src);
+            //if (typeof subtitles === s) u.searchParams.set('subtitles', subtitles);
+            //if (/^\{/.test(licence) && /\}$/.test(licence)) u.searchParams.set('licence', licence);
+
+
         }
 
 
@@ -723,7 +749,16 @@
 
         let id = 0;
         NodeFinder.find('video[data-src^="http"], video[src^="http"], video source[src^="http"]', element => {
+            let
+                    video = element.closest('video'),
+                    tracks = video.querySelectorAll('track[srclang="en"],track[srclang="und"]'),
+                    subtitles;
             if (typeof doc.body.KRPCM === u) new KodiRPC();
+
+            tracks.forEach(track => {
+                subtitles = track.dataset.src || track.src;
+            });
+
 
             let src = element.data('src') || element.src,desc = "Send Source link";
 
@@ -735,12 +770,32 @@
                     desc += size;
                 }
             } else desc = "Send Video Link";
-
             desc += " from " + host;
 
+            commands.add('sendplugin' + id, desc + ' (plugin)', KodiRPC.plugin(src, subtitles));
             commands.add('send' + id, desc, KodiRPC.action(src));
             id++;
         });
+
+        NodeFinder.find('source[src^="http"][data-licence^="{"][data-licence$="}"], source[data-src^="http"][data-licence^="{"][data-licence$="}"]', source => {
+
+            let
+                    src = source.dataset.src || source.src,
+                    licence = source.getAttribute('data-licence'),
+                    video = source.closest('video'),
+                    tracks = video.querySelectorAll('track[srclang="en"],track[srclang="und"]'),
+                    subtitles,
+                    size = source.getAttribute('size') || "",
+                    desc = "Send Source " + (size.length > 0 ? size : "") + " Link from " + host + " (DRM)";
+            if (tracks.length === 0) tracks = [video.querySelector('track')];
+            tracks.forEach(track => {
+                if (track instanceof Element) subtitles = track.dataset.src || track.src;
+            });
+
+            commands.add(uniqid(), desc, KodiRPC.plugin(src, subtitles, licence));
+
+        });
+
 
         NodeFinder.find('video.jw-video', video => {
             if (typeof doc.body.KRPCM === u) new KodiRPC();
@@ -751,8 +806,11 @@
                 if (typeof jw.getPlaylist === f) {
                     let playlist = jw.getPlaylist()[0];
                     playlist.sources.forEach((source, i) => {
-                        if (/^http/.test(source.file))
+                        if (/^http/.test(source.file)){
+                            commands.add('sendjwplugin' + i, 'Send JWPlayer video ' + i + ' from ' + host + ' (Plugin) ', KodiRPC.plugin(source.file));
                             commands.add('sendjw' + i, 'Send JWPlayer video ' + i + ' from ' + host, KodiRPC.action(source.file));
+                        }
+
                     });
                 }
             }
@@ -804,7 +862,6 @@
             servers.forEach(server => {
                 server.client.getPluginVersion(plugin)
                         .then(response => {
-                            console.debug(response);
                             if (!response.error) {
                                 if (typeof doc.body.KRPCM === u) new KodiRPC();
                                 commands.add(site + id, 'Send ' + site + ' Video', KodiRPC.action(purl));
