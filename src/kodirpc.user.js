@@ -873,6 +873,45 @@
 
         }
 
+
+
+        if (/viki/.test(location.host) && /^\/videos\/\d+v/.test(location.pathname)) {
+            if (typeof doc.body.KRPCM === u) new KodiRPC();
+            let
+                    plugin = 'plugin.video.vikir',
+                    site = 'Viki',
+                    purl = new URL('plugin://plugin.video.vikir/?mode=4');
+
+
+            servers.forEach(server => {
+                server.client.getPluginVersion(plugin)
+                        .then(response => {
+                            if (!response.error) {
+
+                                commands.add(site + 'video', 'Send ' + site + ' Video', () => {
+
+
+                                    let matches = /^\/videos\/(\d+v)/.exec(location.pathname);
+                                     if (matches !== null) {
+                                        let
+                                                vid = matches[1],
+                                                vurl = vid + '@video@100@100@';
+                                        purl.searchParams.set('name', doc.title);
+                                        purl.searchParams.set('url', vurl);
+
+                                     KodiRPC.action(purl.href)();
+                                    }
+                                });
+                            }
+                        })
+                        .catch(e => e);
+            });
+
+        }
+
+        
+
+
     });
     
 
