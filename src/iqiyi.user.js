@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.2.6
+// @version     1.2.7
 // @name        iQiyi
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -30,7 +30,7 @@
             this.style = true;
             addstyle(`
                 .mdl-search {
-                    padding: 0px;margin: 8px 8px 8px 0;display: inline-block;color: rgb(255, 255, 255);
+                    padding: 0px;margin: 0;display: inline-block;color: rgb(255, 255, 255);
                     border-radius: 2px;float: left;width: 32px;height: 32px;background-color: rgba(0, 0, 0, 0.3);
                     box-sizing: border-box;position: relative;cursor:pointer;
                 }
@@ -64,7 +64,7 @@
         constructor(title){
             MDLSearch.applyStyle();
             Object.assign(this, {
-                title: title.innerText.trim(),
+                title: title.querySelector('a').innerText.trim(),
                 btn: html2element('<a class="mdl-search" title="MyDramaList Search" href="#"><img src="https://mydramalist.com/favicon.ico" /></a>')
             });
             const self = this;
