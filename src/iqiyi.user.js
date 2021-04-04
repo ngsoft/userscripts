@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.2.7
+// @version     1.2.8
 // @name        iQiyi
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -32,7 +32,7 @@
                 .mdl-search {
                     padding: 0px;margin: 0;display: inline-block;color: rgb(255, 255, 255);
                     border-radius: 2px;float: left;width: 32px;height: 32px;background-color: rgba(0, 0, 0, 0.3);
-                    box-sizing: border-box;position: relative;cursor:pointer;
+                    box-sizing: border-box;position: absolute;cursor:pointer;top: 12px; left: 28px;
                 }
                 .mdl-search:hover{background: rgb(0, 0, 0) none repeat scroll 0% 0%;}
                 .mdl-search img{position: absolute; top:50%;left: 50%;transform: translate(-50%,-50%);}
@@ -68,7 +68,7 @@
                 btn: html2element('<a class="mdl-search" title="MyDramaList Search" href="#"><img src="https://mydramalist.com/favicon.ico" /></a>')
             });
             const self = this;
-            title.appendChild(self.btn);
+            root.appendChild(self.btn);
 
             Events(self.btn).on('click', (e) => {
                 e.preventDefault();
@@ -322,14 +322,23 @@
         NodeFinder(video.parentElement).findOne(`.iqp-btn-subtitle`, el => {
             new SubtitleDownloader(el);
         });
+        NodeFinder.find(`h1.intl-play-title a`, t => {
+
+            let title = t.innerText.trim();
+
+            title = title.replace(/\ Season\ \d+$/, '');
+
+            let container = t.closest('.pc-info');
+            if (container !== null) {
+                new MDLSearch(container, title);
+            }
+
+
+
+        });
     });
 
 
-    NodeFinder.findOne(`h1.intl-play-title`, el => {
 
-        let title = '', t = el.querySelector('a');
-        if (t !== null) title = t.innerText.trim();
-        new MDLSearch(el, title);
-    });
 
 })(document);
