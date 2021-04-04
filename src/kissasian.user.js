@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.2.1
+// @version      1.3
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -35,6 +35,68 @@
             btn.click();
         });
     }
+
+
+
+    /**
+     * MyDramaList Search
+     */
+    class MDLSearch {
+        static applyStyle(){
+            if (this.style === true) return;
+            this.style = true;
+            addstyle(`
+                .mdl-search {
+                    padding: 0px;margin: 0;display: inline-block;color: rgb(255, 255, 255);
+                    border-radius: 2px;float: left;width: 32px;height: 32px;background-color: rgba(0, 0, 0, 0.3);
+                    box-sizing: border-box;position: relative;cursor:pointer;
+                }
+                .mdl-search:hover{background: rgb(0, 0, 0) none repeat scroll 0% 0%;}
+                .mdl-search img{position: absolute; top:50%;left: 50%;transform: translate(-50%,-50%);}
+            `);
+        }
+
+
+        search(query){
+            if (typeof query === s) {
+                let url = new URL('https://mydramalist.com/search');
+                url.searchParams.set('q', query);
+                let link = doc.createElement('a');
+                Object.assign(link, {
+                    target: "_blank",
+                    style: "opacity: 0;",
+                    href: url.href
+                });
+                doc.body.appendChild(link);
+                setTimeout(() => {
+                    doc.body.removeChild(link);
+                }, 10);
+                link.click();
+            }
+
+        }
+
+
+
+        constructor(title){
+            MDLSearch.applyStyle();
+            Object.assign(this, {
+                title: title.innerText.trim(),
+                btn: html2element('<a class="mdl-search" title="MyDramaList Search" href="#"><img src="https://mydramalist.com/favicon.ico" /></a>')
+            });
+            const self = this;
+            title.appendChild(self.btn);
+
+            Events(self.btn).on('click', (e) => {
+                e.preventDefault();
+                self.search(self.title);
+
+            });
+
+        }
+
+    }
+
     /**
      * Some Alterations
      */
@@ -265,6 +327,12 @@
         //html2element('<video preload="none" controls tabindex="-1" src="" class="altvideo" data-src=""></video>')
     });
 
+
+    //MDL Search
+
+    NodeFinder.find('#leftside a.bigChar[href*="/Drama/"]', el => {
+        new MDLSearch(el);
+    });
 
 
 
