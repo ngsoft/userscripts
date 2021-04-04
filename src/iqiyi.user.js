@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.2.5
+// @version     1.2.6
 // @name        iQiyi
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -215,9 +215,8 @@
                     .iqp-logo-box{display: none;}
                     .iqp-subtitle{
                         bottom: 10% !important; text-shadow: 5px 5px 5px #000 !important;
-                        min-width: 60% !important; background: rgba(0,0,0,.55) !important;
-                        padding: 2% 0 !important;text-align: center !important;
-                        line-height: 1.5 !important;font-size: 16px !important;
+                        min-width: 60% !important; padding: 2% 0 !important;
+                        text-align: center !important; line-height: 1.5 !important;font-size: 16px !important;
                     }
                     .video-xs .iqp-subtitle:not([data-player-hook="previewSubtitle"]){display: block !important;}
                     .video-s .iqp-subtitle{font-size: 20px !important;}

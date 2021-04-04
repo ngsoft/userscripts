@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version	1.2.5
+// @version	1.2.6
 // @name	iQiyi
 // @description	Video Player modificatons
 // @namespace	https://github.com/ngsoft/userscripts
@@ -8,7 +8,6 @@
 // @require	https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js
 // @grant	none
 // @noframes
-// @include	/^https?:\/\/(www\.)?iqiyi.com\/intl\/play\//
 // @include	/^https?:\/\/(www\.)?iq.com\/play\//
 // @icon	https://www.iqiyipic.com/common/images/logo.ico
 // ==/UserScript==
