@@ -61,10 +61,10 @@
 
 
 
-        constructor(title){
+        constructor(root, title){
             MDLSearch.applyStyle();
             Object.assign(this, {
-                title: title.querySelector('a').innerText.trim(),
+                title: title,
                 btn: html2element('<a class="mdl-search" title="MyDramaList Search" href="#"><img src="https://mydramalist.com/favicon.ico" /></a>')
             });
             const self = this;
@@ -326,7 +326,10 @@
 
 
     NodeFinder.findOne(`h1.intl-play-title`, el => {
-        new MDLSearch(el);
+
+        let title = '', t = el.querySelector('a');
+        if (t !== null) title = t.innerText.trim();
+        new MDLSearch(el, title);
     });
 
 })(document);
