@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.2
+// @version     1.2.1
 // @name        WETV Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -289,12 +289,12 @@
         if (mdl === null) return;
         if (!doc.body.contains(mdl.btn)) {
             mdl = null;
-            NodeFinder.findOne(`h2.cover_title`, el => {
+            NodeFinder.findOne(`h2.cover_title, h1.cover_title`, el => {
                 mdl = new MDLSearch(el);
             });
         }
     });
-    NodeFinder.findOne(`h2.cover_title`, (el, obs) => {
+    NodeFinder.findOne(`h2.cover_title, h1.cover_title`, (el, obs) => {
         mdl = new MDLSearch(el);
         obs.stop();
 
