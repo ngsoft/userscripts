@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kissasian 2.0
 // @namespace    https://github.com/ngsoft
-// @version      1.3
+// @version      1.3.1
 // @description  Kissasian, Kissanime, Kissmanga Integration
 // @author       daedelus
 // 
@@ -47,7 +47,7 @@
             this.style = true;
             addstyle(`
                 .mdl-search {
-                    padding: 0px;margin: 0;display: inline-block;color: rgb(255, 255, 255);
+                    padding: 0px;margin: 0 4px;display: inline-block;color: rgb(255, 255, 255);
                     border-radius: 2px;float: left;width: 32px;height: 32px;background-color: rgba(0, 0, 0, 0.3);
                     box-sizing: border-box;position: relative;cursor:pointer;
                 }
