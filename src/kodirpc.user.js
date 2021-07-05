@@ -4,7 +4,7 @@
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
 // @namespace   https://github.com/ngsoft
-// @icon        https://kodi.tv/favicon.ico
+// @icon        https://kodi.tv/favicon-32x32.png
 //
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
@@ -694,6 +694,8 @@
             if (/^\{/.test(licence) && /\}$/.test(licence)) request.licence = licence;
             if (isPlainObject(headers)) request.headers = headers;
             u.searchParams.set('request', btoa(JSON.stringify(request)));
+
+            console.debug(request);
             return this.action(u.href);
 
             //u.searchParams.set('title', doc.title);
@@ -804,14 +806,32 @@
                 if (id !== null) id = id.id;
                 let jw = jwplayer(id);
                 if (typeof jw.getPlaylist === f) {
-                    let playlist = jw.getPlaylist()[0];
+                    let playlist = jw.getPlaylist()[0], track;
+                    
+                    if (playlist.tracks) {
+                        playlist.tracks.forEach(t => {
+
+                            if (typeof track !== 'string') {
+                                track = t.file;
+                            } else if (t.label && /^en/i.test(t.label)) {
+                                track = t.file;
+                            }
+
+                        });
+                    }
                     playlist.sources.forEach((source, i) => {
-                        if (/^http/.test(source.file)){
-                            commands.add('sendjwplugin' + i, 'Send JWPlayer video ' + i + ' from ' + host + ' (Plugin) ', KodiRPC.plugin(source.file));
+                        if (/^http/.test(source.file)) {
+
+                            commands.add('sendjwplugin' + i, 'Send JWPlayer video ' + i + ' from ' + host + ' (Plugin) ', KodiRPC.plugin(source.file, track));
                             commands.add('sendjw' + i, 'Send JWPlayer video ' + i + ' from ' + host, KodiRPC.action(source.file));
                         }
 
                     });
+
+
+
+
+
                 }
             }
         });
