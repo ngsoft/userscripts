@@ -694,17 +694,7 @@
             if (/^\{/.test(licence) && /\}$/.test(licence)) request.licence = licence;
             if (isPlainObject(headers)) request.headers = headers;
             u.searchParams.set('request', btoa(JSON.stringify(request)));
-
-            console.debug(request);
             return this.action(u.href);
-
-            //u.searchParams.set('title', doc.title);
-            //u.searchParams.set('url', btoa(src));
-            //u.searchParams.set('url', src);
-            //if (typeof subtitles === s) u.searchParams.set('subtitles', subtitles);
-            //if (/^\{/.test(licence) && /\}$/.test(licence)) u.searchParams.set('licence', licence);
-
-
         }
 
 
