@@ -665,7 +665,7 @@
 
 
                         self.target.insertBefore(self.elements.root, self.target.firstChild);
-                        self.video.data("src", self.src);
+                        self.video.dataset.src = self.src;
 
                         self.plyr = new Plyr(self.video, self.plyropts);
 
