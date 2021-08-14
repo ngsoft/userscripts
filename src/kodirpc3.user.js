@@ -30,15 +30,20 @@
     const
 
             // Scallar types
-            s = string = "string",
-            b = bool = "boolean",
-            f = "function",
-            o = object = "object",
-            u = "undefined",
-            n = number = "number",
+            string = "string",
+            bool = "boolean",
+            object = "object",
+            number = "number",
             int = 'int',
             float = 'float',
             array = 'array',
+            s = string,
+            b = bool,
+            f = "function",
+            o = object,
+            u = "undefined",
+            n = number,
+
             //time
             second = 1000,
             minute = 60 * second,
@@ -53,7 +58,7 @@
             GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
             scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
             UUID = GMinfo ? GMinfo.script.uuid : "",
-            GM = {};
+            utils = {};
 
     // Pass sandboxed functions into the module GM
     [
@@ -77,7 +82,7 @@
         'GM_addStyle',
         'GM_notification',
         'GM_setClipboard'
-    ].forEach(v => GM[v] = self[v]);
+    ].forEach(v => utils[v] = self[v]);
 
 
 
@@ -100,7 +105,33 @@
     }
 
 
+    /**
+     * Creates an HTMLElement from html code
+     * @param {string} html
+     * @returns {HTMLElement}
+     */
+    function html2element(html){
+        if (typeof html === "string") {
+            let template = doc.createElement('template');
+            html = html.trim();
+            template.innerHTML = html;
+            return template.content.firstChild;
+        }
+    }
 
+    /**
+     * Adds CSS to the bottom of the head
+     * @param {string} css
+     * @returns {undefined}
+     */
+    function addstyle(css){
+        if (typeof css === "string" && css.length > 0) {
+            let s = doc.createElement('style');
+            s.setAttribute('type', "text/css");
+            s.appendChild(doc.createTextNode('<!-- ' + css + ' -->'));
+            doc.head.appendChild(s);
+        }
+    }
 
 
     /**
@@ -205,7 +236,7 @@
         /* globals GM_getValue, GM_setValue, GM_deleteValue, GM_listValues */
         constructor(){
             super();
-            const errors = ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].filter(x => typeof GM[x] !== f);
+            const errors = ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].filter(x => typeof utils[x] !== f);
             if (errors.length > 0) throw new Error('gmStore:  %s are not available.'.replace('%s', errors.join(', ')));
         }
         get(key){
@@ -664,7 +695,7 @@
     class Settings {
 
         get servers(){
-            let servers = this._config.get('servers') || [], retval;
+            let servers = this._config.get('servers') || [];
 
             if (servers.length == 0) {
                 let server = new Server();
@@ -687,10 +718,10 @@
             if (!(server instanceof Server)) server = new Server();
                 let
                     id = server.id,
-                    servers = this._config.get(servers) || [];
+                    servers = this._config.get('servers') || [];
 
             if (!servers.includes(id)) servers.push(id);
-            this._config.set('servers', cfg);
+            this._config.set('servers', servers);
             this._config.set(id, server._params);
         }
 
@@ -700,7 +731,7 @@
                         servers = this._config.get('servers') || [],
                         index = servers.indexOf(server.id);
                 this._config.remove(server.id);
-                if (index > -1) servers = servers.splice(index, 1);
+                if (index > -1) servers.splice(index, 1);
                 this._config.set('servers', servers);
             }
         }
@@ -1082,6 +1113,78 @@
         }
     }
 
+
+
+    /**
+     * Manages GM_registerMenuCommand, GM_unregisterMenuCommand
+     */
+    class ContextMenu {
+
+        add(desc, callback, name){
+
+            if (typeof name === u) name = uniqid();
+
+            if (typeof desc === s && typeof callback === f) {
+                // reserve id
+                let command = {
+                    name: name,
+                    description: desc,
+                    callback: callback
+                };
+                command.id = GM_registerMenuCommand(desc, callback);
+                console.debug(command);
+                this.commands[name] = command;
+            }
+
+            return this;
+
+
+        }
+        
+        remove(name){
+            
+            let id ;
+            if(typeof name === n){
+                Object.keys(this.commands).forEach(n=>{
+                    if(this.commands[n].id == name) name = n;
+                });
+            }
+            if (
+                    (typeof n === s) &&
+                    (id = typeof this.commands[name] !== u ? this.commands[name].id : undef)
+                    ) {
+                GM_unregisterMenuCommand(id);
+                delete this.commands[name];
+
+            }
+
+            return this;
+        }
+
+
+        constructor(){
+            this.commands = {};
+        }
+    }
+
+
+
+
+
+
+
+    const Menu = new ContextMenu();
+    
+    
+    if (window === window.parent) {
+        Events(doc.body).on('kodirpc.settings', () => {
+
+        });
+        Menu.add('Configure' + GMinfo.script.name, () => {
+            Events(doc.body).trigger('kodirpc.settings');
+
+        }, 'configure');
+     }
 
 
 

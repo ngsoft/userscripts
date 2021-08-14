@@ -714,6 +714,227 @@
 
 
 
+    class DailymotionAPI {
+
+        getToken(){
+
+            return new Promise((resolve, reject) => {
+
+                if (this.token !== null) {
+                    resolve(this.token);
+                    return;
+                }
+
+                let  data = {
+                    'client_id': 'f1a362d288c1b98099c7',
+                    'client_secret': 'eea605b96e01c796ff369935357eca920c5da4c5',
+                    'grant_type': 'client_credentials'
+                }, encoded = new URLSearchParams();
+                Object.keys(data).forEach(function(k){
+                    encoded.set(k, data[k]);
+                });
+
+                GM_xmlhttpRequest({
+                    method: 'POST',
+                    url: 'https://graphql.api.dailymotion.com/oauth/token',
+                    data: encoded.toString(),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    onload(xhr){
+                        if (xhr.status === 200) {
+                            let json = JSON.parse(xhr.response);
+                            resolve(this.token = json.access_token);
+
+                        }
+                        else reject(new Error('Cannot get Dailymotion access Token.'));
+                    },
+                    onerror(){
+                        reject(new Error('Cannot get Dailymotion access Token.'));
+                    }
+                });
+            });
+
+        }
+
+
+        getMetadata(vid){
+            
+            return new Promise((resolve, reject) => {
+                
+                this.getToken().then(token=>{
+
+                    let headers = Object.assign({
+                        'Authorization': 'Bearer ' + token
+                    }, this.headers),
+                            url = 'https://www.dailymotion.com/player/metadata/video/' + vid + '?fields=qualities';
+
+                    
+                    GM_xmlhttpRequest({
+                        method: 'POST',
+                        url: url,
+                        headers: headers,
+                        data: JSON.stringify({app: 'com.dailymotion.neon'}),
+                        onload(xhr){
+                            if (xhr.status === 200) {
+                                let json = JSON.parse(xhr.response);
+                                resolve(json);
+
+                            } else reject(new Error('Cannot get Dailymotion Metadata for ' + vid + '.'));
+                        },
+                        onerror(xhr){
+                            reject(new Error('Cannot get Dailymotion Metadata for ' + vid + '.'));
+                        }
+                    });
+                    
+                    
+                    
+                });
+
+
+            });
+        }
+        
+        
+        getMediaList(metadata){
+            const that = this;
+            return new Promise((resolve, reject)=>{
+                if (isPlainObject(metadata)) {
+
+                    if (typeof metadata.qualities !== u) {
+
+                        let result = {};
+
+                        Object.keys(metadata.qualities).forEach(key => {
+                            let arr = metadata.qualities[key];
+                            if (Array.isArray(arr)) {
+                                arr.forEach(obj => {
+                                    if (
+                                            (typeof obj.type !== u) &&
+                                            (typeof obj.url !== u)
+                                            ) {
+                                        if (obj.type === 'application/x-mpegURL') {
+                                            //parse m3u8
+                                            that.parseM3U8(obj.url).then(data => {
+                                                data.forEach(obj => {
+
+                                                    let key = obj.name + 'p';
+                                                    key = key.replace('"', '');
+                                                    result[key] = {
+                                                        url: obj.url,
+                                                        resolution: key,
+                                                        hls: true
+                                                    };
+
+                                                });
+                                                if (Object.keys(result).length > 0) {
+                                                    resolve(result);
+                                                }
+                                            });
+
+                                        }
+                                    }
+                                });
+                            }
+
+                        });
+
+
+                    }
+
+                }
+
+                else reject(new Error('Invalid Metadata.'));
+            });
+
+        }
+        getSubtitles(metadata){
+            let url = null;
+            if (isPlainObject(metadata)) {
+                //console.debug(metadata);
+                if (
+                        (typeof metadata.subtitles !== u) &&
+                        (typeof metadata.subtitles.data !== u) &&
+                        (typeof metadata.subtitles.data.en !== u) &&
+                        (typeof metadata.subtitles.data.en.urls !== u)
+
+                        ) {
+                    metadata.subtitles.data.en.urls.forEach(u => url = u);
+                }
+            }
+            return url;
+        }
+
+        parseM3U8(url){
+
+            let regex = /(#EXT-X-STREAM-INF.*)\n([^#].*)/;
+
+            return new Promise((resolve, reject) => {
+
+
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: url,
+                    onload(xhr){
+                        if (xhr.status === 200) {
+                            let text = xhr.response, result = [], matches;
+
+                            while ((matches = regex.exec(text)) !== null) {
+                                text = text.replace(matches[0], '');
+                                let
+                                        line = matches[1].replace('#EXT-X-STREAM-INF:', ''),
+                                data = {};
+
+                                line.split(',').forEach(t => {
+                                    let kv = t.split('=');
+                                    if (kv.length == 2) {
+                                        let key = kv[0].trim(), value = kv[1].replace(/"/, '').trim();
+                                        data[key.toLowerCase()] = value;
+                                    }
+                                });
+                                if (Object.keys(data).length > 0) {
+                                    data.url = matches[2].trim();
+                                    result.push(data);
+                                }
+                            }
+                            if (result.length > 0) {
+                                resolve(result);
+                                return;
+                            }
+
+
+                        }
+                        reject(new Error('Cannot get Dailymotion HLS Info'));
+                    },
+                    onerror(){
+                        reject(new Error('Cannot get Dailymotion HLS Info'));
+                    }
+                });
+
+
+
+            });
+
+        }
+
+
+
+
+
+        constructor(){
+
+            this.token = null;
+
+            this.headers = {
+                'Content-Type': 'application/json',
+                'Origin': 'https://www.dailymotion.com'
+            };
+
+        }
+    }
+
+
+
     let
             gmSettings = new UserSettings({
                 servers: [],
@@ -823,14 +1044,14 @@
             if (/youtube/.test(src.host)) {
                 src.href = src.href.replace('embed/', 'watch?v=');
                 vid = src.searchParams.get('v');
-                site = "youtube";
+                site = "YOUTUBE";
                 plugin = 'plugin.video.youtube';
                 purl = "plugin://plugin.video.youtube/?action=play_video&videoid=%s".replace(/\%s/, vid);
 
             } else if (/dailymotion/.test(src.host)) {
                 src.href = src.href.replace('embed/', '');
                 vid = src.href.substr(src.href.lastIndexOf('/') + 1);
-                site = "dailymotion";
+                site = "DAILYMOTION";
                 plugin = 'plugin.video.dailymotion_com';
                 purl = "plugin://plugin.video.dailymotion_com/?url=%s&mode=playVideo".replace(/\%s/, vid);
             }
@@ -840,10 +1061,41 @@
                         .then(response => {
                             if (!response.error) {
                                 if (typeof doc.body.KRPCM === u) new KodiRPC();
-                                commands.add(site + vid, '[DAILYMOTION] Send ' + site + ' Video ' + vid, KodiRPC.action(purl));
+                                commands.add(site + vid, '[' + site + '] Send  Video ' + vid, KodiRPC.action(purl));
                             }
                         })
                         .catch(e => e);
+                if (site == 'DAILYMOTION') {
+                    commands.add(site + vid + 'manual', '[RPCSTREAM][' + site + '] send video ' + vid, function(){
+
+                        let d = new DailymotionAPI();
+                        d.getMetadata(vid).then(meta => {
+                            let subs = d.getSubtitles(meta), link;
+
+                            d
+                                    .getMediaList(meta)
+                                    .then(list => {
+
+                                        Object.keys(list).forEach(console.debug);
+
+                                        console.debug(list);
+                                        ['480p', '720p', '1080p'].forEach(res => {
+                                            if (typeof list[res] !== u) link = list[res].url
+                                        });
+                                        console.debug(link, subs);
+                                        if (typeof link !== u) KodiRPC.plugin(link, subs, 2)();
+
+
+
+
+                                    })
+                                    .catch(new Error('cannot send dailymotion video ' + vid));
+
+
+                        }).catch(console.error);
+
+                    });
+                }
             });
 
         });
@@ -872,43 +1124,7 @@
 
         }
 
-/*
 
-        if (/viki/.test(location.host) && /^\/videos\/\d+v/.test(location.pathname)) {
-            if (typeof doc.body.KRPCM === u) new KodiRPC();
-            let
-                    plugin = 'plugin.video.vikir',
-                    site = 'Viki',
-                    purl = new URL('plugin://plugin.video.vikir/?mode=4');
-
-
-            servers.forEach(server => {
-                server.client.getPluginVersion(plugin)
-                        .then(response => {
-                            if (!response.error) {
-
-                                commands.add(site + 'video', 'Send ' + site + ' Video', () => {
-
-
-                                    let matches = /^\/videos\/(\d+v)/.exec(location.pathname);
-                                     if (matches !== null) {
-                                        let
-                                                vid = matches[1],
-                                                vurl = vid + '@video@100@100@';
-                                        purl.searchParams.set('name', doc.title);
-                                        purl.searchParams.set('url', vurl);
-
-                                     KodiRPC.action(purl.href)();
-                                    }
-                                });
-                            }
-                        })
-                        .catch(e => e);
-            });
-
-        }
-
-        */
 
 
     });
