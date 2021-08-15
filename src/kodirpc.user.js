@@ -792,7 +792,7 @@
                     let headers = Object.assign({
                         'Authorization': 'Bearer ' + token
                     }, this.headers),
-                            url = 'https://www.dailymotion.com/player/metadata/video/' + vid + '?fields=qualities';
+                            url = 'https://www.dailymotion.com/player/metadata/video/' + vid;
 
                     
                     GM_xmlhttpRequest({
@@ -949,6 +949,7 @@
                         .then(meta => {
                             let subs = d.getSubtitles(meta), link;
 
+
                             d
                                     .getMediaList(meta)
                                     .then(list => {
@@ -959,7 +960,8 @@
                                         if (typeof link !== u) KodiRPC.advancedPlugin(link, subs, {
                                                 referer: 'https://www.dailymotion.com/video/' + vid,
                                                 useragent: 'Mozilla/5.0 (Linux; Android 7.1.1; Pixel Build/NMF26O) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.91 Mobile Safari/537.36',
-                                                mode: 0
+                                                mode: 0,
+                                                title: meta.title
                                             })();
                                     })
                                     .catch(new Error('cannot send dailymotion video ' + vid));

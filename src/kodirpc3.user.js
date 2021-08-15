@@ -7,6 +7,7 @@
 // @icon        https://kodi.tv/favicon-32x32.png
 //
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
+// @resource    iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
 // @require
 // @grant       GM_setValue
 // @grant       GM_getValue
@@ -15,6 +16,7 @@
 // @grant       GM_xmlhttpRequest
 // @grant       GM_registerMenuCommand
 // @grant       GM_unregisterMenuCommand
+// @grant       GM_getResourceText
 // @run-at      document-end
 //
 // @include     *
@@ -241,28 +243,28 @@
         }
         get(key){
             let retval;
-            if (typeof key === s) retval = GM_getValue(key);
+            if (typeof key === s) retval = utils.GM_getValue(key);
             else if (typeof key === u) {
                 retval = {};
-                GM_listValues().forEach(key => retval[key] = this.get(key));
+                utils.GM_listValues().forEach(key => retval[key] = this.get(key));
             }
             return retval;
 
         }
         set(key, val){
-            if (typeof key === s && typeof val !== u) GM_setValue(key, val);
+            if (typeof key === s && typeof val !== u) utils.GM_setValue(key, val);
             else if (isPlainObject(key)) Object.keys(key).forEach(k => this.set(k, key[k]));
             return this;
         }
         has(key){
-            return GM_listValues().includes(key);
+            return utils.GM_listValues().includes(key);
         }
         remove(key){
-            if (typeof key === s) GM_deleteValue(key);
+            if (typeof key === s) utils.GM_deleteValue(key);
             return this;
         }
         clear(){
-            GM_listValues().forEach(key => this.remove(key));
+            utils.GM_listValues().forEach(key => this.remove(key));
             return this;
         }
     }
@@ -875,7 +877,7 @@
             return new Promise((resolve, reject) => {
                 let data = JSON.RPCRequest(method, params);
                 if (data === undef) reject();
-                GM_xmlhttpRequest({
+                utils.GM_xmlhttpRequest({
                     method: 'POST',
                     url: that.address,
                     data: data,
@@ -1131,8 +1133,7 @@
                     description: desc,
                     callback: callback
                 };
-                command.id = GM_registerMenuCommand(desc, callback);
-                console.debug(command);
+                command.id = utils.GM_registerMenuCommand(desc, callback);
                 this.commands[name] = command;
             }
 
@@ -1145,15 +1146,15 @@
             
             let id ;
             if(typeof name === n){
-                Object.keys(this.commands).forEach(n=>{
-                    if(this.commands[n].id == name) name = n;
+                Object.keys(this.commands).forEach(key => {
+                    if (this.commands[key].id == name) name = this.commands[key].name;
                 });
             }
             if (
                     (typeof n === s) &&
                     (id = typeof this.commands[name] !== u ? this.commands[name].id : undef)
                     ) {
-                GM_unregisterMenuCommand(id);
+                utils.GM_unregisterMenuCommand(id);
                 delete this.commands[name];
 
             }
@@ -1166,12 +1167,6 @@
             this.commands = {};
         }
     }
-
-
-
-
-
-
 
     const Menu = new ContextMenu();
     
