@@ -680,7 +680,7 @@
             };
         }
 
-        static plugin(src, subtitles, licence, mode){
+        static plugin(src, subtitles, mode){
 
             let
                     u = new URL('plugin://plugin.video.rpcstream/'),
@@ -702,13 +702,40 @@
                         url: src
                     };
             if (typeof subtitles === s) request.subtitles = subtitles;
-            if (/^\{/.test(licence) && /\}$/.test(licence)) request.licence = licence;
+
 
             u.searchParams.set('request', btoa(JSON.stringify(request)));
             if (typeof mode === 'number') u.searchParams.set('mode', mode);
             return this.action(u.href);
         }
 
+
+        static advancedPlugin(src, subtitles, params){
+            let
+                    u = new URL('plugin://plugin.video.rpcstream/'),
+                    title = doc.title !== null ? doc.title : '';
+            if (
+                    title.length < 1 &&
+                    window.frameElement &&
+                    window.frameElement.ownerDocument
+                    ) {
+                title = window.frameElement.ownerDocument.title;
+            }
+
+            let
+                    request = {
+                        title: title,
+                        referer: location.origin + location.pathname,
+                        useragent: navigator.userAgent,
+                        url: src
+                    };
+            if (isPlainObject(params)) request = Object.assign(request, params);
+            if (typeof subtitles === s) request.subtitles = subtitles;
+            u.searchParams.set('request', btoa(JSON.stringify(request)));
+            if (typeof request.mode === n) u.searchParams.set('mode', request.mode);
+            return this.action(u.href);
+
+        }
 
     }
 
@@ -821,7 +848,7 @@
                                                     let key = obj.name + 'p';
                                                     key = key.replace('"', '');
                                                     result[key] = {
-                                                        url: obj.url,
+                                                        url: obj.url.replace(/\#.*$/, ''),
                                                         resolution: key,
                                                         hls: true
                                                     };
@@ -917,7 +944,33 @@
 
         }
 
+        static action(vid){
+            return function(){
+                let d = new DailymotionAPI();
+                d.getMetadata(vid)
+                        .then(meta => {
+                            let subs = d.getSubtitles(meta), link;
 
+                            d
+                                    .getMediaList(meta)
+                                    .then(list => {
+                                        ['480p', '720p', '1080p'].forEach(res => {
+                                            if (typeof list[res] !== u) link = list[res].url;
+                                        });
+
+                                        if (typeof link !== u) KodiRPC.advancedPlugin(link, subs, {
+                                                referer: 'https://www.dailymotion.com/video/' + vid,
+                                                useragent: 'Mozilla/5.0 (Linux; Android 7.1.1; Pixel Build/NMF26O) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.91 Mobile Safari/537.36',
+                                                mode: 0
+                                            })();
+                                    })
+                                    .catch(new Error('cannot send dailymotion video ' + vid));
+
+
+                        })
+                        .catch(console.error);
+            };
+        }
 
 
 
@@ -1065,37 +1118,11 @@
                             }
                         })
                         .catch(e => e);
-                if (site == 'DAILYMOTION') {
-                    commands.add(site + vid + 'manual', '[RPCSTREAM][' + site + '] send video ' + vid, function(){
-
-                        let d = new DailymotionAPI();
-                        d.getMetadata(vid).then(meta => {
-                            let subs = d.getSubtitles(meta), link;
-
-                            d
-                                    .getMediaList(meta)
-                                    .then(list => {
-
-                                        Object.keys(list).forEach(console.debug);
-
-                                        console.debug(list);
-                                        ['480p', '720p', '1080p'].forEach(res => {
-                                            if (typeof list[res] !== u) link = list[res].url
-                                        });
-                                        console.debug(link, subs);
-                                        if (typeof link !== u) KodiRPC.plugin(link, subs, 2)();
-
-
-
-
-                                    })
-                                    .catch(new Error('cannot send dailymotion video ' + vid));
-
-
-                        }).catch(console.error);
-
-                    });
+                if (site == 'DAILYMOTION'){
+                    commands.add(site + vid + 'manual', '[RPCSTREAM] Send dailymotion video ' + vid, DailymotionAPI.action(vid));
                 }
+
+
             });
 
         });
