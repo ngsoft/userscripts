@@ -1109,6 +1109,10 @@
                 purl = "plugin://plugin.video.dailymotion_com/?url=%s&mode=playVideo".replace(/\%s/, vid);
             }
             let success = false;
+            if (site == 'DAILYMOTION') {
+                commands.add(site + vid + 'RPCSTREAM', '[RPCSTREAM] Send dailymotion video+subs ' + vid, DailymotionAPI.action(vid));
+            }
+
             servers.forEach(server => {
                 server.client.getPluginVersion(plugin)
                         .then(response => {
@@ -1118,12 +1122,11 @@
                             }
                         })
                         .catch(e => e);
-                if (site == 'DAILYMOTION'){
-                    commands.add(site + vid + 'manual', '[RPCSTREAM] Send dailymotion video ' + vid, DailymotionAPI.action(vid));
-                }
-
-
             });
+
+
+
+
 
         });
 
