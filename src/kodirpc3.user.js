@@ -6,6 +6,7 @@
 // @namespace   https://github.com/ngsoft
 // @icon        https://kodi.tv/favicon-32x32.png
 //
+// @require     https://cdn.jsdelivr.net/gh/odyniec/MonkeyConfig@master/monkeyconfig.min.js
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @resource    iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
 // @require
@@ -17,6 +18,7 @@
 // @grant       GM_registerMenuCommand
 // @grant       GM_unregisterMenuCommand
 // @grant       GM_getResourceText
+// @grant       GM_addStyle
 // @run-at      document-end
 //
 // @include     *
@@ -710,6 +712,10 @@
             });
         }
 
+        get server(){
+            return this.servers[0];
+        }
+
 
         get clients(){
             return this.servers.map(s => new Client(s));
@@ -825,7 +831,9 @@
             if ((typeof pass === s ? pass.length > 0 : false) && (this.user !== null)) {
                 this._params.auth = btoa(this.user + ':' + pass);
                 this._dirty = true;
-            } else if (pass === null) this.user = null;
+                return;
+            }
+            this.user = null;
         }
 
         get enabled(){
@@ -1168,16 +1176,80 @@
         }
     }
 
-    const Menu = new ContextMenu();
+
+    class Configurator {
+
+        static get hidden(){
+            return this._open !== true;
+        }
+
+
+        static open(server){
+            if (!this.hidden) return;
+            const settings = new Settings();
+            if (!(server instanceof Server)) server = settings.server;
+            this._open = true;
+
+            const cfg = new MonkeyConfig({
+                title: GM_info.script.name,
+                buttons: ['check', 'save', 'cancel'],
+                params: {
+                    id: {
+                        type: 'hidden',
+                        default: server.id
+                    },
+                    name: {
+                        type: 'text',
+                        default: server.name
+                    },
+                    host: {
+                        type: 'text',
+                        default: server.host
+                    },
+                    user: {
+                        type: 'text',
+                        default: server.user || ''
+                    },
+                    password: {
+                        type: 'password',
+                        default: ''
+                    }
+                },
+                onSave(values){
+                    ['name', 'host', 'user'].forEach(key => server[key] = values[key]);
+                    if (values.password.length > 0) server.auth = values.password
+                }
+
+
+
+
+            });
+            cfg.open();
+            console.debug(cfg);
+
+        }
+
+    }
+
+
+
+    const  Menu = new ContextMenu();
     
     
     if (window === window.parent) {
         Events(doc.body).on('kodirpc.settings', () => {
 
+
+
+            Configurator.open();
+
+
+
+
+
         });
         Menu.add('Configure' + GMinfo.script.name, () => {
             Events(doc.body).trigger('kodirpc.settings');
-
         }, 'configure');
      }
 
