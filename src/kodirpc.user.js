@@ -8,6 +8,8 @@
 //
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
+// @resource    iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
+//
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -15,6 +17,7 @@
 // @grant       GM_xmlhttpRequest
 // @grant       GM_registerMenuCommand
 // @grant       GM_unregisterMenuCommand
+// @grant       GM_getResourceText
 // @run-at      document-end
 //
 // @include     *
@@ -30,19 +33,14 @@
 
 
     function loadResources(){
+
         if (loadResources.loading !== true) {
             loadResources.loading = true;
-            [
-                //"https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js",
-                "https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"
-            ].forEach(src => {
-                if (/\.js$/.test(src)) loadjs(src);
-                else if (/\.css$/.test(src)) loadcss(src);
-            });
-            addstyle(`
-                .iziToast-wrapper {z-index: 2147483647 !important;}
-                .iziToast-wrapper-bottomRight{top: 40% !important;bottom: auto !important;}
-            `);
+            addstyle(
+                    GM_getResourceText('iziToastCSS') + `
+                        .iziToast-wrapper {z-index: 2147483647 !important;}
+                        .iziToast-wrapper-bottomRight{top: 40% !important;bottom: auto !important;}
+                    `);
         }
 
         return new Promise(resolve => {
