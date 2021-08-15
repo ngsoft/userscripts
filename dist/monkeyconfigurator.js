@@ -10,8 +10,8 @@
  * version 0.1.4
  *
  * Copyright (c) 2011-2013 Michal Wojciechowski (odyniec.net)
+ * Modified by me to use custom fields, trigger events and some debugging
  */
-
 function MonkeyConfig(){
     var cfg = this,
             /* Data object passed to the constructor */
@@ -29,7 +29,8 @@ function MonkeyConfig(){
             /* DOM element wrapping the configuration form */
             container,
             /* Darkened overlay used in the layer display mode */
-            overlay;
+            overlay,
+            listener = document.createElement('div');
 
     /**
      * Initialize configuration
@@ -102,8 +103,8 @@ function MonkeyConfig(){
             set(name, value);
             update();
         };
-        cfg.listener = document.createElement('div');
         cfg.on = on;
+        cfg.one = one;
         cfg.trigger = trigger;
     }
 
@@ -117,10 +118,10 @@ function MonkeyConfig(){
      * @returns {undefined}
      */
     function on(type, callback, options){
-        if (typeof type === 'string' && typeof listener === 'function') {
+        if ((typeof type === 'string') && (typeof callback === 'function')) {
             const params = {
                 once: false,
-                capture: false
+                capture: true
             };
             if (typeof options === 'boolean') params.capture = options;
             else if (typeof options === 'object') {
@@ -128,7 +129,7 @@ function MonkeyConfig(){
                     params[key] = options[key] === true;
                 });
             }
-            type.split(/\s+/).forEach(type => cfg.listener.addEventListener(type, callback, params));
+            type.split(/\s+/).forEach(t => listener.addEventListener(t, callback, params));
         }
     }
 
@@ -153,14 +154,13 @@ function MonkeyConfig(){
      */
     function trigger(type, data){
         if (typeof type === 'string') {
-            data = typeof data !== 'undefined' ? data : {};
-            type.split(/\s+/).forEach(type => {
-                let event = new Event(type);
+            data = typeof data === 'object' ? data : {};
+            type.split(/\s+/).forEach(t => {
+                let event = new Event(t);
                 Object.assign(event, data);
-                cfg.listener.dispatchEvent(event);
+                listener.dispatchEvent(event);
             });
         }
-        return this;
     }
 
 
@@ -415,6 +415,8 @@ function MonkeyConfig(){
             trigger('open');
         }
 
+
+
         switch (mode) {
             case 'window':
                 var windowFeatures = {
@@ -579,6 +581,7 @@ function MonkeyConfig(){
                 }, false);
 
                 setTimeout(function(){
+                    if (typeof container === 'undefined') return;
                     iframe.width = container.clientWidth;
                     iframe.height = container.clientHeight;
 
@@ -740,14 +743,14 @@ MonkeyConfig.HTML = {
                     'name="' + name + '" />';
     },
     'hidden': function(name, options, data){
-            return '<input id="__MonkeyConfig_field_' + name + '" ' +
+        return '<input id="__MonkeyConfig_field_' + name + '" ' +
                 'type="hidden" class="__MonkeyConfig_field_text" ' +
-                    'name="' + name + '" />';
+                'name="' + name + '" />';
     },
     'password': function(name, options, data){
-            return '<input id="__MonkeyConfig_field_' + name + '" ' +
+        return '<input id="__MonkeyConfig_field_' + name + '" ' +
                 'type="password" class="__MonkeyConfig_field_text" ' +
-                    'name="' + name + '" />';
+                'name="' + name + '" />';
     }
 };
 
@@ -995,5 +998,3 @@ body.__MonkeyConfig_body {\
 }\
 '
 };
-
-

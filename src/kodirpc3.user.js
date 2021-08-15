@@ -6,7 +6,7 @@
 // @namespace   https://github.com/ngsoft
 // @icon        https://kodi.tv/favicon-32x32.png
 //
-// @require     https://cdn.jsdelivr.net/gh/odyniec/MonkeyConfig@master/monkeyconfig.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/monkeyconfigurator.min.js
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @resource    iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
 // @require
@@ -23,6 +23,7 @@
 //
 // @include     *
 // ==/UserScript==
+
 
 (function(undef){
 
@@ -1217,15 +1218,18 @@
                 },
                 onSave(values){
                     ['name', 'host', 'user'].forEach(key => server[key] = values[key]);
-                    if (values.password.length > 0) server.auth = values.password
+                    if (values.password.length > 0) server.auth = values.password;
+                    console.debug(server);
                 }
 
 
 
 
             });
+            cfg.on('close', () => {
+                this._open = false;
+            });
             cfg.open();
-            console.debug(cfg);
 
         }
 
