@@ -26,7 +26,7 @@
 
 
 (function(undef){
-
+    /* globals 	unsafeWindow, GM_info, GM, self, EventTarget, iziToast, MonkeyConfig */
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
@@ -109,34 +109,6 @@
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
 
-
-    /**
-     * Creates an HTMLElement from html code
-     * @param {string} html
-     * @returns {HTMLElement}
-     */
-    function html2element(html){
-        if (typeof html === "string") {
-            let template = doc.createElement('template');
-            html = html.trim();
-            template.innerHTML = html;
-            return template.content.firstChild;
-        }
-    }
-
-    /**
-     * Adds CSS to the bottom of the head
-     * @param {string} css
-     * @returns {undefined}
-     */
-    function addstyle(css){
-        if (typeof css === "string" && css.length > 0) {
-            let s = doc.createElement('style');
-            s.setAttribute('type', "text/css");
-            s.appendChild(doc.createTextNode('<!-- ' + css + ' -->'));
-            doc.head.appendChild(s);
-        }
-    }
 
 
     /**
@@ -238,7 +210,6 @@
      * @extends {DataStore}
      */
     class gmStore extends DataStore {
-        /* globals GM_getValue, GM_setValue, GM_deleteValue, GM_listValues */
         constructor(){
             super();
             const errors = ["GM_getValue", "GM_setValue", "GM_deleteValue", "GM_listValues"].filter(x => typeof utils[x] !== f);
@@ -892,6 +863,7 @@
                     data: data,
                     headers: that.headers,
                     onload(xhr){
+                        console.debug(xhr);
                         if (xhr.status === 200) resolve(JSON.parse(xhr.response));
                         else reject();
                     },
@@ -1113,10 +1085,10 @@
                 this
                         .directPlayOrQueueVideo(link)
                         .then(response => {
-                            if (typeof success === f) success.call(this, link, this);
+                            if (typeof success === f) success.call(this, this);
                         })
                         .catch(() => {
-                            if (typeof error === f) error.call(this, link, this);
+                            if (typeof error === f) error.call(this, this);
 
                         });
             }
@@ -1131,7 +1103,9 @@
      */
     class ContextMenu {
 
-        add(desc, callback, name){
+        static add(desc, callback, name){
+
+            this.commands = this.commands || {};
 
             if (typeof name === u) name = uniqid();
 
@@ -1151,8 +1125,8 @@
 
         }
         
-        remove(name){
-            
+        static remove(name){
+            this.commands = this.commands || {};
             let id ;
             if(typeof name === n){
                 Object.keys(this.commands).forEach(key => {
@@ -1171,11 +1145,44 @@
             return this;
         }
 
+    }
 
-        constructor(){
-            this.commands = {};
+
+    class Notify {
+
+        static load(){
+            return new Promise(resolve=>{
+                if (this.loaded !== true) {
+                    utils.GM_addStyle(utils.GM_getResourceText('iziToastCSS') + `.iziToast-wrapper {z-index: 2147483647 !important;} .iziToast-wrapper-bottomRight{top: 40% !important;bottom: auto !important;}`);
+                    this.loaded = true;
+                }
+                resolve(iziToast);
+            });
+        }
+        
+        static success(message, title = ''){
+            
+            this.load().then(iziToast=>{
+                iziToast.success({
+                    title: title,
+                    message: message
+                });
+            });
+
+        }
+        
+        static error(message, title = ''){
+
+            this.load().then(iziToast => {
+                console.debug(iziToast);
+                iziToast.error({
+                    title: title,
+                    message: message
+                });
+            });
         }
     }
+
 
 
     class Configurator {
@@ -1218,8 +1225,19 @@
                 },
                 onSave(values){
                     ['name', 'host', 'user'].forEach(key => server[key] = values[key]);
-                    if (values.password.length > 0) server.auth = values.password;
-                    console.debug(server);
+                    server.auth = values.password;
+
+                    settings.saveServer(server);
+                    //check connection
+                    server.client
+                            .ping()
+                            .then(() => {
+                                Notify.success('Connection to ' + server.name + ' Success');
+
+                            })
+                            .catch(() => {
+                                Notify.error('Connection to ' + server.name + ' Error');
+                            });
                 }
 
 
@@ -1237,26 +1255,225 @@
 
 
 
-    const  Menu = new ContextMenu();
-    
+    class KodiRPC {
+
+        static send(url, success, error){
+
+            if (typeof url !== s) throw new Error('invalid url');
+            success = typeof success === f ? success : client => {
+                Notify.success('Link sent to ' + client.server.name);
+
+
+            };
+            error = typeof error === f ? error : client => {
+                    Notify.error('Error ' + client.server.name);
+
+                };
+
+            Settings.servers.forEach(server => {
+                if (server.enabled) {
+                    server.client.send(url, success, error);
+                }
+            });
+        }
+
+        static action(url){
+            return () => {
+                this.send(url);
+            };
+        }
+
+
+
+
+    }
+
+
+    /**
+     * Interface for Kodi Plugin
+     */
+    class KodiPlugin extends Iface {
+
+        get __ABSTRACT(){
+            return ['send', 'setParam', 'addMenuEntry'];
+        }
+
+        send(){
+
+            Settings.servers.forEach(server => {
+                server.client.getPluginVersion(this.identifier())
+                        .then(response => {
+                            if (!response.error) {
+                                server.client.send(this.url.href, () => {
+                                    Notify.success('Video sent to ' + server.name, 'Plugin ' + this.name());
+
+                                },
+                                        () => {
+                                    Notify.error('Error ' + server.name, 'Plugin ' + this.name());
+                                });
+
+                            } else Notify.error('Plugin not installed on ' + server.name, 'Plugin ' + this.name());
+                        })
+                        .catch(console.error);
+            });
+        }
+
+        setParam(key, value){
+
+            if (
+                    (typeof key === s) &&
+                    (typeof value === s)
+                    ) {
+                this.url.searchParams.set(key, value);
+            }
+            return this;
+        }
+
+        addMenuEntry(){
+            ContextMenu.add('[' + this.name() + '] Send Video ' + this.description(), () => {
+            this.send();
+            }, this.identifier() + '.' + this.description());
+        }
+
+        identifier(){}
+        name(){}
+        description(){}
+
+        constructor(){
+            super();
+            this.url = new URL('plugin://' + this.identifier() + '/');
+        }
+    }
+
+    /**
+     * Youtube kodi plugin
+     */
+    class Youtube extends KodiPlugin {
+        identifier(){
+            return 'plugin.video.youtube';
+        }
+        name(){
+            return 'YOUTUBE';
+        }
+
+        description(){
+            return this.xid;
+        }
+
+        constructor(xid){
+            super();
+            if (typeof xid !== s) throw new Error('Invalid xid');
+            this
+                    .setParam('action', 'play_video')
+                    .setParam('videoid', xid);
+
+            this.xid = xid;
+            this.addMenuEntry();
+        }
+    }
+
+    /**
+     * Dailymotion Kodi Plugin
+     */
+    class Dailymotion extends KodiPlugin {
+        identifier(){
+            return 'plugin.video.dailymotion_com';
+        }
+        name(){
+            return 'DAILYMOTION';
+        }
+        description(){
+            return this.xid;
+        }
+
+        constructor(xid){
+            super();
+            if (typeof xid !== s) throw new Error('Invalid xid');
+            this
+                    .setParam('mode', 'playVideo')
+                    .setParam('url', xid);
+            this.xid = xid;
+            this.addMenuEntry();
+        }
+    }
+
+    /**
+     * Crunchyroll Kodi Plugin
+     */
+    class Crunchyroll extends KodiPlugin {
+        identifier(){
+            return 'plugin.video.crunchyroll';
+        }
+        name(){
+            return 'CRUNCHYROLL';
+        }
+
+        description(){
+            return this.xid;
+        }
+
+        constructor(xid){
+            super();
+            if (typeof xid !== s) throw new Error('Invalid xid');
+            this
+                    .setParam('mode', 'videoplay')
+                    .setParam('episode_id', xid);
+            this.xid = xid;
+            this.addMenuEntry();
+        }
+    }
+
+
+    class RPCStream extends KodiPlugin {
+        identifier(){
+            return 'plugin.video.rpcstream';
+        }
+        name(){
+            return 'RPCSTREAM';
+        }
+
+        description(){
+            return this.desc;
+        }
+
+        constructor(url, subs, description, params){
+            super();
+            title = doc.title;
+            if (
+                    title.length < 1 &&
+                    window.frameElement &&
+                    window.frameElement.ownerDocument
+                    ) {
+                title = window.frameElement.ownerDocument.title;
+            }
+            params = Object.assign({
+                title: title,
+                referer: location.origin + location.pathname,
+                useragent: navigator.userAgent,
+                url: url
+            }, params);
+
+            if (typeof subs === s) {
+                params.subtitles = subs;
+            }
+            this.setParam('request', btoa(JSON.stringify(params)));
+            if (typeof params.mode === n) this.setParam('mode', params.mode);
+
+            if (typeof description === s) {
+                this.desc = description;
+            } else this.desc = '';
+
+            this.addMenuEntry();
+
+        }
+    }
+
     
     if (window === window.parent) {
-        Events(doc.body).on('kodirpc.settings', () => {
-
-
-
+        ContextMenu.add('Configure ' + GMinfo.script.name, () => {
             Configurator.open();
-
-
-
-
-
-        });
-        Menu.add('Configure' + GMinfo.script.name, () => {
-            Events(doc.body).trigger('kodirpc.settings');
         }, 'configure');
-     }
-
+    }
 
 
 
