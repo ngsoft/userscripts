@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.0.alpha1
+// @version     3.0
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -27,10 +27,11 @@
 
 
 (function(undef){
-    /* globals 	unsafeWindow, GM_info, GM, self, EventTarget, iziToast, MonkeyConfig */
+    /* globals 	unsafeWindow, GM_info, GM, self, EventTarget, iziToast, MonkeyConfig, utf8, URLSearchParams, jwplayer */
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
+    /* jshint sub:true */
 
 
     const
@@ -110,16 +111,7 @@
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
 
-    function stringToBytes(text){
-        const length = text.length;
-        const result = new Uint8Array(length);
-        for (let i = 0; i < length; i++) {
-            const code = text.charCodeAt(i);
-            const byte = code > 255 ? 32 : code;
-            result[i] = byte;
-        }
-        return result;
-    }
+
     /**
      * Sanitize a given filename
      * @param {string} input
@@ -1396,15 +1388,12 @@
             if (typeof url !== s) throw new Error('invalid url');
             success = typeof success === f ? success : client => {
                 Notify.success('Link sent to ' + client.server.name);
-
-
             };
             error = typeof error === f ? error : client => {
-                    Notify.error('Error ' + client.server.name);
-
+                Notify.error('Error ' + client.server.name);
                 };
 
-            (new Settings).servers.forEach(server => {
+            (new Settings()).servers.forEach(server => {
                 if (server.enabled) {
                     server.client.send(url, success, error);
                 }
@@ -1434,7 +1423,7 @@
 
         send(){
 
-            (new Settings).servers.forEach(server => {
+            (new Settings()).servers.forEach(server => {
                 server.client.getPluginVersion(this.identifier())
                         .then(response => {
                             if (!response.error) {
@@ -1510,7 +1499,7 @@
 
         send(){
 
-            (new Settings).servers.forEach(server => {
+            (new Settings()).servers.forEach(server => {
                 server.client.ping()
                         .then(response => {
                             if (!response.error) {
@@ -1737,7 +1726,7 @@
                     encoded.set(k, data[k]);
                 });
 
-                GM_xmlhttpRequest({
+                utils.GM_xmlhttpRequest({
                     method: 'POST',
                     url: 'https://graphql.api.dailymotion.com/oauth/token',
                     data: encoded.toString(),
@@ -2139,7 +2128,11 @@
 
                 KodiRPC.send(rpcstream.url.href, success, error);
             }
-        }).on('kodirpc.ready',()=>{
+        }).on('kodirpc.ready', () => {
+            //module detection
+            Object.defineProperty(doc.body, 'KRPCM', {
+                configurable: true, value: {}
+            });
             console.debug("KodiRPC Module version", GMinfo.script.version, "started");
         }).trigger('kodirpc.ready');
 
@@ -2166,10 +2159,10 @@
 
             let
                     src = element.dataset.src || element.src,
-                    tags = [];
+                    tags = [], desc = "from " + host;
 
             if (element.tagName === "SOURCE") tags.push('source');
-            desc = "from " + host;
+
 
 
             (new RPCStream(src, subtitles, {desc: desc, tags: tags}));
@@ -2181,6 +2174,8 @@
 
         // Jwplayer Video Detection
         NodeFinder.find('video.jw-video', video => {
+
+            let container;
 
             if (
                     (typeof jwplayer === f) &&
