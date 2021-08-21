@@ -8,6 +8,7 @@
 //
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/monkeyconfigurator.min.js
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
+// @require     https://cdn.jsdelivr.net/gh/mathiasbynens/utf8.js@v3.0.0/utf8.min.js
 // @resource    iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
 // @require
 // @grant       GM_setValue
@@ -108,6 +109,131 @@
     function uniqid(){
         return  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
+
+    function stringToBytes(text){
+        const length = text.length;
+        const result = new Uint8Array(length);
+        for (let i = 0; i < length; i++) {
+            const code = text.charCodeAt(i);
+            const byte = code > 255 ? 32 : code;
+            result[i] = byte;
+        }
+        return result;
+    }
+    /**
+     * Sanitize a given filename
+     * @param {string} input
+     * @param {string} replacement
+     * @returns {string}
+     */
+    function sanitizeFileName(input, replacement){
+        replacement = typeof replacement === s ? replacement : "";
+        
+        if (typeof input === s) {
+            // using utf8 encoder to remove invalid characters
+            input = utf8.encode(input);
+            return input
+                    .replace(/[\/\?<>\\:\*\|":\'\`\’]/g, replacement)
+                    .replace(/[\x00-\x1f\x80-\x9f]/g, replacement)
+                    .replace(/^\.+$/, replacement)
+                    //.replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, replacement)
+                    .replace(/[\. ]+$/, replacement)
+                    .substring(0, 255);
+        }
+
+    }
+
+    /**
+     * Run a callback
+     * @param {function} ...callbacks Run callback in order
+     * @returns {undefined}
+     */
+    function on(callback){
+        const callbacks = [];
+        for (let i = 0; i < arguments.length; i++) {
+            let arg = arguments[i];
+            if (typeof arg === f) callbacks.push(arg);
+        }
+        callbacks.forEach(c => c.call());
+    }
+    /**
+     * Run a Callback when body is created
+     * @param {function} callback
+     * @returns {Promise}
+     */
+    on.body = function(){
+        return new Promise(resolve => {
+
+            let resolver = body => {
+                if (arguments.length > 0) on(...arguments);
+                resolve(doc.body);
+            };
+
+            if (doc.body === null) {
+                const observer = new MutationObserver((mutations, obs) => {
+                    let ready = false;
+                    mutations.forEach(mutation => {
+                        mutation.addedNodes.forEach(node => {
+                            if (typeof node.matches === f ? node.matches('body') : false) {
+                                obs.disconnect();
+                                ready = true;
+                            }
+                        });
+                    });
+                    if (ready === true) resolver();
+
+                });
+                observer.observe(doc.documentElement, {childList: true});
+            } else resolver();
+
+        });
+    };
+
+    /**
+     * Run a callback when page is loading DOMContentLoaded
+     * @param {function} callback
+     * @returns {Promise}
+     */
+    on.load = function(){
+        return new Promise(resolve => {
+
+            let resolver = body => {
+                if (arguments.length > 0) on(...arguments);
+                resolve(doc.body);
+            };
+            if (doc.readyState === "loading") {
+                doc.addEventListener("DOMContentLoaded", function(){
+                    resolver();
+                });
+            } else resolve();
+
+
+        });
+    };
+
+    /**
+     * Run a callback when page is completely loaded
+     * @param {function} callback
+     * @returns {Promise}
+     */
+    on.loaded = function(){
+        return new Promise(resolve => {
+
+            let resolver = body => {
+                if (arguments.length > 0) on(...arguments);
+                resolve(doc.body);
+            };
+
+            if (doc.readyState !== "complete") {
+                addEventListener("load", function(){
+                    resolver();
+                });
+
+            } else resolver();
+
+        });
+    };
+
 
 
 
@@ -863,7 +989,6 @@
                     data: data,
                     headers: that.headers,
                     onload(xhr){
-                        console.debug(xhr);
                         if (xhr.status === 200) resolve(JSON.parse(xhr.response));
                         else reject();
                     },
@@ -1134,7 +1259,7 @@
                 });
             }
             if (
-                    (typeof n === s) &&
+                    (typeof name === s) &&
                     (id = typeof this.commands[name] !== u ? this.commands[name].id : undef)
                     ) {
                 utils.GM_unregisterMenuCommand(id);
@@ -1145,7 +1270,18 @@
             return this;
         }
 
+
+        static clear(){
+            let list = Object.keys(this.commands);
+            list.forEach(key => this.remove(key));
+
+        }
+
+
     }
+
+
+
 
 
     class Notify {
@@ -1172,9 +1308,7 @@
         }
         
         static error(message, title = ''){
-
             this.load().then(iziToast => {
-                console.debug(iziToast);
                 iziToast.error({
                     title: title,
                     message: message
@@ -1270,7 +1404,7 @@
 
                 };
 
-            Settings.servers.forEach(server => {
+            (new Settings).servers.forEach(server => {
                 if (server.enabled) {
                     server.client.send(url, success, error);
                 }
@@ -1300,7 +1434,7 @@
 
         send(){
 
-            Settings.servers.forEach(server => {
+            (new Settings).servers.forEach(server => {
                 server.client.getPluginVersion(this.identifier())
                         .then(response => {
                             if (!response.error) {
@@ -1309,7 +1443,7 @@
 
                                 },
                                         () => {
-                                    Notify.error('Error ' + server.name, 'Plugin ' + this.name());
+                                    Notify.error('Error ' + server.name);
                                 });
 
                             } else Notify.error('Plugin not installed on ' + server.name, 'Plugin ' + this.name());
@@ -1330,20 +1464,114 @@
         }
 
         addMenuEntry(){
-            ContextMenu.add('[' + this.name() + '] Send Video ' + this.description(), () => {
-            this.send();
+
+            let title = '';
+
+            this.tags.forEach(t => {
+                title += '[' + t.toUpperCase() + ']';
+            });
+
+            title += ' Send Video ';
+            title += this.description();
+
+            ContextMenu.add(title, () => {
+                this.send();
             }, this.identifier() + '.' + this.description());
         }
 
+
+        /**
+         * @returns {String}
+         */
         identifier(){}
+        /**
+         * @returns {String}
+         */
         name(){}
+        /**
+         * @returns {String}
+         */
         description(){}
 
         constructor(){
             super();
             this.url = new URL('plugin://' + this.identifier() + '/');
+            this.tags = [];
+            this.tags.push(this.name());
         }
     }
+
+
+
+    /**
+     * Legacy Kodi RPC Send
+     */
+    class Kodi extends KodiPlugin {
+
+        send(){
+
+            (new Settings).servers.forEach(server => {
+                server.client.ping()
+                        .then(response => {
+                            if (!response.error) {
+                                server.client.send(this.url.href, () => {
+                                    Notify.success('Video sent to ' + server.name);
+
+                                },
+                                        () => {
+                                    Notify.error('Error ' + server.name);
+                                });
+
+                            } else Notify.error('Error ' + server.name);
+                        })
+                        .catch(console.error);
+            });
+        }
+
+
+        addMenuEntry(){
+            if (typeof Kodi.id !== n) Kodi.id = 0;
+            Kodi.id++;
+
+            let title = '';
+
+            this.tags.forEach(t => {
+                title += '[' + t.toUpperCase() + ']';
+            });
+
+            title += ' Send Video ';
+            title += this.description();
+
+            ContextMenu.add(title, () => {
+                this.send();
+            }, this.identifier() + '.' + this.id);
+        }
+
+        identifier(){
+            return 'kodi';
+        }
+
+        name(){
+            return 'Kodi';
+        }
+
+        description(){
+            return this.desc || '';
+        }
+
+        constructor(url, desc, tags){
+            super();
+            this.desc = desc;
+            if (typeof url !== s) throw new Error('Invalid url');
+            this.url = new URL(url);
+            if (Array.isArray(tags)) tags.forEach(t => this.tags.push(t));
+            this.addMenuEntry();
+        }
+
+
+    }
+
+
 
     /**
      * Youtube kodi plugin
@@ -1423,7 +1651,9 @@
         }
     }
 
-
+    /**
+     * Kodi Plugin created by me (can load subtitle tracks)
+     */
     class RPCStream extends KodiPlugin {
         identifier(){
             return 'plugin.video.rpcstream';
@@ -1436,9 +1666,13 @@
             return this.desc;
         }
 
-        constructor(url, subs, description, params){
+        tags(){
+            return this._tags || [];
+        }
+
+        constructor(url, subs, description, params, menu = true){
             super();
-            title = doc.title;
+            let title = doc.title;
             if (
                     title.length < 1 &&
                     window.frameElement &&
@@ -1453,22 +1687,289 @@
                 url: url
             }, params);
 
+            // some titles can break the json, so we encode it (plugin detects if encoded)
+            params.title = btoa(sanitizeFileName(params.title, ' ').replace(/\s+/, ' '));
+
             if (typeof subs === s) {
                 params.subtitles = subs;
             }
             this.setParam('request', btoa(JSON.stringify(params)));
-            if (typeof params.mode === n) this.setParam('mode', params.mode);
+            if (typeof params.mode === n) this.setParam('mode', '' + params.mode);//needs a string
+
+            if (isPlainObject(description)) {
+                if (Array.isArray(description.tags)) description.tags.forEach(t => this.tags.push(t));
+                description = description.desc;
+            }
+
 
             if (typeof description === s) {
                 this.desc = description;
             } else this.desc = '';
 
-            this.addMenuEntry();
+            if (menu === true) this.addMenuEntry();
 
         }
     }
 
-    
+    // Extractors
+
+    /**
+     * Extracted from Python Youtube-dl extractor
+     * Dailymotion Kodi addon doesn't supports subtitles and i don't want to rewrite it to break updates.
+     */
+    class DailymotionAPI {
+
+        getToken(){
+
+            return new Promise((resolve, reject) => {
+
+                if (this.token !== null) {
+                    resolve(this.token);
+                    return;
+                }
+
+                let  data = {
+                    'client_id': 'f1a362d288c1b98099c7',
+                    'client_secret': 'eea605b96e01c796ff369935357eca920c5da4c5',
+                    'grant_type': 'client_credentials'
+                }, encoded = new URLSearchParams();
+                Object.keys(data).forEach(function(k){
+                    encoded.set(k, data[k]);
+                });
+
+                GM_xmlhttpRequest({
+                    method: 'POST',
+                    url: 'https://graphql.api.dailymotion.com/oauth/token',
+                    data: encoded.toString(),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    onload(xhr){
+                        if (xhr.status === 200) {
+                            let json = JSON.parse(xhr.response);
+                            resolve(this.token = json.access_token);
+
+                        } else reject(new Error('Cannot get Dailymotion access Token.'));
+                    },
+                    onerror(){
+                        reject(new Error('Cannot get Dailymotion access Token.'));
+                    }
+                });
+            });
+
+        }
+
+
+        getMetadata(xid){
+
+            return new Promise((resolve, reject) => {
+
+                this.getToken().then(token => {
+
+                    let
+                            headers = Object.assign({
+                                'Authorization': 'Bearer ' + token
+                            }, this.headers),
+                            url = 'https://www.dailymotion.com/player/metadata/video/' + xid,
+                            error = new Error('Cannot get Dailymotion Metadata for ' + xid + '.');
+
+
+                    utils.GM_xmlhttpRequest({
+                        method: 'POST',
+                        url: url,
+                        headers: headers,
+                        data: JSON.stringify({app: 'com.dailymotion.neon'}),
+                        onload(xhr){
+                            if (xhr.status === 200) {
+                                let json = JSON.parse(xhr.response);
+                                resolve(json);
+
+                            } else reject(error);
+                        },
+                        onerror(){
+                            reject(error);
+                        }
+                    });
+
+
+
+                });
+
+
+            });
+        }
+
+
+        getMediaList(metadata){
+            const that = this;
+            return new Promise((resolve, reject) => {
+                if (isPlainObject(metadata)) {
+
+                    if (typeof metadata.qualities !== u) {
+
+                        let result = {};
+
+                        Object.keys(metadata.qualities).forEach(key => {
+                            let arr = metadata.qualities[key];
+                            if (Array.isArray(arr)) {
+                                arr.forEach(obj => {
+                                    if (
+                                            (typeof obj.type !== u) &&
+                                            (typeof obj.url !== u)
+                                            ) {
+                                        if (obj.type === 'application/x-mpegURL') {
+                                            //parse m3u8
+                                            that.parseM3U8(obj.url).then(data => {
+                                                data.forEach(obj => {
+
+                                                    let key = obj.name + 'p';
+                                                    key = key.replace('"', '');
+                                                    result[key] = {
+                                                        url: obj.url.replace(/\#.*$/, ''),
+                                                        resolution: key,
+                                                        hls: true
+                                                    };
+
+                                                });
+                                                if (Object.keys(result).length > 0) {
+                                                    resolve(result);
+                                                }
+                                            });
+
+                                        }
+                                    }
+                                });
+                            }
+
+                        });
+
+
+                    }
+
+                } else reject(new Error('Invalid Metadata.'));
+            });
+
+        }
+        getSubtitles(metadata){
+            let url = null;
+            if (isPlainObject(metadata)) {
+                if (
+                        (typeof metadata.subtitles !== u) &&
+                        (typeof metadata.subtitles.data !== u) &&
+                        (typeof metadata.subtitles.data.en !== u) &&
+                        (typeof metadata.subtitles.data.en.urls !== u)
+
+                        ) {
+                    metadata.subtitles.data.en.urls.forEach(u => url = u);
+                }
+            }
+            return url;
+        }
+
+        /**
+         * Decodes the M3U8 to get qualities
+         */
+        parseM3U8(m3u8url){
+
+            let regex = /(#EXT-X-STREAM-INF.*)\n([^#].*)/;
+
+            return new Promise((resolve, reject) => {
+
+                let error = new Error('Cannot get Dailymotion HLS Info');
+                utils.GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: m3u8url,
+                    onload(xhr){
+                        if (xhr.status === 200) {
+                            let text = xhr.response, result = [], matches;
+
+                            while ((matches = regex.exec(text)) !== null) {
+                                text = text.replace(matches[0], '');
+                                let
+                                        line = matches[1].replace('#EXT-X-STREAM-INF:', ''),
+                                        data = {};
+
+                                line.split(',').forEach(t => {
+                                    let kv = t.split('=');
+                                    if (kv.length == 2) {
+                                        let key = kv[0].trim(), value = kv[1].replace(/"/, '').trim();
+                                        data[key.toLowerCase()] = value;
+                                    }
+                                });
+                                if (Object.keys(data).length > 0) {
+                                    data.url = matches[2].trim();
+                                    result.push(data);
+                                }
+                            }
+                            if (result.length > 0) {
+                                resolve(result);
+                                return;
+                            }
+
+
+                        }
+                        reject(error);
+                    },
+                    onerror(){
+                        reject(error);
+                    }
+                });
+
+
+
+            });
+
+        }
+
+
+
+        constructor(){
+            this.token = null;
+            this.headers = {
+                'Content-Type': 'application/json',
+                'Origin': 'https://www.dailymotion.com'
+            };
+
+        }
+
+        /**
+         * Creates RPCStream menu entry using dailymotion xid
+         */
+        static rpcstream(xid){
+
+            let d = new DailymotionAPI();
+
+            d
+                    .getMetadata(xid)
+                    .then(meta => {
+                        let
+                                subs = d.getSubtitles(meta), link;
+                        d
+                                .getMediaList(meta)
+                                .then(list => {
+                                    ['480p', '720p', '1080p'].forEach(res => {
+                                        if (typeof list[res] !== u) link = list[res].url;
+                                    });
+                                    if (typeof link !== u) {
+                                        (new RPCStream(
+                                                link, subs,
+                                                {tags: ['dailymotion'], desc: xid}, {
+                                            mode: 0,
+                                            title: meta.title,
+                                            referer: 'https://www.dailymotion.com/video/' + xid,
+                                            useragent: 'Mozilla/5.0 (Linux; Android 7.1.1; Pixel Build/NMF26O) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.91 Mobile Safari/537.36'
+                                        }
+                                        ));
+                                    }
+                                });
+                    })
+                    .catch(console.error);
+
+        }
+
+    }
+
+    // add Configurator
     if (window === window.parent) {
         ContextMenu.add('Configure ' + GMinfo.script.name, () => {
             Configurator.open();
@@ -1480,6 +1981,251 @@
 
 
 
+    on.loaded().then(() => {
 
+        // crunchyroll plugin
+        if (/crunchyroll/.test(location.host)) {
+            
+            if (/\-\d+$/.test(location.pathname)) {
+                (new Crunchyroll(location.pathname.split("-").pop()));
+            }
+            // todo: add episode selector 'ul.list-of-seasons li[id*="_videos_media"] a.episode[href^="/"]'
+
+            return;
+        }
+
+
+        //dailymotion plugin
+
+        if (
+                (/dailymotion/.test(location.host)) &&
+                window === window.parent //not in iframe
+                ) {
+
+            //intercept page changes
+            let evts = Events(doc.body);
+
+            // attach events
+            evts.on(UUID + '.pagechange', e => {
+                ContextMenu.clear();
+                let url = new URL((e.detail.url[0] === '/' ? (location.origin + e.detail.url) : e.detail.url));
+                if (/\/video\/\w+$/.test(url)) {
+                    let xid = url.pathname.substr(url.pathname.lastIndexOf('/') + 1);
+                    (new Dailymotion(xid));
+                    DailymotionAPI.rpcstream(xid);
+                }
+            });
+
+            // intercept forward change
+            global.history.pushState = (function(){
+                const old = global.history.pushState;
+                return function(state, title, url){
+                    evts.trigger(UUID + '.pagechange', {
+                        detail: {
+                            state: state,
+                            title: title,
+                            url: url
+                        }
+                    });
+                    return old.call(global.history, state, title, url);
+                };
+            })();
+
+            // intercept backward change
+            Events(global).on('popstate', e => {
+                evts.trigger(UUID + '.pagechange', {
+                    detail: {
+                        state: e.state,
+                        title: null,
+                        url: location.pathname
+                    }
+                });
+            });
+            
+
+
+            // first page load
+            if (/\/video\/\w+$/.test(location.pathname)) {
+                evts.trigger(UUID + '.pagechange', {
+                    detail: {
+                        state: null,
+                        title: null,
+                        url: location.pathname
+                    }
+
+                });
+            }
+
+            return;
+        }
+
+        NodeFinder.find('iframe[src*="dailymotion.com/embed/"]', iframe => {
+
+            let
+                    link = new URL(iframe.src),
+                    xid = link.pathname.substr(link.pathname.lastIndexOf('/') + 1);
+
+            (new Dailymotion(xid));
+            DailymotionAPI.rpcstream(xid);
+        });
+
+
+        // Youtube Addon
+        if (
+                (/youtube/.test(location.host)) &&
+                window === window.parent //not in iframe
+                ) {
+
+            //intercept page changes
+            let evts = Events(doc.body);
+
+            // attach events
+            evts.on(UUID + '.pagechange', e => {
+                if (e.detail && e.detail.xid) {
+                    (new Youtube(e.detail.xid));
+                }
+            }).on('yt-history-load yt-navigate', e => {
+                ContextMenu.clear();
+                if (
+                        e.detail &&
+                        e.detail.endpoint &&
+                        e.detail.endpoint.watchEndpoint &&
+                        e.detail.endpoint.watchEndpoint.videoId
+                        ) {
+
+                    evts.trigger(UUID + '.pagechange', {detail: {
+                            xid: e.detail.endpoint.watchEndpoint.videoId
+                        }});
+
+                }
+
+
+
+            });
+
+
+            // first page load
+            if (/v\=\w+/.test(location.search)) {
+                let url = new URL(location.href);
+                evts.trigger(UUID + '.pagechange', {
+                    detail: {
+                        xid: url.searchParams.get('v')
+                    }
+
+                });
+            }
+
+            return;
+        }
+
+
+        NodeFinder.find('iframe[src*="youtube.com/embed/"]', iframe => {
+            let src = new URL(iframe.src), xid;
+            src.search = "";
+            src.href = src.href.replace('embed/', 'watch?v=');
+            xid = src.searchParams.get('v');
+            (new Youtube(xid));
+        });
+
+
+
+
+        Events(doc.body).on('kodirpc.send', e => {
+            if (e.data && e.data.link) {
+                let
+                        success = e.data.success || null,
+                        error = e.data.error || null,
+                        rpcstream = new RPCStream(e.data.link, null, null, {mode: 0}, false);
+
+                KodiRPC.send(rpcstream.url.href, success, error);
+            }
+        }).on('kodirpc.ready',()=>{
+            console.debug("KodiRPC Module version", GMinfo.script.version, "started");
+        }).trigger('kodirpc.ready');
+
+
+
+
+
+
+
+
+
+        NodeFinder.find('video[data-src^="http"], video[src^="http"], video source[src^="http"]', element => {
+            let
+                    host = location.hostname,
+                    video = element.closest('video'),
+                    tracks = video.querySelectorAll('track, track[srclang="und"], track[srclang="en"]'),
+                    subtitles;
+
+
+            tracks.forEach(track => {
+                subtitles = track.dataset.src || track.src;
+            });
+
+
+            let
+                    src = element.dataset.src || element.src,
+                    tags = [];
+
+            if (element.tagName === "SOURCE") tags.push('source');
+            desc = "from " + host;
+
+
+            (new RPCStream(src, subtitles, {desc: desc, tags: tags}));
+            (new RPCStream(src, subtitles, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
+            (new Kodi(src, desc, tags));
+
+
+        });
+
+        // Jwplayer Video Detection
+        NodeFinder.find('video.jw-video', video => {
+
+            if (
+                    (typeof jwplayer === f) &&
+                    (container = video.closest('div[id]')) !== null
+                    ) {
+
+                let jw = jwplayer(container.id);
+                if (typeof jw.getPlaylist === f) {
+                    let playlist = jw.getPlaylist()[0], track;
+
+                    if (playlist.tracks) {
+                        playlist.tracks.forEach(t => {
+
+                            if (typeof track !== 'string') {
+                                track = t.file;
+                            } else if (t.label && /^en/i.test(t.label)) {
+                                track = t.file;
+                            }
+
+                        });
+                    }
+
+                    let
+                            uni = playlist.sources.length === 1,
+                            host = location.hostname,
+                            tags = ['jwplayer'];
+                    
+                    playlist.sources.forEach((source, i) => {
+                        if (/^http/.test(source.file)) {
+                            let desc = uni ? '' : `${i} `;
+                            desc += `from ${host}`;
+                            (new RPCStream(source.file, track, {desc: desc, tags: tags}));
+                            (new RPCStream(source.file, track, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
+                            (new Kodi(source.file, desc, tags));
+                        }
+                    });
+
+                }
+            }
+        });
+
+
+
+
+
+    });
 
 })();
