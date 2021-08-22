@@ -845,6 +845,7 @@ div.__MonkeyConfig_container {\
     display: table !important;\
     font-family: sans-serif !important;\
     padding: 0.3em !important;\
+    z-index: 2147483647 !important;\
 }\
 \
 body.__MonkeyConfig_window div.__MonkeyConfig_container {\

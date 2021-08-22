@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.0
+// @version     3.0.1
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -132,6 +132,31 @@
                     .replace(/[\. ]+$/, replacement)
                     .substring(0, 255);
         }
+
+    }
+
+
+    /**
+     * Convert uri into full url
+     * @param {string} uri
+     * @returns {string|undefined}
+     */
+    function getURL(uri){
+        let retval;
+        if (typeof uri === s && uri.length > 0) {
+            try {
+                let a = doc.createElement("a"),
+                        url;
+                a.href = uri;
+                //throws error if url not valid
+                url = new URL(a.href);
+                retval = url.href;
+            } catch (error) {
+                retval = undef;
+            }
+
+        }
+        return retval;
 
     }
 
@@ -2128,7 +2153,7 @@
 
                 KodiRPC.send(rpcstream.url.href, success, error);
             }
-        }).on('kodirpc.ready', () => {
+        }).one('kodirpc.ready', () => {
             //module detection
             Object.defineProperty(doc.body, 'KRPCM', {
                 configurable: true, value: {}
@@ -2144,7 +2169,7 @@
 
 
 
-        NodeFinder.find('video[data-src^="http"], video[src^="http"], video source[src^="http"]', element => {
+        NodeFinder.find('video[data-src^="http"], video[src^="http"], video source[src^="http"], video[data-src^="//"], video[src^="//"], video source[src^="//"]', element => {
             let
                     host = location.hostname,
                     video = element.closest('video'),
@@ -2158,7 +2183,7 @@
 
 
             let
-                    src = element.dataset.src || element.src,
+                    src = getURL(element.dataset.src || element.src),
                     tags = [], desc = "from " + host;
 
             if (element.tagName === "SOURCE") tags.push('source');
