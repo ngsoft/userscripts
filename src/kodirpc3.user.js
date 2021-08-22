@@ -6,7 +6,7 @@
 // @namespace   https://github.com/ngsoft
 // @icon        https://kodi.tv/favicon-32x32.png
 //
-// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/monkeyconfigurator.min.js
+// @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/configurator.min.js
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @require     https://cdn.jsdelivr.net/gh/mathiasbynens/utf8.js@v3.0.0/utf8.min.js
 // @resource    iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
@@ -1345,6 +1345,7 @@
 
         static open(server){
             if (!this.hidden) return;
+
             const settings = new Settings();
             if (!(server instanceof Server)) server = settings.server;
             this._open = true;

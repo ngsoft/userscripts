@@ -487,7 +487,7 @@ function MonkeyConfig(){
                 overlay.style.top = 0;
                 overlay.style.width = window.innerWidth + 'px';
                 overlay.style.height = window.innerHeight + 'px';
-                overlay.style.zIndex = 9999;
+                overlay.style.zIndex = 2147483647;
 
                 body.appendChild(overlay);
                 body.appendChild(openLayer);
@@ -502,7 +502,7 @@ function MonkeyConfig(){
                         openLayer.clientWidth) / 2) + 'px';
                 openLayer.style.top = Math.round((window.innerHeight -
                         openLayer.clientHeight) / 2) + 'px';
-                openLayer.style.zIndex = 9999;
+                openLayer.style.zIndex = 2147483647;
 
                 container = document.querySelector('.__MonkeyConfig_container');
 
@@ -530,7 +530,7 @@ function MonkeyConfig(){
                 overlay.style.top = 0;
                 overlay.style.width = window.innerWidth + 'px';
                 overlay.style.height = window.innerHeight + 'px';
-                overlay.style.zIndex = 9999;
+                overlay.style.zIndex = 2147483647;
 
                 iframe.id = '__MonkeyConfig_frame';
                 /*
@@ -575,7 +575,7 @@ function MonkeyConfig(){
                             openLayer.clientWidth) / 2) + 'px';
                     openLayer.style.top = Math.round((window.innerHeight -
                             openLayer.clientHeight) / 2) + 'px';
-                    openLayer.style.zIndex = 9999;
+                    openLayer.style.zIndex = 2147483647;
 
                     openDone();
                 }, false);
@@ -590,7 +590,7 @@ function MonkeyConfig(){
                             openLayer.clientWidth) / 2) + 'px';
                     openLayer.style.top = Math.round((window.innerHeight -
                             openLayer.clientHeight) / 2) + 'px';
-                    openLayer.style.zIndex = 9999;
+                    openLayer.style.zIndex = 2147483647;
                 }, 0);
 
                 body.appendChild(overlay);
