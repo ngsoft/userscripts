@@ -1,11 +1,11 @@
 // ==UserScript==
-// @version     3.0.1
+// @version     3.0.2
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
 // @namespace   https://github.com/ngsoft
 // @icon        https://kodi.tv/favicon-32x32.png
-//
+// 
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/configurator.min.js
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @require     https://cdn.jsdelivr.net/gh/mathiasbynens/utf8.js@v3.0.0/utf8.min.js
@@ -20,10 +20,15 @@
 // @grant       GM_unregisterMenuCommand
 // @grant       GM_getResourceText
 // @grant       GM_addStyle
+// @grant       GM_setClipboard
 // @run-at      document-end
 //
 // @include     *
 // ==/UserScript==
+
+/**
+ * todo: replace monkeyconfig by https://cdn.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
+ */
 
 
 (function(undef){
@@ -159,6 +164,7 @@
         return retval;
 
     }
+
 
     /**
      * Run a callback
@@ -1454,14 +1460,14 @@
                         .then(response => {
                             if (!response.error) {
                                 server.client.send(this.url.href, () => {
-                                    Notify.success('Video sent to ' + server.name, 'Plugin ' + this.name());
+                                    Notify.success('Video sent to ' + server.name, this.name());
 
                                 },
                                         () => {
                                     Notify.error('Error ' + server.name);
                                 });
 
-                            } else Notify.error('Plugin not installed on ' + server.name, 'Plugin ' + this.name());
+                            } else Notify.error('Plugin not installed on ' + server.name, this.name());
                         })
                         .catch(console.error);
             });
@@ -1518,6 +1524,59 @@
 
 
 
+    /**
+     * Copy url to clipboard
+     */
+    class Clipboard extends KodiPlugin {
+        send(){
+            utils.GM_setClipboard(this.url.href);
+            Notify.success('Link copied to clipboard', this.name());
+        }
+
+
+        addMenuEntry(){
+            if (typeof Kodi.id !== n) Kodi.id = 0;
+            Kodi.id++;
+
+            let title = '';
+
+            this.tags.forEach(t => {
+                title += '[' + t.toUpperCase() + ']';
+            });
+
+            title += ' Copy video link ';
+            title += this.description();
+
+            ContextMenu.add(title, () => {
+                this.send();
+            }, this.identifier() + '.' + this.id);
+        }
+
+        identifier(){
+            return 'clip';
+        }
+
+        name(){
+            return 'CLIPBOARD';
+        }
+
+        description(){
+            return this.desc || '';
+        }
+
+        constructor(url, desc, tags){
+            super();
+            this.desc = desc;
+            if (typeof url !== s) throw new Error('Invalid url');
+            this.url = new URL(url);
+            if (Array.isArray(tags)) tags.forEach(t => this.tags.push(t));
+            this.addMenuEntry();
+        }
+
+
+    }
+    
+    
     /**
      * Legacy Kodi RPC Send
      */
@@ -1997,6 +2056,27 @@
 
 
     on.loaded().then(() => {
+        
+        Events(doc.body).on('kodirpc.send', e => {
+            if (e.data && e.data.link) {
+                let
+                        success = e.data.success || null,
+                        error = e.data.error || null,
+                        rpcstream = new RPCStream(e.data.link, null, null, {mode: 0}, false);
+
+                KodiRPC.send(rpcstream.url.href, success, error);
+            }
+        }).one('kodirpc.ready', () => {
+            //module detection
+            Object.defineProperty(doc.body, 'KRPCM', {
+                configurable: true, value: {}
+            });
+            console.debug("KodiRPC Module version", GMinfo.script.version, "started");
+        }).trigger('kodirpc.ready');
+        
+        
+        
+        
 
         // crunchyroll plugin
         if (/crunchyroll/.test(location.host)) {
@@ -2143,33 +2223,6 @@
         });
 
 
-
-
-        Events(doc.body).on('kodirpc.send', e => {
-            if (e.data && e.data.link) {
-                let
-                        success = e.data.success || null,
-                        error = e.data.error || null,
-                        rpcstream = new RPCStream(e.data.link, null, null, {mode: 0}, false);
-
-                KodiRPC.send(rpcstream.url.href, success, error);
-            }
-        }).one('kodirpc.ready', () => {
-            //module detection
-            Object.defineProperty(doc.body, 'KRPCM', {
-                configurable: true, value: {}
-            });
-            console.debug("KodiRPC Module version", GMinfo.script.version, "started");
-        }).trigger('kodirpc.ready');
-
-
-
-
-
-
-
-
-
         NodeFinder.find('video[data-src^="http"], video[src^="http"], video source[src^="http"], video[data-src^="//"], video[src^="//"], video source[src^="//"]', element => {
             let
                     host = location.hostname,
@@ -2194,6 +2247,7 @@
             (new RPCStream(src, subtitles, {desc: desc, tags: tags}));
             (new RPCStream(src, subtitles, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
             (new Kodi(src, desc, tags));
+            (new Clipboard(src, desc, tags));
 
 
         });
@@ -2236,6 +2290,7 @@
                             (new RPCStream(source.file, track, {desc: desc, tags: tags}));
                             (new RPCStream(source.file, track, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
                             (new Kodi(source.file, desc, tags));
+                            (new Clipboard(source.file, desc, tags));
                         }
                     });
 
