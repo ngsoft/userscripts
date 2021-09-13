@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.2.8
+// @version     1.2.9
 // @name        iQiyi
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -223,6 +223,7 @@
                     .video-m .iqp-subtitle{font-size: 24px !important;}
                     .video-l .iqp-subtitle{font-size: 28px !important;}
                     .video-xl .iqp-subtitle{font-size: 44px !important;}
+                    .intl-episodes-list li a:visited{color: #FDB813;}
                 `);
 
             }

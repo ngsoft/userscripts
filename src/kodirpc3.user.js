@@ -1523,7 +1523,6 @@
     }
 
 
-
     /**
      * Copy url to clipboard
      */
