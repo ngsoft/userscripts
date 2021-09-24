@@ -223,7 +223,7 @@
                     .video-m .iqp-subtitle{font-size: 24px !important;}
                     .video-l .iqp-subtitle{font-size: 28px !important;}
                     .video-xl .iqp-subtitle{font-size: 44px !important;}
-                    .intl-episodes-list li a:visited{color: #FDB813;}
+                    .intl-episodes-list a:visited{color: #FDB813 !important;text-decoration-color: #FDB813 !important; }
                 `);
 
             }

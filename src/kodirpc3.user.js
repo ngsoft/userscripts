@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.0.2
+// @version     3.0.3
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -1534,8 +1534,8 @@
 
 
         addMenuEntry(){
-            if (typeof Kodi.id !== n) Kodi.id = 0;
-            Kodi.id++;
+            if (typeof Clipboard.id !== n) Clipboard.id = 0;
+            Clipboard.id++;
 
             let title = '';
 
@@ -1543,12 +1543,12 @@
                 title += '[' + t.toUpperCase() + ']';
             });
 
-            title += ' Copy video link ';
+            title += ' Copy link ';
             title += this.description();
 
             ContextMenu.add(title, () => {
                 this.send();
-            }, this.identifier() + '.' + this.id);
+            }, this.identifier() + '.' + Clipboard.id);
         }
 
         identifier(){
@@ -1617,7 +1617,7 @@
 
             ContextMenu.add(title, () => {
                 this.send();
-            }, this.identifier() + '.' + this.id);
+            }, this.identifier() + '.' + Kodi.id);
         }
 
         identifier(){
@@ -1635,6 +1635,7 @@
         constructor(url, desc, tags){
             super();
             this.desc = desc;
+
             if (typeof url !== s) throw new Error('Invalid url');
             this.url = new URL(url);
             if (Array.isArray(tags)) tags.forEach(t => this.tags.push(t));
@@ -2235,6 +2236,7 @@
             });
 
 
+
             let
                     src = getURL(element.dataset.src || element.src),
                     tags = [], desc = "from " + host;
@@ -2247,7 +2249,7 @@
             (new RPCStream(src, subtitles, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
             (new Kodi(src, desc, tags));
             (new Clipboard(src, desc, tags));
-
+            if (typeof subtitles === s) (new Clipboard(subtitles, desc, tags.concat(['subs'])));
 
         });
 
@@ -2277,11 +2279,16 @@
                         });
                     }
 
+
+
                     let
                             uni = playlist.sources.length === 1,
                             host = location.hostname,
-                            tags = ['jwplayer'];
-                    
+                            tags = ['jwplayer'],
+                            trackAdded = false;
+
+
+
                     playlist.sources.forEach((source, i) => {
                         if (/^http/.test(source.file)) {
                             let desc = uni ? '' : `${i} `;
@@ -2289,7 +2296,11 @@
                             (new RPCStream(source.file, track, {desc: desc, tags: tags}));
                             (new RPCStream(source.file, track, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
                             (new Kodi(source.file, desc, tags));
-                            (new Clipboard(source.file, desc, tags));
+                            (new Clipboard(source.file, desc, tags.concat(['video'])));
+                            if (typeof track === s && trackAdded === false) {
+                                (new Clipboard(track, desc, tags.concat(['subs'])));
+                                trackAdded = true;
+                            }
                         }
                     });
 
