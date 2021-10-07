@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.7.1
+// @version      1.8
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -32,7 +32,9 @@
     //clear cache on upgrade
     (() => {
         let last = localStorage.getItem(UUID);
-        if (last !== GMinfo.script.version) rload.clear();
+        if (last !== GMinfo.script.version) {
+            rload.clear();
+        }
         localStorage.setItem(UUID, GMinfo.script.version);
     })();
 
@@ -45,7 +47,7 @@
     class MyDramaList {
 
         static get cors(){
-            return "https://cors-anywhere.herokuapp.com/";
+            return "http://daedelus.us.to:8050/";
         }
         static get endpoint(){
             return "/search?adv=titles&so=newest";
@@ -55,23 +57,55 @@
         }
 
 
-        static search(query, callback){
+        static handleResponseText(html){
 
-            if (typeof query === s && typeof callback === f) {
+            let  page = html2doc(html), results = [];
+            page.querySelectorAll('[id*="mdl-"].box').forEach(node => {
+                results.push(new MyDramaList(node));
+            });
+            return results;
 
-                let url = new URL(this.base + this.endpoint);
-                url.searchParams.set("q", query);
+        }
 
-                const results = [];
-                fetch(this.cors + url.href).then(r => {
-                    if (r.status === 200) return r.text();
-                }).then(text => html2doc(text)).then(page => page.querySelectorAll('[id*="mdl-"].box')).then(list => {
-                    list.forEach(node => {
-                        results.push(new MyDramaList(node));
-                    });
-                    callback(results);
-                }).catch(console.warn);
-            }
+
+
+
+        static search(query){
+
+            return new Promise((resolve, reject) => {
+
+                if (typeof query === s) {
+
+                    let url = new URL(this.base + this.endpoint);
+                    url.searchParams.set("q", query);
+
+                    fetch(url.href)
+                            .then(r => {
+                                if (r.status !== 200) throw new Error('Invalid status ' + r.status);
+                                return r.text();
+                            })
+                            .then(text => {
+                                resolve(this.handleResponseText(text));
+                            })
+                            .catch(() => {
+
+                                fetch(this.cors + url.href)
+                                        .then(r => {
+                                            if (r.status !== 200) throw new Error('Invalid status ' + r.status);
+                                            return r.text();
+                                        })
+                                        .then(text => {
+                                            resolve(this.handleResponseText(text));
+                                        })
+                                        .catch(error => {
+                                            reject(error);
+                                        });
+                            });
+                    return;
+                }
+                reject(new Error('Invalid query'));
+            });
+
         }
 
         constructor(node){
@@ -177,7 +211,7 @@
                 
                                 <div class="form-el">
                                     <label class="form-label">FFMPEG Params</label>
-                                    <input class="form-input" type="text" name="ffmpeg" value="${self.settings.get('ffmpeg')}" placeholder="FFMPEG Params ..." required />
+                                    <input class="form-input" type="text" name="ffmpeg" value='${self.settings.get('ffmpeg')}' placeholder="FFMPEG Params ..." required />
                                 </div>
 
 
@@ -416,8 +450,13 @@
         }
 
         get ffmpeg() {
-            let cmd = "echo " + this.title + "\n";
-            cmd += `ffmpeg ${this.player.settings.get('ffmpeg')} "${this.src}" -c copy "${this.title}"`;
+            let
+                    cmd = "echo " + this.title + "\n",
+                    ffcmd = this.player.settings.get('ffmpeg');
+            ffcmd = ffcmd.replace('%url', this.src);
+            ffcmd = ffcmd.replace('%file', this.title);
+            cmd += ffcmd;
+            //  cmd += `ffmpeg ${this.player.settings.get('ffmpeg')} "${this.src}" -c copy "${this.title}"`;
             cmd += "\n";
             return cmd;
         }
@@ -531,10 +570,17 @@
 
                 if (!this.translation) {
                     const self = this;
-                    MyDramaList.search(title, list => {
-                        if (list.length > 0) self.translation = list[0].title;
-                        else self.translation = title;
-                    });
+
+                    MyDramaList.search(title)
+                            .then(list => {
+                                if (list.length > 0) self.translation = list[0].title;
+                                else self.translation = title;
+                            })
+                            .catch(error => {
+                                console.error(error);
+                                this.translation = title;
+                            });
+
                 } else this.start();
             }
             
@@ -543,7 +589,10 @@
         set translation(title){
             if (typeof title === s && this.title) {
                 let translations = this.settings.get('translations');
-                if (typeof translations[this.title] === u) {
+                if (
+                        (typeof translations[this.title] === u) &&
+                        this.title !== title
+                        ) {
                     translations[this.title] = title;
                     this.settings.set('translations', translations);
                 }
@@ -557,6 +606,7 @@
                 if (typeof translations[this.title] === s) {
                     return translations[this.title];
                 }
+
             }
         }
 
@@ -795,10 +845,17 @@
                 settings: new UserSettings({
                     autoplay: false,
                     translations: {},
-                    ffmpeg: "-v quiet -stats -y -i"
+                    ffmpeg: ''
                 })
             });
             new Events(this.video, this);
+
+            let ffmpegcmd;
+            if (ffmpegcmd = this.settings.get('ffmpeg')) {
+                if (ffmpegcmd.indexOf('%url') === -1) this.settings.set('ffmpeg', `ffmpeg -v quiet -stats -y -i "%url" -c copy "%file"`);
+            }
+
+
             this.onReady(() => {
                 new ToolBar(self);
             });

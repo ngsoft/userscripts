@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version	1.7.1
+// @version	1.8
 // @name	CDRAMA Downloader
 // @description	FIX Stream + download stream (FFMPEG)
 // @namespace	https://github.com/ngsoft/userscripts
