@@ -449,12 +449,16 @@
         }
 
         get title() {
-            return this.player.videotitle + ".mp4";
+            return this.player.videotitle;
+        }
+
+        get file(){
+            return this.title + ".mp4";
         }
 
         get jdlink() {
             let url = new URL(this.src);
-            url.searchParams.set('jdtitle', this.title);
+            url.searchParams.set('jdtitle', this.file);
             return url.href;
         }
 
@@ -463,9 +467,8 @@
                     cmd = "echo " + this.title + "\n",
                     ffcmd = this.player.settings.get('ffmpeg');
             ffcmd = ffcmd.replace('%url', this.src);
-            ffcmd = ffcmd.replace('%file', this.title);
+            ffcmd = ffcmd.replace('%file', this.file);
             cmd += ffcmd;
-            //  cmd += `ffmpeg ${this.player.settings.get('ffmpeg')} "${this.src}" -c copy "${this.title}"`;
             cmd += "\n";
             return cmd;
         }
@@ -578,12 +581,10 @@
                 this.__title__ = title;
 
                 if (!this.translation) {
-                    const self = this;
-
                     MyDramaList.search(title)
                             .then(list => {
                                 if (list.length > 0) self.translation = list[0].title;
-                                else self.translation = title;
+                                else this.translation = title;
                             })
                             .catch(error => {
                                 console.error(error);
@@ -598,10 +599,7 @@
         set translation(title){
             if (typeof title === s && this.title) {
                 let translations = this.settings.get('translations');
-                if (
-                        (typeof translations[this.title] === u) &&
-                        this.title !== title
-                        ) {
+                if ((typeof translations[this.title] === u) && this.title !== title) {
                     translations[this.title] = title;
                     this.settings.set('translations', translations);
                 }
