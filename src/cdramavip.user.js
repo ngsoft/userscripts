@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.8
+// @version      1.8.1
 // @name         CDRAMA Downloader
 // @description  FIX Stream + download stream (FFMPEG)
 // @namespace    https://github.com/ngsoft/userscripts
@@ -10,6 +10,7 @@
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_listValues
+// @grant       GM_xmlhttpRequest
 // @run-at      document-body
 // @noframes
 //
@@ -57,6 +58,10 @@
         }
 
 
+        static get headers(){
+            return {};
+        }
+
         static handleResponseText(html){
 
             let  page = html2doc(html), results = [];
@@ -64,6 +69,27 @@
                 results.push(new MyDramaList(node));
             });
             return results;
+
+        }
+        
+        
+        
+        static fetch(url){
+            url = url instanceof URL ? url.href : url;
+            return new Promise((resolve, reject)=>{
+                 GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: url,
+                    headers: this.headers,
+                    onload(xhr){
+                        if (xhr.status === 200) resolve(xhr.response);
+                        else reject(new Error('Invalid status ' + xhr.status));
+                    },
+                    onerror(){
+                        reject(new Error('Cannot fetch ' + url));
+                    }
+                });
+            });
 
         }
 
@@ -79,28 +105,11 @@
                     let url = new URL(this.base + this.endpoint);
                     url.searchParams.set("q", query);
 
-                    fetch(url.href)
-                            .then(r => {
-                                if (r.status !== 200) throw new Error('Invalid status ' + r.status);
-                                return r.text();
-                            })
+                    this.fetch(url.href)
                             .then(text => {
                                 resolve(this.handleResponseText(text));
                             })
-                            .catch(() => {
-
-                                fetch(this.cors + url.href)
-                                        .then(r => {
-                                            if (r.status !== 200) throw new Error('Invalid status ' + r.status);
-                                            return r.text();
-                                        })
-                                        .then(text => {
-                                            resolve(this.handleResponseText(text));
-                                        })
-                                        .catch(error => {
-                                            reject(error);
-                                        });
-                            });
+                            .catch(error => reject(error));
                     return;
                 }
                 reject(new Error('Invalid query'));
@@ -850,11 +859,10 @@
             });
             new Events(this.video, this);
 
-            let ffmpegcmd;
-            if (ffmpegcmd = this.settings.get('ffmpeg')) {
-                if (ffmpegcmd.indexOf('%url') === -1) this.settings.set('ffmpeg', `ffmpeg -v quiet -stats -y -i "%url" -c copy "%file"`);
+            let ffmpegcmd = this.settings.get('ffmpeg') || '';
+            if (ffmpegcmd.indexOf('%url') === -1 || ffmpegcmd.indexOf('%file') === -1){
+                this.settings.set('ffmpeg', `ffmpeg -v quiet -stats -y -i "%url" -c copy "%file"`);
             }
-
 
             this.onReady(() => {
                 new ToolBar(self);

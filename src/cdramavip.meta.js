@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version	1.8
+// @version	1.8.1
 // @name	CDRAMA Downloader
 // @description	FIX Stream + download stream (FFMPEG)
 // @namespace	https://github.com/ngsoft/userscripts
@@ -9,6 +9,7 @@
 // @grant	GM_getValue
 // @grant	GM_deleteValue
 // @grant	GM_listValues
+// @grant	GM_xmlhttpRequest
 // @run-at	document-body
 // @noframes
 // @include	/^https?:\/\/(\w+\.)?(5nj|cechi8|zhuijukan|16ys|duboku|dboku|jhooslea|fanstui|newsinportal)\.\w+\//
