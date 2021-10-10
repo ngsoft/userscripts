@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.0.3
+// @version     3.1
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -1523,6 +1523,11 @@
     }
 
 
+
+
+
+
+
     /**
      * Copy url to clipboard
      */
@@ -1699,6 +1704,7 @@
         }
     }
 
+
     /**
      * Crunchyroll Kodi Plugin
      */
@@ -1786,6 +1792,112 @@
     }
 
     // Extractors
+
+    class VimeoEmbedAPI {
+
+        getJson(embedUrl, referer){
+            
+            return new Promise((resolve, reject)=>{
+                if (typeof embedUrl !== s || typeof referer !== s) {
+                    reject(new Error('Invalid argument(s)'));
+                }
+
+
+                utils.GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: embedUrl.trim('/') + '/config',
+                    headers: {
+                        'Referer': referer
+                    },
+                    onload(xhr){
+                        if (xhr.status === 200) {
+                            resolve(JSON.parse(xhr.response));
+
+                        } else reject(new Error('Cannot get Vimeo data.'));
+                    },
+                    onerror(){
+                        reject(new Error('Cannot get Vimeo data.'));
+                    }
+                });
+
+            });
+        }
+
+
+
+        getStreams(embedUrl, referer){
+            
+            return new Promise((resolve, reject) => {
+
+                this
+                        .getJson(embedUrl, referer)
+                        .then(jsonObj => {
+                            let result = {dash: [], hls: []}, cnt = 0;
+                            ['dash', 'hls'].forEach(mode => {
+                                if (
+                                        jsonObj.request &&
+                                        jsonObj.request.files &&
+                                        jsonObj.request.files[mode] &&
+                                        jsonObj.request.files[mode].cdns
+                                        ) {
+                                    let obj = jsonObj.request.files[mode].cdns;
+                                    Object.keys(obj).forEach(key => {
+                                        result[mode].push({
+                                            cdn: key.split('_', 2).pop(),
+                                            mode: mode,
+                                            url: obj[key].url
+                                        });
+                                        cnt++;
+                                    });
+                                }
+
+
+                            });
+                            if (cnt === 0) reject(new Error('Cannot get streams.'));
+                            else resolve(result);
+                        })
+                        .catch(error => reject(error));
+            });
+        }
+
+
+        constructor(url){
+            if (typeof url !== s) throw new Error('Invalid vimeo url');
+            let xid = url.trim('/').split('/').pop();
+            this.getStreams(url, location.href)
+                    .then(result => {
+
+                        result.hls.forEach(entry => {
+                            (new RPCStream(
+                                    entry.url,
+                                    null,
+                                    {tags: ['vimeo', entry.cdn], desc: xid}, {
+                                mode: 0,
+                                title: doc.title
+                            }
+                            ));
+                        });
+
+
+
+                    })
+                    .catch(console.error);
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Extracted from Python Youtube-dl extractor
@@ -2090,6 +2202,10 @@
         }
 
 
+
+
+
+
         //dailymotion plugin
 
         if (
@@ -2222,6 +2338,12 @@
             (new Youtube(xid));
         });
 
+
+        //Vimeo
+        NodeFinder.find('iframe[src*="player.vimeo.com/video/"]', iframe => {
+            let src = new URL(iframe.src);
+            (new VimeoEmbedAPI(src.origin + src.pathname));
+        });
 
         NodeFinder.find('video[data-src^="http"], video[src^="http"], video source[src^="http"], video[data-src^="//"], video[src^="//"], video source[src^="//"]', element => {
             let
