@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.1
+// @version     3.1.1
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -2327,6 +2327,29 @@
             }
 
             return;
+        }
+
+
+        if (/yt5s/.test(location.host)) {
+
+            return NodeFinder.find('#search-result .detail #asuccess', btn => {
+
+                let
+                        link = btn.href,
+                        title = doc.querySelector('.detail .content .clearfix h3').innerText.trim(),
+                        xid = doc.querySelector('#video_id').value,
+                        rpcstream = new RPCStream(link, null, null, {mode: 0}, false);
+
+
+
+                ContextMenu.add('[Y5S] Send Video ' + xid, () => {
+                    KodiRPC.send(rpcstream.url.href);
+                }, 'y5s.' + xid);
+
+
+
+                //  (new RPCStream(link, null, {desc: xid, tags: ['yt5s']}));
+            });
         }
 
 
