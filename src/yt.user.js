@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Embed
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      1.0.2
+// @version      1.1
 // @description  Embed Video Link
 // @author       daedelus
 //
@@ -90,7 +90,13 @@
                         elements = this._Elements = {},
                         link = elements.link = html2element(`<a target="_blank" href="${src}">Video Link</a>`),
                         subs = elements.subs = html2element(`<a target="_blank" href="${sub}">Subtitles</a>`);
+
                 list.push(link);
+                if (/youtube/.test(this.src)) {
+                    let url = new URL(this.src);
+                    url.host = url.host.replace('youtube', 'youtube5s');
+                    list.push(elements.download = html2element(`<a target="_blank" href="${url.href}">Download</a>`));
+                }
                 list.push(subs);
                 const root = elements.list = list.html;
                 this.root.appendChild(root);
