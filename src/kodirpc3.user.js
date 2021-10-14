@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.1.1
+// @version     3.1.2
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -2332,23 +2332,32 @@
 
         if (/yt5s/.test(location.host)) {
 
-            return NodeFinder.find('#search-result .detail #asuccess', btn => {
+            return NodeFinder.find('#search-result .detail #asuccess[href^="http"]', btn => {
 
                 let
                         link = btn.href,
                         title = doc.querySelector('.detail .content .clearfix h3').innerText.trim(),
                         xid = doc.querySelector('#video_id').value,
-                        rpcstream = new RPCStream(link, null, null, {mode: 0}, false);
+                        resolveURL = url => new Promise((resolve, reject) => {
+                                const err = new Error('Cannot resolve YT5S url.');
+                                utils.GM_xmlhttpRequest({
+                                    method: 'HEAD',
+                                    url: link,
+                                    onreadystatechange(xhr){
+                                        if (xhr.readyState == xhr.DONE) {
+                                            if (xhr.finalUrl != link) resolve(xhr.finalUrl);
+                                            else reject(err);
+                                        }
+                                    }
+                                });
+                            });
 
 
-
-                ContextMenu.add('[Y5S] Send Video ' + xid, () => {
-                    KodiRPC.send(rpcstream.url.href);
-                }, 'y5s.' + xid);
-
-
-
-                //  (new RPCStream(link, null, {desc: xid, tags: ['yt5s']}));
+                resolveURL(link)
+                        .then(url => {
+                            (new RPCStream(link, null, {desc: xid, tags: ['yt5s']}));
+                        })
+                        .catch(console.error);
             });
         }
 
