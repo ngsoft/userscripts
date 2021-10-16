@@ -2149,7 +2149,7 @@
             ContextMenu.add('[RPCSTREAM][YT5S] Send Video ' + xid, () => {
 
 
-                Notify.notice('Loading video ' + xid + ', A download box will appear.', 'YoutubeDebrid');
+                Notify.notice('Loading video ' + xid, 'YoutubeDebrid');
                 
                 const api = new YoutubeAPI(xid);
                 
