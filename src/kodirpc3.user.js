@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.1.2
+// @version     3.2
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -1679,17 +1679,12 @@
 
             this.xid = xid;
             this.addMenuEntry();
-
-            // use apidata
-
-            const api = new YoutubeAPI(xid);
-
-
-
-
-
+            YoutubeAPI.AddMenuEntry(xid);
         }
     }
+
+
+
 
     /**
      * Dailymotion Kodi Plugin
@@ -1858,7 +1853,7 @@
                     return;
                 }
                 headers = isPlainObject(headers) ? headers : {};
-                headers = Object.assign({"Content-Type": "application/x-www-form-urlencoded"}, headers);
+                headers = Object.assign({"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}, headers);
 
                 data = data || '';
 
@@ -1876,6 +1871,8 @@
                     reject(new Error('Invalid post  data.'));
                     return;
                 }
+
+
                 utils.GM_xmlhttpRequest({
                     method: 'POST',
                     url: url,
@@ -1891,6 +1888,10 @@
                 });
             });
         }
+
+
+
+
     }
 
 
@@ -1970,13 +1971,199 @@
         }
     }
 
-    class Youtube5sAPI {
+    class Youtube5sAPI extends FetchAPI {
+
+        getVideo(url){
+            return new Promise((resolve, reject) => {
+                if (url instanceof URL) url = url.href;
+                if (typeof url !== string) throw new Error('Invalid url');
+                this
+                        .getVideoLink(url)
+                        .then(data => {
+                            this.resolveUrl(data.url).then(resolved => {
+                                data.url = resolved;
+                                resolve(data);
+                            });
+                        })
+                        .catch(err => reject(err));
+            });
+
+
+
+        }
+
+
+        getAjaxSeach(url){
+            return new Promise((resolve, reject) => {
+                if (url instanceof URL) url = url.href;
+
+                if (typeof url !== string) throw new Error('Invalid url');
+                this
+                        .post('https://yt5s.com/api/ajaxSearch', {q: url, vt: 'home'}, Object.assign({}, this.headers))
+                        .then(json => {
+                            let obj = parseJson(json);
+                            if (!obj.error) resolve(obj);
+                            else reject(new Error(obj.error));
+                        })
+                        .catch(err => reject(err));
+            });
+        }
+
+
+        getVideoLink(url){
+            return new Promise((resolve, reject) => {
+                this.getAjaxSeach(url)
+                        .then(obj => {
+                            const qualities = [
+                                '720p',
+                                '1080p',
+                                '480p',
+                                '360p'
+                            ];
+                            let fquality;
+
+                            if (obj.links && obj.links.mp4) {
+                                for (let i = 0; i < qualities.length; i++) {
+                                    Object.keys(obj.links.mp4).forEach(key => {
+                                        const data = obj.links.mp4[key];
+                                        if (data.q == qualities[i]) {
+                                            fquality = fquality || qualities[i];
+                                        }
+                                    });
+                                    if (typeof fquality === string) break;
+                                }
+                            }
+
+                            if (typeof fquality !== string) {
+                                reject(new Error('Cannot find quality for video.'));
+                                return;
+                            }
+                            this.post(
+                                    'https://backend.svcenter.xyz/api/convert', {
+                                        v_id: obj.vid,
+                                        ftype: 'mp4',
+                                        fquality: fquality,
+                                        token: obj.token,
+                                        timeExpire: obj.timeExpires,
+                                        client: 'yt5s.com'
+                                    }, Object.assign({"X-Requested-Key": "de0cfuirtgf67a"}, this.headers))
+                                    .then(json => {
+                                        const data = parseJson(json);
+                                        if (data.c_server) {
+
+                                            let worker = () => {
+                                                this.post(data.c_server + '/api/json/convert', {
+                                                    v_id: obj.vid,
+                                                    ftype: 'mp4',
+                                                    fquality: fquality,
+                                                    token: obj.token,
+                                                    timeExpire: obj.timeExpires,
+                                                    fname: obj.fn
+                                                }, Object.assign({}, this.headers))
+                                                        .then(jsonString => {
+                                                            let serverData = parseJson(jsonString);
+
+                                                            if (typeof serverData.jobID === string) {
+                                                                setTimeout(() => {
+                                                                    worker();
+                                                                }, 200);
+                                                                return;
+                                                            } else if (
+                                                                    serverData.statusCode === 200 &&
+                                                                    /^http/.test(serverData.result)
+                                                                    ) {
+
+                                                                resolve({
+                                                                    url: serverData.result,
+                                                                    title: obj.title
+                                                                });
+                                                                return;
+
+                                                            }
+                                                            reject(new Error('Cannot get Video URL.'));
+                                                        })
+                                                        .catch(err => reject(err));
+
+                                            };
+                                            worker();
+                                            return;
+                                        }
+                                        reject(new Error('Cannot get Server.'));
+                                    })
+                                    .catch(err => reject(err));
+                        })
+                        .catch(err => reject(err));
+            });
+        }
+
+
+        resolveUrl(link){
+            return new Promise((resolve, reject) => {
+
+
+                let iframe = doc.createElement('iframe');
+
+                iframe.onload = () => {
+                    resolve(link);
+
+                    doc.body.removeChild(iframe);
+                };
+                iframe.style.opacity = 0;
+                iframe.src = link;
+
+
+                doc.body.appendChild(iframe);
+                
+            });
+        }
+
+        constructor(){
+            super();
+
+            this.headers = {
+                Origin: 'https://yt5s.com',
+                Referer: 'https://yt5s.com/'
+            };
+        }
 
     }
 
 
 
     class YoutubeAPI {
+
+        static AddMenuEntry(xid){
+            if (typeof YoutubeAPI.id !== n) YoutubeAPI.id = 0;
+            YoutubeAPI.id++;
+
+
+            ContextMenu.add('[RPCSTREAM] Send Video ' + xid, () => {
+                
+                
+                const api = new YoutubeAPI(xid);
+                
+                
+                api.getVideo().then(data => {
+
+                    let
+                            title = data.title,
+                            url = data.url;
+
+                    api.getSubs().then(obj => {
+                        let
+                                subs = obj.en || null,
+                                rpcstream = new RPCStream(url, subs, xid, {mode: 0, title: title}, false);
+                        rpcstream.send();
+                    });
+                }).catch(err=>{
+                    console.error(err);
+                    Notify.error('Cannot send video ' + xid, 'YoutubeDebrid');
+                });
+            }, 'plugin.video.rpcstream.' + YoutubeAPI.id);
+
+
+
+        }
         
         getSubs(){
 
@@ -1992,24 +2179,22 @@
 
         }
 
+
+        getVideo(){
+            return new Promise((resolve, reject) => {
+                const api = new Youtube5sAPI();
+                api.getVideo(this.url)
+                        .then(url => resolve(url))
+                        .catch(err => reject(err));
+            });
+        }
+
         constructor(xid){
             this.xid = xid;
             this.url = new URL('https://www.youtube.com/watch');
             this.url.searchParams.set('v', xid);
 
-            this.getSubs().then(console.debug);
-            
-            
-
         }
-
-
-
-
-
-
-
-
     }
 
 
@@ -2554,7 +2739,7 @@
         }
 
 
-        if (/yt5s/.test(location.host)) {
+        /* if (/yt5s/.test(location.host)) {
 
             return NodeFinder.find('#search-result .detail #asuccess[href^="http"]', btn => {
 
@@ -2569,12 +2754,13 @@
                                     url: link,
                                     onreadystatechange(xhr){
                                         if (xhr.readyState == xhr.DONE) {
-                                            if (xhr.finalUrl != link) resolve(xhr.finalUrl);
-                                            else reject(err);
+                                            resolve(xhr.finalUrl);
                                         }
                                     }
                                 });
                             });
+
+
 
 
                 resolveURL(link)
@@ -2583,7 +2769,7 @@
                         })
                         .catch(console.error);
             });
-        }
+        }*/
 
 
         NodeFinder.find('iframe[src*="youtube.com/embed/"]', iframe => {
