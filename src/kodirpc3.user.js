@@ -70,7 +70,10 @@
             GMinfo = (typeof GM_info !== 'undefined' ? GM_info : (typeof GM === 'object' && GM !== null && typeof GM.info === 'object' ? GM.info : null)),
             scriptname = GMinfo ? `${GMinfo.script.name} @${GMinfo.script.version}` : "",
             UUID = GMinfo ? GMinfo.script.uuid : "",
-            utils = {};
+            utils = {},
+            // youtube desktop_polymer.js overrides the originals so we export them before the script loads
+            parseJson = JSON.parse,
+            stringify = JSON.stringify;
 
     // Pass sandboxed functions into the module GM
     [
@@ -802,10 +805,10 @@
      * @param {int} id
      * @returns {string|undefined}
      */
-    JSON.RPCRequest = function(method, params, id){
+    function RPCRequest(method, params, id){
         params = params || {};
         if (typeof method === s && isPlainObject(params)) {
-            return this.stringify({
+            return stringify({
                 jsonrpc: '2.0',
                 method: method,
                 params: params,
@@ -1004,7 +1007,7 @@
         send(method, params){
             const that = this;
             return new Promise((resolve, reject) => {
-                let data = JSON.RPCRequest(method, params);
+                let data = RPCRequest(method, params);
                 if (data === undef) reject();
                 utils.GM_xmlhttpRequest({
                     method: 'POST',
@@ -1012,7 +1015,7 @@
                     data: data,
                     headers: that.headers,
                     onload(xhr){
-                        if (xhr.status === 200) resolve(JSON.parse(xhr.response));
+                        if (xhr.status === 200) resolve(parseJson(xhr.response));
                         else reject();
                     },
                     onerror(){
@@ -1676,6 +1679,15 @@
 
             this.xid = xid;
             this.addMenuEntry();
+
+            // use apidata
+
+            const api = new YoutubeAPI(xid);
+
+
+
+
+
         }
     }
 
@@ -1773,7 +1785,7 @@
             if (typeof subs === s) {
                 params.subtitles = subs;
             }
-            this.setParam('request', btoa(JSON.stringify(params)));
+            this.setParam('request', btoa(stringify(params)));
             if (typeof params.mode === n) this.setParam('mode', '' + params.mode);//needs a string
 
             if (isPlainObject(description)) {
@@ -1793,6 +1805,218 @@
 
     // Extractors
 
+
+
+    class FetchAPI {
+        fetch(url, headers){
+
+            return new Promise((resolve, reject) => {
+
+                if (url instanceof URL) url = url.href;
+                if (!/^http/.test(typeof url === string ? url : '')) {
+                    reject(new Error('Invalid URL provided.'));
+                    return;
+                }
+
+                headers = isPlainObject(headers) ? headers : {};
+
+                utils.GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: url,
+                    headers: headers,
+                    onload(xhr){
+                        if (xhr.status !== 200) reject(new Error('Invalid status code: ' + url + ': ' + xhr.status));
+                        else resolve(xhr.response);
+
+                    },
+                    onerror(){
+                        reject(new Error('Cannot fetch ' + url));
+                    }
+                });
+            });
+        }
+
+
+
+        fetchJSON(url, headers){
+
+            headers = isPlainObject(headers) ? headers : {};
+            headers = Object.assign({
+                'Accept': 'application/json, text/plain, */*'
+            }, headers);
+            return  this.fetch(url, headers)
+                    .then(text => parseJson(text));
+        }
+
+
+        post(url, data, headers){
+            return new Promise((resolve, reject) => {
+
+                if (url instanceof URL) url = url.href;
+                if (!/^http/.test(typeof url === string ? url : '')) {
+                    reject(new Error('Invalid URL provided.'));
+                    return;
+                }
+                headers = isPlainObject(headers) ? headers : {};
+                headers = Object.assign({"Content-Type": "application/x-www-form-urlencoded"}, headers);
+
+                data = data || '';
+
+                if (isPlainObject(data)) {
+                    const sp = new URLSearchParams();
+
+                    Object.keys(data).forEach(key => {
+                        sp.set(key, data[key]);
+                    });
+
+                    data = sp.toString();
+                }
+
+                if (typeof data !== string) {
+                    reject(new Error('Invalid post  data.'));
+                    return;
+                }
+                utils.GM_xmlhttpRequest({
+                    method: 'POST',
+                    url: url,
+                    data: data,
+                    headers: headers,
+                    onload(xhr){
+                        if (xhr.status !== 200) reject(new Error('Invalid status code: ' + url + ': ' + xhr.status));
+                        else resolve(xhr.response);
+                    },
+                    onerror(){
+                        reject(new Error('Cannot fetch ' + url));
+                    }
+                });
+            });
+        }
+    }
+
+
+
+    /**
+     * Youtube API is too complex (api key, number of requests)
+     * so we use another api
+     * and this api can be used with other websites
+     */
+    class DownSubAPI extends FetchAPI {
+
+        /**
+         * Get Subtitles
+         */
+        getSubtitles(url){
+
+            return new Promise((resolve, reject) => {
+                if (url instanceof URL) url = url.href;
+
+                if (typeof url !== string) throw new Error('Invalid url');
+
+                this.getSubContext(url)
+                        .then(context => {
+                            this.fetchJSON('https://get-info.downsub.com/' + context, Object.assign({}, this.headers))
+                                    .then(obj => {
+                                        if (Array.isArray(obj.subtitles)) {
+
+                                            const result = {};
+                                            obj.subtitles.forEach(sub => {
+                                                let url = new URL(obj.urlSubtitle);
+                                                url.searchParams.set('title', obj.title);
+                                                url.searchParams.set('url', sub.url);
+                                                result[sub.code] = url.href;
+                                            });
+                                            resolve(result);
+                                        } else reject(new Error('Cannot fetch subtitle data.'));
+
+                                    })
+                                    .catch(err => reject(err));
+                        });
+            });
+        }
+
+
+
+        /**
+         * loads the search page and get the context constant
+         */
+        getSubContext(url){
+            return new Promise((resolve, reject) => {
+                
+                const fetchUrl = new URL('https://downsub.com/');
+
+                fetchUrl.searchParams.set('url', url);
+
+                this
+                        .fetch(fetchUrl, Object.assign({}, this.headers))
+                        .then(html => {
+                            let matches, obj;
+                            if ((matches = /const\ context=\'(.*?)\';/i.exec(html)) !== null) {
+                                if (obj = parseJson(atob(matches[1]))) {
+                                    resolve(obj.id);
+                                    return;
+                                }
+                            }
+                            reject(new Error('Cannot parse context.'));
+                        })
+                        .catch(error => reject(error));
+            });
+        }
+        constructor(){
+            super();
+            this.headers = {
+                Origin: 'https://downsub.com',
+                Referer: 'https://downsub.com/'
+            };
+        }
+    }
+
+    class Youtube5sAPI {
+
+    }
+
+
+
+    class YoutubeAPI {
+        
+        getSubs(){
+
+            return new Promise((resolve, reject)=>{
+                const api = new DownSubAPI();
+                api.getSubtitles(this.url)
+                    .then(subs => resolve(subs))
+                    .catch(err => {
+                        console.error(err);
+                        resolve([]);
+                    });
+            });
+
+        }
+
+        constructor(xid){
+            this.xid = xid;
+            this.url = new URL('https://www.youtube.com/watch');
+            this.url.searchParams.set('v', xid);
+
+            this.getSubs().then(console.debug);
+            
+            
+
+        }
+
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
     class VimeoEmbedAPI {
 
         getJson(embedUrl, referer){
@@ -1811,7 +2035,7 @@
                     },
                     onload(xhr){
                         if (xhr.status === 200) {
-                            resolve(JSON.parse(xhr.response));
+                            resolve(parseJson(xhr.response));
 
                         } else reject(new Error('Cannot get Vimeo data.'));
                     },
@@ -1932,7 +2156,7 @@
                     },
                     onload(xhr){
                         if (xhr.status === 200) {
-                            let json = JSON.parse(xhr.response);
+                            let json = parseJson(xhr.response);
                             resolve(this.token = json.access_token);
 
                         } else reject(new Error('Cannot get Dailymotion access Token.'));
@@ -1964,10 +2188,10 @@
                         method: 'POST',
                         url: url,
                         headers: headers,
-                        data: JSON.stringify({app: 'com.dailymotion.neon'}),
+                        data: stringify({app: 'com.dailymotion.neon'}),
                         onload(xhr){
                             if (xhr.status === 200) {
-                                let json = JSON.parse(xhr.response);
+                                let json = parseJson(xhr.response);
                                 resolve(json);
 
                             } else reject(error);
