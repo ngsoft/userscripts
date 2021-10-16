@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.2
+// @version     3.2.1
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -1321,7 +1321,21 @@
                 resolve(iziToast);
             });
         }
-        
+
+
+        static notice(message, title = ''){
+
+
+            this.load().then(iziToast => {
+                iziToast.info({
+                    title: title,
+                    message: message
+                });
+            });
+
+        }
+
+
         static success(message, title = ''){
             
             this.load().then(iziToast=>{
@@ -2137,8 +2151,10 @@
             YoutubeAPI.id++;
 
 
-            ContextMenu.add('[RPCSTREAM] Send Video ' + xid, () => {
-                
+            ContextMenu.add('[RPCSTREAM][YT5S] Send Video ' + xid, () => {
+
+
+                Notify.notice('Loading video ' + xid + ', A download box will appear.', 'YoutubeDebrid');
                 
                 const api = new YoutubeAPI(xid);
                 
