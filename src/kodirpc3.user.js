@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.2.1
+// @version     3.2.2
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -1993,12 +1993,7 @@
                 if (typeof url !== string) throw new Error('Invalid url');
                 this
                         .getVideoLink(url)
-                        .then(data => {
-                            this.resolveUrl(data.url).then(resolved => {
-                                data.url = resolved;
-                                resolve(data);
-                            });
-                        })
+                        .then(data => resolve(data))
                         .catch(err => reject(err));
             });
 
