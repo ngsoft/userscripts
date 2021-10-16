@@ -2195,7 +2195,7 @@
             return new Promise((resolve, reject) => {
                 const api = new Youtube5sAPI();
                 api.getVideo(this.url)
-                        .then(url => resolve(url))
+                        .then(data => resolve(data))
                         .catch(err => reject(err));
             });
         }
