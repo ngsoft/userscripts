@@ -1,11 +1,13 @@
 // ==UserScript==
-// @name	PHP Web Docs
-// @namespace	https://github.com/ngsoft
-// @version	2.4
-// @description	Use PHP UI to store locale and auto redirect to the choosen on every pages
+// @version	2.5
+// @name	MDN + PHP Web Docs
+// @description	Use MDN Web Docs and PHP UI to store locale and auto redirect to the choosen on every pages
+// @namespace	https://github.com/ngsoft/userscripts
 // @author	daedelus
-// @include	*://*php.net/manual/*
-// @noframes
+// @run-at	document-end
 // @grant	none
-// @icon	https://www.php.net/favicon.ico
+// @noframes
+// @include	*://developer.mozilla.org/*
+// @include	*://*php.net/manual/*
+// @icon	https://developer.mozilla.org/favicon.ico
 // ==/UserScript==
