@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.2.1
+// @version     1.3
 // @name        WETV Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -81,7 +81,7 @@
         
         get drama(){
 
-            let el = doc.querySelector('.cover_title');
+            let el = doc.querySelector('.title--main');
             if (el instanceof Element) {
                 return sanitizeFileName(el.innerText.trim(), " ");
             }
@@ -90,7 +90,7 @@
         }
 
         get episode(){
-            let el = doc.querySelector('.video_episode_box a.video_current span');
+            let el = doc.querySelector('.play-video__list .play-video__item--selected');
             if (el instanceof Element) {
                 let num = el.innerText.trim(), matches;
                 if (/^[0-9]+$/.test(num)) {
@@ -204,13 +204,13 @@
 
 
         get EpisodeList(){
-            return doc.querySelectorAll(`.video_episode_box > a`);
+            return doc.querySelectorAll(`.play-video__list > li`);
         }
 
         get CurrentEpisodeIndex(){
             let index = -1;
             this.EpisodeList.forEach((a, i) => {
-                if (a.classList.contains('video_current')) index = i;
+                if (a.classList.contains('play-video__item--selected')) index = i;
             });
             return index;
         }
@@ -231,14 +231,14 @@
                         let ci = this.CurrentEpisodeIndex, list = this.EpisodeList, prev = ci - 1;
 
                         if ((prev >= 0) && (typeof list[prev] !== u)) {
-                            list[prev].dispatchEvent( new MouseEvent('click', {bubbles: true, cancelable: true})  );
+                            list[prev].querySelector('a').dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
                         }
 
                     },
                     video_next(e){
                         let ci = this.CurrentEpisodeIndex, list = this.EpisodeList, next = ci + 1;
                         if ((next > 0) && (typeof list[next] !== u)) {
-                            list[next].dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                            list[next].querySelector('a').dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
                         }
 
                     },
@@ -289,12 +289,12 @@
         if (mdl === null) return;
         if (!doc.body.contains(mdl.btn)) {
             mdl = null;
-            NodeFinder.findOne(`h2.cover_title, h1.cover_title`, el => {
+            NodeFinder.findOne(`h2.title--main, h1.title--main`, el => {
                 mdl = new MDLSearch(el);
             });
         }
     });
-    NodeFinder.findOne(`h2.cover_title, h1.cover_title`, (el, obs) => {
+    NodeFinder.findOne(`h2.title--main, h1.title--main`, (el, obs) => {
         mdl = new MDLSearch(el);
         obs.stop();
 
