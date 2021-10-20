@@ -6,11 +6,21 @@
 // @author       daedelus
 //
 // @require     https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
+// @require     https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js
+// @require     https://cdn.jsdelivr.net/npm/hls.js@0.14.11/dist/hls.min.js
+// @require     https://cdn.jsdelivr.net/npm/plyr@3.6.9/dist/plyr.min.js
+//
+// @resource    plyr_css https://cdn.jsdelivr.net/npm/plyr@3.6.9/dist/plyr.min.css
+// @resource    altvideo_css https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.2/dist/altvideo.css
+// 
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_listValues
 // @grant       GM_xmlhttpRequest
+// @grant       GM_getResourceText
+// @grant       GM_addStyle
+// 
 // @run-at      document-body
 // @noframes
 //
@@ -107,6 +117,7 @@
 
                     this.fetch(url.href)
                             .then(text => {
+
                                 resolve(this.handleResponseText(text));
                             })
                             .catch(error => reject(error));
@@ -580,10 +591,11 @@
             if (typeof title === s) {
                 this.__title__ = title;
 
-                if (!this.translation) {
+                if (!this.translation || this.translation === title) {
                     MyDramaList.search(title)
                             .then(list => {
-                                if (list.length > 0) self.translation = list[0].title;
+                                console.debug(list);
+                                if (list.length > 0) this.translation = list[0].title;
                                 else this.translation = title;
                             })
                             .catch(error => {
@@ -613,6 +625,7 @@
                 if (typeof translations[this.title] === s) {
                     return translations[this.title];
                 }
+                return this.title;
 
             }
         }
@@ -868,23 +881,18 @@
 
         }
 
-        static loadDeps(onload) {
-            const self = this;
-            if (self.loaded !== true) {
-                [
-                    "https://cdn.jsdelivr.net/npm/subtitle@latest/dist/subtitle.bundle.min.js",
-                    "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.css",
-                    "https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.1.2/dist/altvideo.css",
-                    "https://cdn.jsdelivr.net/npm/hls.js@0.14.11/dist/hls.min.js",
-                    "https://cdn.jsdelivr.net/npm/plyr@latest/dist/plyr.min.js"
-                ].forEach(params => {
-                    rload.require(params);
-                });
+        static loadDeps(onload){
+            if (this.loaded !== true) {
 
-                new Timer((timer) => {
+                GM_addStyle(GM_getResourceText('plyr_css'));
+                GM_addStyle(GM_getResourceText('altvideo_css'));
+
+                console.debug(Plyr, Hls);
+
+                new Timer(timer => {
                     if (typeof Hls === f && typeof Plyr === f) {
                         timer.stop();
-                        self.loaded = true;
+                        this.loaded = true;
                         if (typeof onload === f) {
                             onload();
                         }
@@ -1051,7 +1059,7 @@
             node.remove();
         });
 
-        return find('#playleft iframe[src*="m3u8"][src*="id="]', (frame, obs) => {
+        return NodeFinder.find('#playleft iframe[src*="m3u8"][src*="id="]', (frame, obs) => {
             obs.stop();
             app = new AltVideoPlayer(frame.parentElement);
             app.onReady(() => {
@@ -1104,7 +1112,7 @@
         });
 
     } else if (/(duboku|dboku|fanstui|newsinportal|jhooslea)/.test(location.host) && /^\/vodplay\//.test(location.pathname) && typeof MacPlayer !== u && typeof MacPlayer.PlayUrl === s) {
-        return find('.embed-responsive .MacPlayer', (player, obs) => {
+        return NodeFinder.find('.embed-responsive .MacPlayer', (player, obs) => {
             obs.stop();
             app = new AltVideoPlayer(player.parentElement.parentElement);
             app.onReady(() => {

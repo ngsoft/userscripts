@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.2.2
+// @version     3.2.3
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -2749,40 +2749,6 @@
             return;
         }
 
-
-        /* if (/yt5s/.test(location.host)) {
-
-            return NodeFinder.find('#search-result .detail #asuccess[href^="http"]', btn => {
-
-                let
-                        link = btn.href,
-                        title = doc.querySelector('.detail .content .clearfix h3').innerText.trim(),
-                        xid = doc.querySelector('#video_id').value,
-                        resolveURL = url => new Promise((resolve, reject) => {
-                                const err = new Error('Cannot resolve YT5S url.');
-                                utils.GM_xmlhttpRequest({
-                                    method: 'HEAD',
-                                    url: link,
-                                    onreadystatechange(xhr){
-                                        if (xhr.readyState == xhr.DONE) {
-                                            resolve(xhr.finalUrl);
-                                        }
-                                    }
-                                });
-                            });
-
-
-
-
-                resolveURL(link)
-                        .then(url => {
-                            (new RPCStream(link, null, {desc: xid, tags: ['yt5s']}));
-                        })
-                        .catch(console.error);
-            });
-        }*/
-
-
         NodeFinder.find('iframe[src*="youtube.com/embed/"]', iframe => {
             let src = new URL(iframe.src), xid;
             src.search = "";
@@ -2882,6 +2848,26 @@
                 }
             }
         });
+        
+        //animixplay
+        
+        
+        NodeFinder.find('iframe[src*="/player.html#"]', iframe=>{
+
+                let
+                        src = new URL(iframe.src),
+                        hash = src.hash.trim('#').replace(/^\#/, ''),
+                        url;
+            if (hash.length > 0) {
+                url = atob(hash);
+                if (/^http/.test(url)) {
+                    (new RPCStream(url, null, 'from ' + src.hostname, {mode: 0}));
+                }
+            }
+
+            
+        });
+        
 
 
 
