@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.2.3
+// @version     3.2.4
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -677,6 +677,8 @@
 
             return this;
         } else if ((target instanceof EventTarget)) return new Events(...arguments);
+
+        throw new Error('Invalid argument target.');
 
     }
 
@@ -2852,17 +2854,23 @@
         //animixplay
         
         
-        NodeFinder.find('iframe[src*="/player.html#"]', iframe=>{
+        NodeFinder.find('iframe[src *= "/player.html#"]', iframe => {
 
                 let
-                        src = new URL(iframe.src),
-                        hash = src.hash.trim('#').replace(/^\#/, ''),
-                        url;
-            if (hash.length > 0) {
-                url = atob(hash);
-                if (/^http/.test(url)) {
-                    (new RPCStream(url, null, 'from ' + src.hostname, {mode: 0}));
+                    src = new URL(iframe.src),
+                    hashes = src.hash.replace(/^\#/, '').split('#'), url = '';
+
+            for (let i = 0; i < hashes.length; i++) {
+                try {
+                    let str = hashes[i];
+                    url = atob(str);
+                    break;
+                } catch (e) {
                 }
+            }
+
+            if (/^http/.test(url)) {
+                (new RPCStream(url, null, 'from ' + src.hostname, {mode: 0}));
             }
 
             
