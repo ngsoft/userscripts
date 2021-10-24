@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.2.4
+// @version     3.3
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -10,7 +10,8 @@
 // @require     https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @require     https://cdn.jsdelivr.net/gh/mathiasbynens/utf8.js@v3.0.0/utf8.min.js
 // @resource    iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
-// @require
+//
+// 
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -239,24 +240,23 @@
 
     /**
      * Run a callback when page is completely loaded
+     * Load events not triggered in certains browsers
+     *
      * @param {function} callback
      * @returns {Promise}
      */
     on.loaded = function(){
         return new Promise(resolve => {
 
-            let resolver = body => {
-                if (arguments.length > 0) on(...arguments);
-                resolve(doc.body);
+            const worker = () => {
+                if (doc.readyState !== "complete") {
+                    setTimeout(() => {
+                        worker();
+                    }, 100);
+                } else resolve(doc.body);
             };
 
-            if (doc.readyState !== "complete") {
-                addEventListener("load", function(){
-                    resolver();
-                });
-
-            } else resolver();
-
+            worker();
         });
     };
 
@@ -2144,14 +2144,14 @@
     class YoutubeAPI {
 
         static AddMenuEntry(xid){
-            if (typeof YoutubeAPI.id !== n) YoutubeAPI.id = 0;
-            YoutubeAPI.id++;
+            if (typeof this.id !== n) this.id = 0;
+            this.id++;
 
 
             ContextMenu.add('[RPCSTREAM][YT5S] Send Video ' + xid, () => {
 
 
-                Notify.notice('Loading video ' + xid, 'YoutubeDebrid');
+                Notify.notice('Loading video ' + xid, 'YOUTUBE');
                 
                 const api = new YoutubeAPI(xid);
                 
@@ -2170,9 +2170,9 @@
                     });
                 }).catch(err=>{
                     console.error(err);
-                    Notify.error('Cannot send video ' + xid, 'YoutubeDebrid');
+                    Notify.error('Cannot send video ' + xid, 'YOUTUBE');
                 });
-            }, 'plugin.video.rpcstream.' + YoutubeAPI.id);
+            }, 'plugin.video.rpcstream.' + this.id);
 
 
 
@@ -2286,37 +2286,35 @@
         constructor(url){
             if (typeof url !== s) throw new Error('Invalid vimeo url');
             let xid = url.trim('/').split('/').pop();
+
             this.getStreams(url, location.href)
                     .then(result => {
 
                         result.hls.forEach(entry => {
-                            (new RPCStream(
-                                    entry.url,
-                                    null,
-                                    {tags: ['vimeo', entry.cdn], desc: xid}, {
-                                mode: 0,
-                                title: doc.title
-                            }
+                            (new RPCStream(entry.url, null,
+                                    {
+                                        tags: ['vimeo', entry.cdn],
+                                        desc: xid
+                                    },
+                                    {
+                                        mode: 0,
+                                        title: doc.title
+                                    }
+
                             ));
                         });
 
 
 
                     })
-                    .catch(console.error);
+                    .catch(err => {
+                        console.error(err);
+                    });
+
+
         }
 
     }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2540,41 +2538,53 @@
 
         }
 
+
+
+
         /**
          * Creates RPCStream menu entry using dailymotion xid
          */
         static rpcstream(xid){
 
-            let d = new DailymotionAPI();
 
-            d
-                    .getMetadata(xid)
-                    .then(meta => {
-                        let
-                                subs = d.getSubtitles(meta), link;
-                        d
-                                .getMediaList(meta)
-                                .then(list => {
-                                    ['480p', '720p', '1080p'].forEach(res => {
-                                        if (typeof list[res] !== u) link = list[res].url;
+            if (typeof this.id !== n) this.id = 0;
+            this.id++;
+
+
+            ContextMenu.add('[RPCSTREAM][DAILYMOTION] Send Video ' + xid, () => {
+
+                Notify.notice('Loading video ' + xid, 'DAILYMOTION');
+
+                let d = new DailymotionAPI();
+
+                d
+                        .getMetadata(xid)
+                        .then(meta => {
+                            let
+                                    subs = d.getSubtitles(meta), link;
+                            d
+                                    .getMediaList(meta)
+                                    .then(list => {
+                                        ['480p', '720p', '1080p'].forEach(res => {
+                                            if (typeof list[res] !== u) link = list[res].url;
+                                        });
+                                        if (typeof link !== u) {
+                                            (new RPCStream(link, subs, xid, {
+                                                mode: 0,
+                                                title: meta.title,
+                                                referer: 'https://www.dailymotion.com/video/' + xid,
+                                                useragent: 'Mozilla/5.0 (Linux; Android 7.1.1; Pixel Build/NMF26O) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.91 Mobile Safari/537.36'
+                                            }, false)).send();
+                                        } else Notify.error('Cannot send video ' + xid, 'DAILYMOTION');
                                     });
-                                    if (typeof link !== u) {
-                                        (new RPCStream(
-                                                link, subs,
-                                                {tags: ['dailymotion'], desc: xid}, {
-                                            mode: 0,
-                                            title: meta.title,
-                                            referer: 'https://www.dailymotion.com/video/' + xid,
-                                            useragent: 'Mozilla/5.0 (Linux; Android 7.1.1; Pixel Build/NMF26O) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.91 Mobile Safari/537.36'
-                                        }
-                                        ));
-                                    }
-                                });
-                    })
-                    .catch(console.error);
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Notify.error('Cannot send video ' + xid, 'DAILYMOTION');
+                        });
+            });
 
         }
-
     }
 
     // add Configurator
@@ -2583,10 +2593,6 @@
             Configurator.open();
         }, 'configure');
     }
-
-
-
-
 
 
     on.loaded().then(() => {
@@ -2622,10 +2628,6 @@
 
             return;
         }
-
-
-
-
 
 
         //dailymotion plugin
@@ -2875,10 +2877,6 @@
 
             
         });
-        
-
-
-
 
 
     });
