@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.2.9
+// @version     1.3
 // @name        iQiyi
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -84,6 +84,10 @@
 
     class SubtitleDownloader {
 
+        get video(){
+            return doc.querySelector('video[src]');
+        }
+
         get drama(){
 
             let el = doc.querySelector('h1.intl-play-title');
@@ -113,7 +117,7 @@
             try {
                 data = QiyiPlayerLoaderIbd.manager.players.flashbox.package.engine.pingback._core.movieinfo.current.subtitlesUrlMap;
             } catch (e) {
-                console.error(e.message);
+                console.error(e);
             }
 
             if (typeof data !== u) {
@@ -129,10 +133,9 @@
         }
 
         get filename(){
-            const self = this;
-            let filename = self.drama;
-            if ((typeof self.drama === s) && (typeof self.episode === s)) {
-                filename += self.episode;
+            let filename = this.drama;
+            if ((typeof this.drama === s) && (typeof this.episode === s)) {
+                filename += this.episode;
                 filename += ".en.srt";
             }
             return filename;
@@ -169,18 +172,30 @@
 
             if (!(nextelement instanceof Element) || nextelement.parentElement === null) throw new Error("Invalid Control.");
 
-            const self = this, btn = html2element(`<iqpdiv class="iqp-btn iqp-btn-srt"><iqp class="iqp-label">SRT</iqp></iqpdiv>`);
+            const btn = html2element(`<iqpdiv class="iqp-btn iqp-btn-srt"><iqp class="iqp-label">SRT</iqp></iqpdiv>`);
+
+            this.btn = btn;
             
             Events(btn).on("click", (e) => {
                 e.preventDefault();
 
-                if ((self.filename !== null) && (self.src !== null)) {
-                    self.getsubs(self.src, self.filename);
+                if ((this.filename !== null) && (this.src !== null)) {
+                    this.getsubs(this.src, this.filename);
                 }
             });
+
+
+            Events(this.video).on('play pause', e => {
+                btn.hidden = null;
+                if (this.src === null) {
+                    btn.hidden = true;
+                }
+            });
+
+
+
             
             nextelement.parentElement.insertBefore(btn, nextelement.nextElementSibling);
-
 
         }
     }
@@ -224,6 +239,7 @@
                     .video-l .iqp-subtitle{font-size: 28px !important;}
                     .video-xl .iqp-subtitle{font-size: 44px !important;}
                     .intl-episodes-list a:visited{color: #FDB813 !important;text-decoration-color: #FDB813 !important; }
+                    [hidden]{display: none !important;}
                 `);
 
             }
