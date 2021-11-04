@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.3
+// @version     3.3.1
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -2151,7 +2151,7 @@
             ContextMenu.add('[RPCSTREAM][YT5S] Send Video ' + xid, () => {
 
 
-                Notify.notice('Loading video ' + xid, 'YOUTUBE');
+                Notify.notice('Resolving ' + xid, 'YOUTUBE');
                 
                 const api = new YoutubeAPI(xid);
                 
@@ -2553,7 +2553,7 @@
 
             ContextMenu.add('[RPCSTREAM][DAILYMOTION] Send Video ' + xid, () => {
 
-                Notify.notice('Loading video ' + xid, 'DAILYMOTION');
+                Notify.notice('Resolving ' + xid, 'DAILYMOTION');
 
                 let d = new DailymotionAPI();
 
@@ -2854,12 +2854,11 @@
         });
         
         //animixplay
-        
-        
-        NodeFinder.find('iframe[src *= "/player.html#"]', iframe => {
 
-                let
-                    src = new URL(iframe.src),
+
+        if (/\/player\.html\#/.test(location.href)) {
+            let
+                    src = new URL(location.href),
                     hashes = src.hash.replace(/^\#/, '').split('#'), url = '';
 
             for (let i = 0; i < hashes.length; i++) {
@@ -2874,10 +2873,7 @@
             if (/^http/.test(url)) {
                 (new RPCStream(url, null, 'from ' + src.hostname, {mode: 0}));
             }
-
-            
-        });
-
+        }
 
     });
 
