@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.3.1
+// @version     3.3.2
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -2856,7 +2856,7 @@
         //animixplay
 
 
-        if (/\/player\.html\#/.test(location.href)) {
+        if (/\/(player|goplyr)\.html\#/.test(location.href)) {
             let
                     src = new URL(location.href),
                     hashes = src.hash.replace(/^\#/, '').split('#'), url = '';
@@ -2865,7 +2865,7 @@
                 try {
                     let str = hashes[i];
                     url = atob(str);
-                    break;
+                    if (/^http/.test(url)) break;
                 } catch (e) {
                 }
             }
