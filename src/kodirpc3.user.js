@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.3.2
+// @version     3.4
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -1558,8 +1558,8 @@
 
 
         addMenuEntry(){
-            if (typeof Clipboard.id !== n) Clipboard.id = 0;
-            Clipboard.id++;
+            if (typeof this.id !== n) this.id = 0;
+            this.id++;
 
             let title = '';
 
@@ -1572,7 +1572,7 @@
 
             ContextMenu.add(title, () => {
                 this.send();
-            }, this.identifier() + '.' + Clipboard.id);
+            }, this.identifier() + '.' + this.id);
         }
 
         identifier(){
@@ -1590,6 +1590,7 @@
         constructor(url, desc, tags){
             super();
             this.desc = desc;
+            if (url instanceof URL) url = url.href;
             if (typeof url !== s) throw new Error('Invalid url');
             this.url = new URL(url);
             if (Array.isArray(tags)) tags.forEach(t => this.tags.push(t));
@@ -1783,12 +1784,15 @@
                     ) {
                 title = window.frameElement.ownerDocument.title;
             }
+
+            if (url instanceof URL) url = url.href;
+
             params = Object.assign({
                 title: title,
                 referer: location.origin + location.pathname,
                 useragent: navigator.userAgent,
                 url: url
-            }, params);
+            }, params || {});
 
             // some titles can break the json, so we encode it (plugin detects if encoded)
             params.title = btoa(sanitizeFileName(params.title, ' ').replace(/\s+/, ' '));
@@ -2597,22 +2601,49 @@
 
     on.loaded().then(() => {
         
-        Events(doc.body).on('kodirpc.send', e => {
-            if (e.data && e.data.link) {
-                let
-                        success = e.data.success || null,
-                        error = e.data.error || null,
-                        rpcstream = new RPCStream(e.data.link, null, null, {mode: 0}, false);
+        Events(doc.body)
+                //legacy support
+                .on('kodirpc.send', e => {
+                    if (e.data && e.data.link) {
+                        let
+                                success = e.data.success || null,
+                                error = e.data.error || null,
+                                rpcstream = new RPCStream(e.data.link, null, null, {mode: 0}, false);
 
-                KodiRPC.send(rpcstream.url.href, success, error);
-            }
-        }).one('kodirpc.ready', () => {
-            //module detection
-            Object.defineProperty(doc.body, 'KRPCM', {
-                configurable: true, value: {}
-            });
-            console.debug("KodiRPC Module version", GMinfo.script.version, "started");
-        }).trigger('kodirpc.ready');
+                        KodiRPC.send(rpcstream.url.href, success, error);
+                    }
+                })
+                .one('kodirpc.ready', () => {
+                    //module detection
+                    Object.defineProperty(doc.body, 'KRPCM', {
+                        configurable: true, value: {}
+                    });
+                    console.debug("KodiRPC Module @" + GMinfo.script.version, "started");
+                })
+                .trigger('kodirpc.ready')
+                // exposes api for an helper
+                .on('kodirpc.add', e => {
+                    if (isPlainObject(e.data)) {
+
+                        let
+                                data = e.data,
+                                url = data.url || null,
+                                subs = data.subtitles || null,
+                                description = data.description || null,
+                                params = data.params || {},
+                                tags = data.tags || null;
+                        if (typeof url === string || url instanceof URL) {
+                            if (typeof description === string) desc = {desc: description};
+                            else desc = {desc: ''};
+                            desc.tags = tags;
+                            // Adds RPCStream MenuItem
+                            (new RPCStream(url, subs, desc, params));
+                            // Adds Clipboard Entry
+                            (new Clipboard(url, description, tags));
+                        } else console.warn('Invalid data for event', e);
+                    }
+
+                });
         
         
         
