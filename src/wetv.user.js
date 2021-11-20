@@ -204,7 +204,7 @@
 
 
         get EpisodeList(){
-            return doc.querySelectorAll(`.play-video__list > li`);
+            return doc.querySelectorAll(`.play-video__list li`);
         }
 
         get CurrentEpisodeIndex(){
