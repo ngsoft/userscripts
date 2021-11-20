@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     1.3
+// @version     1.3.1
 // @name        WETV Video Player
 // @description Video Player modificatons
 // @namespace   https://github.com/ngsoft/userscripts
@@ -93,8 +93,8 @@
             let el = doc.querySelector('.play-video__list .play-video__item--selected');
             if (el instanceof Element) {
                 let num = el.innerText.trim(), matches;
-                if (/^[0-9]+$/.test(num)) {
-                    return `.E${num}`;
+                if (matches = /(\d+)$/.exec(num)) {
+                    return `.E${matches[1]}`;
                 }
             }
             return "";
