@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.4
+// @version     3.5
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -2176,7 +2176,7 @@
                     console.error(err);
                     Notify.error('Cannot send video ' + xid, 'YOUTUBE');
                 });
-            }, 'plugin.video.rpcstream.' + this.id);
+            }, 'plugin.video.rpcstream.yt5s.' + this.id);
 
 
 
@@ -2591,6 +2591,202 @@
         }
     }
 
+
+
+
+    const resolveurl = {
+        // from each plugins in script.module.resolveurl
+        // script.module.urlresolver is nice too but comes with bloatwares
+        patterns: [
+            '(?://|\.)(abcvideo\.cc)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(adultswim\.com)/videos/((?!streams)[a-z\-]+/[a-z\-]+)',
+            '(?://|\.)(aliez\.me)/(?:(?:player/video\.php\?id=([0-9]+)&s=([A-Za-z0-9]+))|(?:video/([0-9]+)/([A-Za-z0-9]+)))',
+            '(?://|\.)(amazon\.com)/clouddrive/share/([0-9a-zA-Z]+)',
+            '(?://|\.)(anavids\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(anavids\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)((?:aparat\.cam|wolfstream\.tv))/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(bitchute\.com)/(?:video|embed)/([\w-]+)/',
+            '(?://|\.)(brighteon\.com)/(?:embed)?/?([\w-]+)',
+            '(?://|\.)(brupload\.net)/([0-9A-Za-z]+)',
+            '(?://|\.)(castamp\.com)/embed\.php\?c=(.*?)&',
+            '(?://|\.)(cda\.pl)/(?:.\d+x\d+|video)/([0-9a-zA-Z]+)',
+            '(?://|\.)(chromecast\.video)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(clicknupload\.(?:com?|me|link|org|cc))/(?:f/)?([0-9A-Za-z]+)',
+            '(?://|\.)((?:clipwatching\.com|highstream.tv))/(?:embed-)?(\w+)',
+            '(?://|\.)(cloud9\.to)/embed/([0-9a-zA-Z-_]+)',
+            '(?://|\.)(cloudb2?\.me)/(?:embed-|emb.html\?)?([0-9a-zA-Z]+)',
+            '(?://|\.)(cloud\.mail\.ru)/public/([0-9A-Za-z]+/[^/]+)',
+            '(?://|\.)(cos\.tv)/videos/play/([0-9a-zA-Z]+)',
+            '(?://|\.)(dailymotion\.com|dai\.ly)(?:/(?:video|embed|sequence|swf)(?:/video)?)?/([0-9a-zA-Z]+)',
+            '(?://|\.)(datemule\.(?:co|com))/watch/(?:featured/)?([\w-]+)',
+            '(?://|\.)(daxab\.com)/player/([^\n]+)',
+            '(?://|\.)(dood(?:stream)?\.(?:com|watch|to|so|cx|la|ws))/(?:d|e)/([0-9a-zA-Z]+)',
+            '(?://|\.)(downace\.com)/(?:embed/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(easyload\.io)/e/([0-9a-zA-Z]+)',
+            '(?://)(.*\.elupload\.com)/(?:embed/)?([0-9a-zA-Z]+)',
+            '(?://|\.)((?:entervideo|eplayvid)\.(?:com|net))/(?:watch/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(evoload\.io)/(?:e|f|v)/([0-9a-zA-Z]+)',
+            '(?://|\.)(facebook\.com)/.+?video_id=([0-9a-zA-Z]+)',
+            '(?://|\.)(fastdrive\.io)/([0-9a-zA-Z]+)',
+            '(?://|\.)(fastplay\.(?:sx|cc|to))/(?:flash-|embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)((?:fembed|feurl|femax20|24hd|anime789|[fv]cdn|sharinglink|streamm4u|votrefil[em]s?|femoload|asianclub|dailyplanet|[jf]player|mrdhan|there|sexhd|gcloud|mediashore|xstreamcdn|vcdnplay|vidohd|vidsource|viplayer|zidiplay|embedsito|dutrag|youvideos|moviepl|vidcloud|diasfem)\.(?:com|club|io|xyz|pw|net|to|live|me|stream|co|cc|org|ru|tv|fun|info))/(?:v|f)/([a-zA-Z0-9-]+)',
+            '(?://|\.)(filepup.(?:net))/(?:play|files)/([0-9a-zA-Z]+)',
+            '(?://|\.)(filerio\.in)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(flashx\.(?:tv|to|sx|cc|bz))/(?:embed-|dl\?|embed.php\?c=)?([0-9a-zA-Z]+)',
+            '(?://|\.)(gamovideo\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(gofile\.io)\/(?:\\?c=|d/)([0-9a-zA-Z]+)',
+            '(?://|\.)(gogo-play\.net)/(?:streaming|embed|load|ajax)\.php\?id=([a-zA-Z0-9]+)',
+            '(?://|\.)((?:gomoplayer|tunestream|xvideosharing)\.(?:com|net))/(?:embed-)?([0-9a-zA-Z]+)',
+            'https?://(.*?(?:\.googlevideo|\.bp\.blogspot|blogger|(?:plus|drive|get|docs)\.google|google(?:usercontent|drive|apis))\.com)/(.*?(?:videoplayback\?|[\?&]authkey|host/)*.+)',
+            '(?://|\.)(gounlimited\.to)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)((?:hdvid|vidhdthe)\.(?:tv|fun|online))/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(holavid\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(hugefiles\.(?:net|cc))/([0-9a-zA-Z/]+)',
+            '(?://|\.)(hxload\.(?:to|co|io))/(?:embed/|\\?e=)?([0-9a-zA-Z]+)',
+            '(?://|\.)(indavideo\.hu)/(?:player/video|video)/([0-9A-Za-z-_]+)',
+            '(?://|\.)(itemfix\.com)/v\?t=([0-9A-Za-z_]+)',
+            '(?://|\.)(jetload\.(?:net|tv|to))/(?:[a-zA-Z]/|.*?embed\.php\?u=)?([0-9a-zA-Z]+)',
+            '(?://|\.)(k2s\.cc)/(?:file/)?([0-9a-f]+)',
+            '(?://|\.)(lbry\.tv|odysee\.com)/(\@[^:\/]+\:[^:\/]+\/[^:\/]+:[0-9a-zA-Z]+)',
+            '(?://|\.)(letsupload\.(?:io|org))/([0-9a-zA-Z]+)',
+            '(?://|\.)(stream\.lewd\.host)/embed/([0-9a-zA-Z]+)',
+            '(?://|\.)(liivideo\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(mail\.ru)/(?:\w+/)?(?:videos/embed/)?(inbox|mail|embed|mailua|list|bk|v)/(?:([^/]+)/[^.]+/)?(\d+)',
+            '(?://|\.)(megaup\.net)/([0-9a-zA-Z]+)',
+            '(?://|\.)(megogo\.(?:net|ru))/.+?(?:id=|view/)(\d+)',
+            '(?://|\.)(mixdrop\.(?:co|to|sx))/(?:f|e)/(\w+)',
+            '(?://|\.)(mp4upload\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(my?cloud\.to)/embed/([\S]+)',
+            '(?://|\.)(my?stream\.(?:la|to|cloud|xyz|fun|press))/(?:external|embed-|watch/)?([0-9a-zA-Z_]+)',
+            '(?://|\.)(myupload\.co)/plugins/mediaplayer/site/_embed.php\?u=([0-9a-zA-Z]+)',
+            '(?://|\.)(newtube\.app)/(?:user/\w+|embed)/(\w+)',
+            '(?://|\.)(ninjastream\.to)/(?:watch|download)/([0-9a-zA-Z]+)',
+            '(?://|\.)(nxload\.com)/(?:v/|embed[-/])?([0-9a-zA-Z]+)',
+            '(?://|\.)(ok\.ru|odnoklassniki\.ru)/(?:videoembed|video)/(\d+)',
+            '(?://|\.)(onlystream\.tv)/(?:e/)?([0-9a-zA-Z-_/]+)',
+            '(?://|\.)(oogly\.io)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(pandafiles\.com)/([0-9a-zA-Z]+)',
+            '(?://|\.)(peertube\.uno)/videos/(?:embed|watch)/([0-9a-f-]+)',
+            '(?://|\.)(pixeldrain\.com)/(?:u|l)/([0-9a-zA-Z\-]+)',
+            '(?://|\.)(pkspeed\.net)/(?:embed-)?([A-Za-z0-9]+)',
+            '(?://|\.)(play(?:hd|drive)\.(?:one|xyz))/e/([0-9a-zA-Z]+)',
+            '(?://|\.)(playtube\.ws)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(config\.playwire\.com)/(.+?)/(?:zeus|player)\.json',
+            '(?://|\.)(cdn\.playwire\.com.+?\d+)/(?:config|embed)/(\d+)',
+            '(?://|\.)(putload\.tv|shitmovie\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(rapidgator\.net|rg\.to)/+file/+([a-z0-9]+)(?=[/?#]|$)',
+            '(?://|\.)(rumble\.com)/(?:embed/)?([^/\?]+)',
+            '(?://|\.)(rutube\.ru)/(?:play/embed/|video/)([0-9a-zA-Z]+)',
+            '(?://|\.)(videos\.sapo\.pt)/([0-9a-zA-Z]+)',
+            '(?://|\.)(saruch\.co)/(?:embed|video)/([0-9a-zA-Z]+)',
+            '(?://|\.)(sendfox\.org)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(sendvid\.com)/([0-9a-zA-Z]+)',
+            '(?://|\.)(sibnet\.ru)/(?:shell\.php\?videoid=|.*video)([0-9a-zA-Z]+)',
+            '(?://|\.)(speedostream\.com)/(?:embed-)?([^\n]+)',
+            '(?://|\.)(speedvideo\.net)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(speedwatch\.io)/(?:plyr|e|play-embed|file)/([0-9a-zA-Z]+)',
+            '(?://|\.)(streamable\.com)/(?:s/)?([a-zA-Z0-9]+(?:/[a-zA-Z0-9]+)?)',
+            '(?://|\.)(streamani\.net)/(?:streaming|embed|load|ajax)\.php\?id=([a-zA-Z0-9]+)',
+            '(?://|\.)(streamingcommunity\.(?:one|xyz|video|vip|work|name|live|tv|space))/watch/(\d+(?:\\?e=)?\d+)',
+            '(?://|\.)(streamlare\.com)/(?:e|v)/([0-9A-Za-z]+)',
+            '(?://|\.)(streamoupload\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(streamrapid\.ru)/embed-([^\n]+)',
+            '(?://|\.)((?:tube|player|cloudemb|stream)?s?b?(?:embed\d?|embedsb\d?|play\d?|video)?\.(?:com|net|org|one))/(?:embed-|e|play|d)?/?([0-9a-zA-Z]+)',
+            '(?://|\.)(str(?:eam)?tap?e?\.(?:com|cloud|net|pe))/(?:e|v)/([0-9a-zA-Z]+)',
+            '(?://|\.)(streamty\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(streamvid\.co)/player/([0-9a-zA-Z]+)',
+            '(?://|\.)(streamwire\.net)/(?:embed-|e/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(streamzz?\.(?:cc|vg|to|ws))/([0-9a-zA-Z]+)',
+            '(?://|\.)(superitu\.com)/embed/redirector\.php\?id=([0-9a-zA-Z=]+)',
+            '(?://|\.)(supervideo\.tv)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(thevid\.(?:net|tv|live))/(?:video|e|v)/([A-Za-z0-9]+)',
+            '(?://|\.)(trollvid(?:\.net|\.io)|mp4edge\.com)/(?:embed\.php.file=|embed/|stream/)([0-9a-zA-Z]+)',
+            '(?://|\.)(truhd\.xyz)/embed/([0-9a-zA-Z]+)',
+            '(?://|\.)(tubitv\.com)/(?:video|embed)/(\d+)',
+            '(?://|\.)(tudou\.com)/programs/view/([0-9a-zA-Z]+)',
+            '(?://|\.)(tune\.(?:video|pk))/(?:player|video|play)/(?:[\w\.\?]+=)?(\d+)',
+            '(?://|\.)(tusfiles\.(?:net|com))/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)((?:hls\.|flow\.)?tvlogy\.to)/(?:embed/|watch\.php\?v=|player/index.php\?data=)?([0-9a-zA-Z/]+)',
+            '(?://|\.)(upstream\.to)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(uptobox.com|uptostream.com)/(?:iframe/)?([0-9A-Za-z_]+)',
+            '(?://|\.)((?:upvideo|videoloca|makaveli|tnaket|highload)\.(?:to|xyz))/(?:e|v|f)/([0-9a-zA-Z]+)',
+            '(?://|\.)(uqload\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(userload\.co)/(?:e|f|embed)/([0-9a-zA-Z]+)',
+            '(?://|\.)(userscloud\.com)/(?:embed-|embed/)?([0-9a-zA-Z/]+)',
+            '(?://|\.)(veehd\.com)/video/([0-9A-Za-z]+)',
+            '(?://|\.)(veoh\.com)/(?:watch/|.+?permalinkId=)?([0-9a-zA-Z/]+)',
+            '(?://|\.)(vev\.(?:io|red))/(?:embed/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vidbob\.com)/(?:embed-)?([0-9a-zA-Z-]+)',
+            '(?://|\.)((?:v[ie]d[bp][oe]?m|myvii?d|v[ei]dshar[er]?)\.(?:com|net|org))(?::\d+)?/(?:embed[/-])?([A-Za-z0-9]+)',
+            '(?://|\.)(vidcloud\.(?:co|pro|is))/(?:embed\d/|v/|player\?fid=)([0-9a-zA-Z?&=]+)',
+            '(?://|\.)((?:vidcloud9|vidnode|vidnext|vidembed)\.(?:com|net|cc))/(?:streaming|embedplus|load(?:server)?)(?:\.php)?\?id=([0-9a-zA-Z]+)',
+            '(?://|\.)((?:videa|videakid)\.hu)/(?:player/?\?v=|player/v/|videok/)(?:.*-|)([0-9a-zA-Z]+)',
+            '(?://|\.)(videoapne\.co)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(thevideobee\.to)/(?:embed-)?([0-9A-Za-z]+)',
+            '(?://|\.)(videobin\.co)/(?:embed-|source/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(videohost2\.com)/playh\.php\?id=([0-9a-f]+)',
+            '(?://|\.)(videomega\.co)/(?:e/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(videooo\.news)/(?:embed-)?([^\n]+)',
+            '(?://|\.)(videoseyred\.in)/embed/([0-9a-zA-Z]+)',
+            '(?://|\.)(videos\.sh)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(videovard\.sx)/[vef]/([0-9a-zA-Z]+)',
+            '(?://|\.)(videowood\.tv)/(?:embed/|video/)([0-9a-z]+)',
+            '(?://|\.)(videoz\.me)/(?:embed-)?([0-9a-zA-Z]+)',
+            /(?:\/\/|\.)(?:play44|playbb|video44|byzoo|playpanda|videozoo|videowing|easyvideo)\.(?:me|org|net|eu)\/(?:embed[/0-9a-zA-Z]*?|gplus|picasa|gogo\/)(?:\.php*)\?.*?((?:vid|video|id|file)=[%0-9a-zA-Z_\-\./]+|.*)[\?&]*.*/,
+            '(?://|\.)((?:videozupload|videzup)\.(?:net|pl|top))/video/([0-9a-z]+)',
+            '(?://|\.)(vidfast\.co)/(?:embed-)?([a-zA-Z0-9]+)',
+            '(?://|\.)(vidia\.tv)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vidlox\.(?:tv|me|xyz))/(?:embed-|source/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vidmojo\.net)/(?:embed-)?([^\n]+)',
+            '(?://|\.)(vidmoly\.(?:me|to|net))/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vidmx\.xyz)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vid(?:org|piz)\.(?:net|xyz))/(?:embed[/-])?([0-9A-Za-z]+)',
+            '(?://|\.)(vidoza\.(?:net|co))/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vidspace\.io)/(?:embed-)?([a-zA-Z0-9]+)',
+            '(?://|\.)(vidstore\.me)/(.+)',
+            '(?://|\.)(vidstreaming\.io)/(?:streaming|embed|load)\.php\?id=([a-zA-Z0-9]+)',
+            '(?://|\.)(vidto\.[sm]e)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(viduplayer\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vidwatch\d*\.me)/(?:embed-)?([a-zA-Z0-9]+)',
+            '(?://|\.)(vidzi\.(?:tv|nu))/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vimeo\.com)/(?:video/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(v[ie]uclips\.(?:net|com))/(?:embed/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vivo\.sx)/(?:embed/)?([0-9a-zA-Z]+)',
+            '(?://|\.)(vk\.com)/(?:video_ext\.php\?|video)(.+)',
+            '(?://|\.)(vkprime\.com)/(?:embed-)?([a-zA-Z0-9]+)',
+            '(?://|\.)(speedwatch\.us|vkspeed\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(videoslala\.com)/v/([^\n]+)',
+            '(?://|\.)((?:videoslala|myfeminist)\.(?:com|net))/embed/([^\n]+)',
+            '(?://|\.)(vlare\.tv)/(?:v|embed)/([\w-]+)(?:/(?:false|true)/(?:false|true)/\d+?)?',
+            '(?://|\.)(voe\.sx)/(?:e/)?([0-9A-Za-z]+)',
+            '(?://|\.)(vshare\.eu)/(?:embed-|)?([0-9a-zA-Z/]+)',
+            '(?://|\.)(vudeo\.net)/(?:embed-)?([0-9a-zA-Z-]+)',
+            '(?://|\.)(vupload\.com)/(?:e/|v/)?([0-9A-Za-z]+)',
+            '(?://|\.)(vup\.to)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(watchvideo[0-9]?[0-9]?\.us)/(?:embed-)?([0-9a-zA-Z]+)',
+            '(?://|\.)(weshare\.me)/(?:services/mediaplayer/site/_embed(?:\.max)?\.php\?u=)?([A-Za-z0-9]+)',
+            '(?://|\.)(wstream\.video)/(?:video6zvimpy52/|video.php\?file_code=)?([0-9a-zA-Z]+)',
+            '(?://|\.)((?:yadi\.sk|disk\.yandex\.ru))/i/([\w\-]+)',
+            '(?://|\.)(youdbox\.(?:com|net|org))/(?:embed-)?(\w+)',
+            '(?://|\.)(yourupload\.com|yucache\.net)/(?:watch|embed)?/?([0-9A-Za-z]+)',
+            '(?://|\.)(cloudvideo\.tv)/(?:embed[/-])?([A-Za-z0-9]+)'
+        ].map(re => re instanceof RegExp ? re : new RegExp(re)),
+
+        resolve(url){
+            url = url instanceof URL ? url.href : url;
+            if (typeof url === string) {
+                let i, re;
+                for (i = 0; i < this.patterns.length; i++) {
+                    re = this.patterns[i];
+                    if (re.test(url)) return true;
+                }
+            }
+            return false;
+        }
+    };
+
+
+
     // add Configurator
     if (window === window.parent) {
         ContextMenu.add('Configure ' + GMinfo.script.name, () => {
@@ -2647,7 +2843,19 @@
         
         
         
-        
+        // resolveurl
+
+        if (resolveurl.resolve(location.href)) {
+            let
+
+                    tags = ['resolve'],
+                    desc = 'from ' + location.hostname,
+                    subtitles = null;
+
+            (new RPCStream(location.href, null, {desc: desc, tags: tags}, {mode: 3}));
+        }
+
+
 
         // crunchyroll plugin
         if (/crunchyroll/.test(location.host)) {
@@ -2905,6 +3113,7 @@
                 (new RPCStream(url, null, 'from ' + src.hostname, {mode: 0}));
             }
         }
+
 
     });
 
