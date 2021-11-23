@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.5
+// @version     3.5.1
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -2576,7 +2576,7 @@
                                             (new RPCStream(link, subs, xid, {
                                                 mode: 0,
                                                 title: meta.title,
-                                                referer: 'https://www.dailymotion.com/video/' + xid,
+                                                referer: 'https://www.dailymotion.com/',
                                                 useragent: 'Mozilla/5.0 (Linux; Android 7.1.1; Pixel Build/NMF26O) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.91 Mobile Safari/537.36'
                                             }, false)).send();
                                         } else Notify.error('Cannot send video ' + xid, 'DAILYMOTION');
@@ -2637,6 +2637,7 @@
             '(?://|\.)(gofile\.io)\/(?:\\?c=|d/)([0-9a-zA-Z]+)',
             '(?://|\.)(gogo-play\.net)/(?:streaming|embed|load|ajax)\.php\?id=([a-zA-Z0-9]+)',
             '(?://|\.)((?:gomoplayer|tunestream|xvideosharing)\.(?:com|net))/(?:embed-)?([0-9a-zA-Z]+)',
+            'https?://(.*?(?:\.googlevideo|\.bp\.blogspot|blogger|(?:plus|drive|get|docs)\.google|google(?:usercontent|drive|apis))\.com)/(.*?(?:videoplayback\?|[\?&]authkey|host/)*.+)',
             '(?://|\.)(gounlimited\.to)/(?:embed-)?([0-9a-zA-Z]+)',
             '(?://|\.)((?:hdvid|vidhdthe)\.(?:tv|fun|online))/(?:embed-)?([0-9a-zA-Z]+)',
             '(?://|\.)(holavid\.com)/(?:embed-)?([0-9a-zA-Z]+)',
@@ -2771,10 +2772,19 @@
             '(?://|\.)(cloudvideo\.tv)/(?:embed[/-])?([A-Za-z0-9]+)'
         ].map(re => re instanceof RegExp ? re : new RegExp(re)),
 
+        ignore: [
+            '(?://|\.)(google\.com)/recaptcha/'
+        ].map(re => re instanceof RegExp ? re : new RegExp(re)),
+
         resolve(url){
             url = url instanceof URL ? url.href : url;
             if (typeof url === string) {
                 let i, re;
+                for (i = 0; i < this.ignore.length; i++) {
+                    re = this.ignore[i];
+                    if (re.test(url)) return false;
+                }
+
                 for (i = 0; i < this.patterns.length; i++) {
                     re = this.patterns[i];
                     if (re.test(url)) return true;
@@ -2783,6 +2793,32 @@
             return false;
         }
     };
+
+
+    function getSubtitlesFromUrl(src){
+        return new Promise(resolve => {
+            const result = {};
+            if (typeof src === string) src = new URL(src);
+            if (src instanceof URL && /subtitle_json\=/.test(src.search)) {
+                let jsonUrl = src.searchParams.get('subtitle_json');
+
+                (new FetchAPI()).fetchJSON(jsonUrl).then(item => {
+                    item.forEach(sub => {
+                        result[sub.label.toLowerCase()] = sub.src;
+                        if (sub.default === true) {
+                            result['default'] = sub.src;
+                        }
+                    });
+                    resolve(result);
+
+                }).catch(() => resolve(result));
+                return;
+            }
+            resolve(result);
+        });
+    }
+
+
 
 
 
@@ -2840,8 +2876,7 @@
 
                 });
         
-        
-        
+
         // resolveurl
 
         if (resolveurl.resolve(location.href)) {
@@ -2851,7 +2886,17 @@
                     desc = 'from ' + location.hostname,
                     subtitles = null;
 
-            (new RPCStream(location.href, null, {desc: desc, tags: tags}, {mode: 3}));
+            
+            getSubtitlesFromUrl(location.href).then(sub => {
+                let subtitles = sub.default || sub.english || null;
+                (new RPCStream(location.href, subtitles, {desc: desc, tags: tags}, {mode: 3}));
+                (new Clipboard(subtitles, desc, tags.concat(['subs'])));
+
+
+            });
+            
+            
+
         }
 
 
@@ -3025,14 +3070,26 @@
                     tags = [], desc = "from " + host;
 
             if (element.tagName === "SOURCE") tags.push('source');
+            
+            const addEntries = ()=>{
+                (new RPCStream(src, subtitles, {desc: desc, tags: tags}));
+                (new RPCStream(src, subtitles, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
+                (new Kodi(src, desc, tags));
+                (new Clipboard(src, desc, tags));
+                if (typeof subtitles === s) (new Clipboard(subtitles, desc, tags.concat(['subs'])));
+            };
+            
+
+            if (typeof subtitles === u) {
+                getSubtitlesFromUrl(location.href).then(sub => {
+                    let subtitles = sub.default || sub.english || null;
+                    addEntries();
+                });
 
 
+            } else addEntries();
 
-            (new RPCStream(src, subtitles, {desc: desc, tags: tags}));
-            (new RPCStream(src, subtitles, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
-            (new Kodi(src, desc, tags));
-            (new Clipboard(src, desc, tags));
-            if (typeof subtitles === s) (new Clipboard(subtitles, desc, tags.concat(['subs'])));
+
 
         });
 
