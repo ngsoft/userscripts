@@ -1776,14 +1776,13 @@
 
         constructor(url, subs, description, params, menu = true){
             super();
-            let title = doc.title;
+            let title;
             if (
-                    title.length < 1 &&
                     window.frameElement &&
                     window.frameElement.ownerDocument
                     ) {
                 title = window.frameElement.ownerDocument.title;
-            }
+            } else title = doc.title;
 
             if (url instanceof URL) url = url.href;
 
