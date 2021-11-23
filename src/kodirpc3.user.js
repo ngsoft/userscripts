@@ -2637,7 +2637,6 @@
             '(?://|\.)(gofile\.io)\/(?:\\?c=|d/)([0-9a-zA-Z]+)',
             '(?://|\.)(gogo-play\.net)/(?:streaming|embed|load|ajax)\.php\?id=([a-zA-Z0-9]+)',
             '(?://|\.)((?:gomoplayer|tunestream|xvideosharing)\.(?:com|net))/(?:embed-)?([0-9a-zA-Z]+)',
-            'https?://(.*?(?:\.googlevideo|\.bp\.blogspot|blogger|(?:plus|drive|get|docs)\.google|google(?:usercontent|drive|apis))\.com)/(.*?(?:videoplayback\?|[\?&]authkey|host/)*.+)',
             '(?://|\.)(gounlimited\.to)/(?:embed-)?([0-9a-zA-Z]+)',
             '(?://|\.)((?:hdvid|vidhdthe)\.(?:tv|fun|online))/(?:embed-)?([0-9a-zA-Z]+)',
             '(?://|\.)(holavid\.com)/(?:embed-)?([0-9a-zA-Z]+)',
