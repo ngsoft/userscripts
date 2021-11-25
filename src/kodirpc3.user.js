@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version     3.5.1
+// @version     3.5.2
 // @name        KodiRPC 3.0
 // @description Send Stream URL to Kodi using jsonRPC
 // @author      daedelus
@@ -73,8 +73,7 @@
             UUID = GMinfo ? GMinfo.script.uuid : "",
             utils = {},
             // youtube desktop_polymer.js overrides the originals so we export them before the script loads
-            parseJson = JSON.parse,
-            stringify = JSON.stringify;
+            SafeJSON = JSON;
 
     // Pass sandboxed functions into the module GM
     [
@@ -358,6 +357,7 @@
 
     /**
      * Store data into GreaseMonkey 3 or Tampermonkey
+     * Recent Tampermonkey update broke arrays so we use json
      * @type {Class}
      * @extends {DataStore}
      */
@@ -374,11 +374,18 @@
                 retval = {};
                 utils.GM_listValues().forEach(key => retval[key] = this.get(key));
             }
+            if (typeof retval === string) {
+                try {
+                    retval = SafeJSON.parse(retval);
+                } catch (e) {
+                }
+
+            }
             return retval;
 
         }
         set(key, val){
-            if (typeof key === s && typeof val !== u) utils.GM_setValue(key, val);
+            if (typeof key === s && typeof val !== u) utils.GM_setValue(key, SafeJSON.stringify(val));
             else if (isPlainObject(key)) Object.keys(key).forEach(k => this.set(k, key[k]));
             return this;
         }
@@ -810,7 +817,7 @@
     function RPCRequest(method, params, id){
         params = params || {};
         if (typeof method === s && isPlainObject(params)) {
-            return stringify({
+            return SafeJSON.stringify({
                 jsonrpc: '2.0',
                 method: method,
                 params: params,
@@ -1017,7 +1024,7 @@
                     data: data,
                     headers: that.headers,
                     onload(xhr){
-                        if (xhr.status === 200) resolve(parseJson(xhr.response));
+                        if (xhr.status === 200) resolve(SafeJSON.parse(xhr.response));
                         else reject();
                     },
                     onerror(){
@@ -1799,7 +1806,7 @@
             if (typeof subs === s) {
                 params.subtitles = subs;
             }
-            this.setParam('request', btoa(stringify(params)));
+            this.setParam('request', btoa(SafeJSON.stringify(params)));
             if (typeof params.mode === n) this.setParam('mode', '' + params.mode);//needs a string
 
             if (isPlainObject(description)) {
@@ -1859,7 +1866,7 @@
                 'Accept': 'application/json, text/plain, */*'
             }, headers);
             return  this.fetch(url, headers)
-                    .then(text => parseJson(text));
+                    .then(text => SafeJSON.parse(text));
         }
 
 
@@ -1971,7 +1978,7 @@
                         .then(html => {
                             let matches, obj;
                             if ((matches = /const\ context=\'(.*?)\';/i.exec(html)) !== null) {
-                                if (obj = parseJson(atob(matches[1]))) {
+                                if (obj = SafeJSON.parse(atob(matches[1]))) {
                                     resolve(obj.id);
                                     return;
                                 }
@@ -2015,7 +2022,7 @@
                 this
                         .post('https://yt5s.com/api/ajaxSearch', {q: url, vt: 'home'}, Object.assign({}, this.headers))
                         .then(json => {
-                            let obj = parseJson(json);
+                            let obj = SafeJSON.parse(json);
                             if (!obj.error) resolve(obj);
                             else reject(new Error(obj.error));
                         })
@@ -2062,7 +2069,7 @@
                                         client: 'yt5s.com'
                                     }, Object.assign({"X-Requested-Key": "de0cfuirtgf67a"}, this.headers))
                                     .then(json => {
-                                        const data = parseJson(json);
+                                        const data = SafeJSON.parse(json);
                                         if (data.c_server) {
 
                                             let worker = () => {
@@ -2075,7 +2082,7 @@
                                                     fname: obj.fn
                                                 }, Object.assign({}, this.headers))
                                                         .then(jsonString => {
-                                                            let serverData = parseJson(jsonString);
+                                                            let serverData = SafeJSON.parse(jsonString);
 
                                                             if (typeof serverData.jobID === string) {
                                                                 setTimeout(() => {
@@ -2236,7 +2243,7 @@
                     },
                     onload(xhr){
                         if (xhr.status === 200) {
-                            resolve(parseJson(xhr.response));
+                            resolve(SafeJSON.parse(xhr.response));
 
                         } else reject(new Error('Cannot get Vimeo data.'));
                     },
@@ -2355,7 +2362,7 @@
                     },
                     onload(xhr){
                         if (xhr.status === 200) {
-                            let json = parseJson(xhr.response);
+                            let json = SafeJSON.parse(xhr.response);
                             resolve(this.token = json.access_token);
 
                         } else reject(new Error('Cannot get Dailymotion access Token.'));
@@ -2387,10 +2394,10 @@
                         method: 'POST',
                         url: url,
                         headers: headers,
-                        data: stringify({app: 'com.dailymotion.neon'}),
+                        data: SafeJSON.stringify({app: 'com.dailymotion.neon'}),
                         onload(xhr){
                             if (xhr.status === 200) {
-                                let json = parseJson(xhr.response);
+                                let json = SafeJSON.parse(xhr.response);
                                 resolve(json);
 
                             } else reject(error);
@@ -2889,7 +2896,7 @@
             getSubtitlesFromUrl(location.href).then(sub => {
                 let subtitles = sub.default || sub.english || null;
                 (new RPCStream(location.href, subtitles, {desc: desc, tags: tags}, {mode: 3}));
-                (new Clipboard(subtitles, desc, tags.concat(['subs'])));
+                if (typeof subtitles === string) (new Clipboard(subtitles, desc, tags.concat(['subs'])));
 
 
             });
