@@ -19,6 +19,8 @@
 // @grant	GM_getResourceText
 // @grant	GM_addStyle
 // @grant	GM_setClipboard
+// @grant	GM_openInTab
 // @run-at	document-end
 // @include	*
+// @connect	*
 // ==/UserScript==

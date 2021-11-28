@@ -22,9 +22,11 @@
 // @grant       GM_getResourceText
 // @grant       GM_addStyle
 // @grant       GM_setClipboard
+// @grant       GM_openInTab
 // @run-at      document-end
 //
 // @include     *
+// @connect     *
 // ==/UserScript==
 
 /**
@@ -2599,6 +2601,98 @@
 
 
 
+    /**
+     * Decodes the M3U8 to get qualities
+     */
+    function parseM3U8(m3u8url){
+
+        let
+                RE_MULTISTREAMS = /(#EXT-X-STREAM-INF.*)\n([^#].*)/,
+                RE_PARAMS = /([\w\-]+)(?:\s*=\s*\"?)([^,"]+)(?:[\"\?]+)?/g,
+                url = m3u8url instanceof  URL ? m3u8url : new URL(m3u8url);
+
+        m3u8url = m3u8url instanceof URL ? m3u8url.href : m3u8url;
+
+        return new Promise(resolve => {
+
+            utils.GM_xmlhttpRequest({
+                method: 'GET',
+                url: m3u8url,
+                headers: {
+                    Origin: location.origin,
+                    Referer: location.origin + '/'
+                },
+                onload(xhr){
+                    let result = [];
+                    if (xhr.status === 200) {
+                        let text = xhr.response, matches;
+
+                        while ((matches = RE_MULTISTREAMS.exec(text)) !== null) {
+                            text = text.replace(matches[0], '');
+                            let
+                                    line = matches[1].replace('#EXT-X-STREAM-INF:', ''),
+                                    data = {}, uri = matches[2].trim(), params;
+                            if (uri.length > 0) {
+                                if (!(/^http/.test(uri))) {
+                                    if (uri[0] === '/') {
+                                        uri = url.origin + uri;
+                                    } else {
+                                        let path = url.pathname.split('/');
+                                        path.pop();
+                                        uri = url.origin + path.join('/') + '/' + uri;
+                                    }
+                                }
+
+                                data.url = uri;
+
+                                while ((params = RE_PARAMS.exec(line)) !== null) {
+                                    let key = params[1], value = params[2];
+                                    data[key.toLowerCase()] = value;
+                                }
+
+                                if (!data.resolution) continue;
+
+                                data.width = parseInt(data.resolution.split(/x/i).shift());
+                                let height = data.height = parseInt(data.resolution.split(/x/i).pop());
+
+                                if (height >= 4320)
+                                    data.name = '8K';
+                                if (height >= 2160)
+                                    data.name = '4K';
+                                if (height > 1080)
+                                    data.name = '2K';
+                                if (height <= 1080)
+                                    data.name = '1080p';
+                                if (height <= 720)
+                                    data.name = '720p';
+                                if (height <= 540)
+                                    data.name = '540p';
+                                if (height <= 480)
+                                    data.name = '480p';
+                                if (height <= 360)
+                                    data.name = '360p';
+
+
+                                result.push(data);
+                            }
+
+                        }
+                    }
+                    result.sort((a, b) => b.height - a.height);
+
+                    resolve(result);
+                },
+                onerror(){
+                    resolve([]);
+                }
+            });
+
+
+
+        });
+
+    }
+
 
     const resolveurl = {
         // from each plugins in script.module.resolveurl
@@ -3118,7 +3212,7 @@
 
                             if (typeof track !== 'string') {
                                 track = t.file;
-                            } else if (t.label && /^en/i.test(t.label)) {
+                            } else if (t.label && /^(en|fr)/i.test(t.label)) {
                                 track = t.file;
                             }
 
@@ -3128,27 +3222,63 @@
 
 
                     let
-                            uni = playlist.sources.length === 1,
                             host = location.hostname,
                             tags = ['jwplayer'],
-                            trackAdded = false;
+                            clip = [],
+                            kodiargs = [],
+                            pcomplete = () => {
+                        let args;
+                        while (args = kodiargs.shift()) {
+                            (new Kodi(...args));
+                        }
+                        while (args = clip.shift()) {
+                            (new Clipboard(...args));
+                        }
+                        if (typeof track === s) (new Clipboard(track, desc, tags.concat(['subs'])));
+                    };
 
 
 
                     playlist.sources.forEach((source, i) => {
+
+
+                        let lastSource = i + 1 === playlist.sources.length;
+
                         if (/^http/.test(source.file)) {
-                            let desc = uni ? '' : `${i} `;
-                            desc += `from ${host}`;
-                            (new RPCStream(source.file, track, {desc: desc, tags: tags}));
-                            (new RPCStream(source.file, track, {desc: desc, tags: tags.concat(['hls'])}, {mode: 2}));
-                            (new Kodi(source.file, desc, tags));
-                            (new Clipboard(source.file, desc, tags.concat(['video'])));
-                            if (typeof track === s && trackAdded === false) {
-                                (new Clipboard(track, desc, tags.concat(['subs'])));
-                                trackAdded = true;
+                            let
+                                    label = `${source.label || 'source ' + i} `,
+                                    desc = host,
+                                    fallback = () => {
+                                (new RPCStream(source.file, track, {desc: desc, tags: tags.concat([label])}));
+                                (new RPCStream(source.file, track, {desc: desc, tags: tags.concat([label, 'hls'])}, {mode: 2}));
+                                kodiargs.push([source.file, desc, tags.concat([label])]);
+                                clip.push([source.file, desc, tags.concat([label, 'video'])]);
+                            };
+
+
+                            if (/\.m3u8/.test(source.file)) {
+
+                                parseM3U8(source.file).then(data => {
+                                    if (data.length > 0) {
+                                        data.forEach(stream => {
+                                            (new RPCStream(stream.url, track, {desc: desc, tags: tags.concat([stream.name])}));
+                                            kodiargs.push([stream.url,desc, tags.concat([stream.name])]);
+                                            clip.push([source.file, desc, tags.concat([stream.name, 'video'])]);
+
+                                        });
+                                    } else fallback();
+                                    if (lastSource) pcomplete();
+                                });
+
+                                return;
+
                             }
+                            fallback();
+                            if (lastSource) pcomplete();
                         }
                     });
+
+
 
                 }
             }
