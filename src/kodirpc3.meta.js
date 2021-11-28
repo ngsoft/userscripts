@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version	3.5.2
+// @version	3.6
 // @name	KodiRPC 3.0
 // @description	Send Stream URL to Kodi using jsonRPC
 // @author	daedelus
@@ -19,7 +19,6 @@
 // @grant	GM_getResourceText
 // @grant	GM_addStyle
 // @grant	GM_setClipboard
-// @grant	GM_openInTab
 // @run-at	document-end
 // @include	*
 // @connect	*
