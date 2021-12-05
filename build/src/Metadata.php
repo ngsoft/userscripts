@@ -144,7 +144,25 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         if (!str_ends_with($userscript, '.user.js')) throw new RuntimeException(sprintf('%s: invalid extension(.user.js).', $userscript));
         $instance = static::create($convert_icons);
         $instance->setFilenames($userscript);
-        $instance->parse(file_get_contents($userscript));
+        $contents = file_get_contents($userscript);
+        $instance->parse($contents);
+
+        if ($convert_icons) {
+
+            foreach ($instance->properties as $prop) {
+
+                if (str_contains($prop, 'icon') and $key = $instance->getKey($prop)) {
+                    /** @var Icon $icon */
+                    $icon = $instance->{$key};
+                    if ($b64 = $icon->getBase64URL() and $b64 != $icon->getURL()) {
+                        $contents = str_replace($icon->getURL(), $b64, $contents);
+                        var_dump($icon->getURL(), $b64);
+                        //file_put_contents($userscript, $contents);
+                    }
+                }
+            }
+        }
+
         return $instance;
     }
 

@@ -16,6 +16,9 @@ class Icon implements Stringable, JsonSerializable {
     /** @var string */
     private $url;
 
+    /** @var ?string */
+    private $b64URL;
+
     /** @var bool */
     private $convert;
 
@@ -32,6 +35,7 @@ class Icon implements Stringable, JsonSerializable {
     public function getBase64URL(): ?string {
 
         if (preg_match('/;base64,/', $this->url)) return $this->url;
+        elseif (isset($this->b64URL)) return $this->b64URL;
         elseif ($this->convert and preg_match('/^https?:\/\//', $this->url)) {
 
             $mimey = new MimeTypes();
@@ -43,7 +47,7 @@ class Icon implements Stringable, JsonSerializable {
                         $body = $response->getBody();
                         $body->rewind();
                         if (!empty($contents = $body->getContents())) {
-                            return sprintf('data:%s;base64,%s', $mime, base64_encode($contents));
+                            return $this->b64URL = sprintf('data:%s;base64,%s', $mime, base64_encode($contents));
                         }
                     }
                 } catch (Throwable $error) {
