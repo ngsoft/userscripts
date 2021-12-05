@@ -10,7 +10,7 @@
 // @grant none
 // @run-at       document-start
 //
-// @icon        https://staticf.akacdn.ru/assets/9anime/favicons/favicon-32x32.png
+// @icon        https://s2.bunnycdn.ru/assets/9anime/favicons/favicon.png
 // @include     /^https?:\/\/(\w+\.)?9anime\.\w+\//
 // ==/UserScript==
 

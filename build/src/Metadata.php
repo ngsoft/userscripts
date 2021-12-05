@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace NGSOFT\Userscript;
 
 use IteratorAggregate,
-    JsonSerializable,
-    NGSOFT\RegExp,
-    RuntimeException,
+    JsonSerializable;
+use NGSOFT\{
+    RegExp, Tools
+};
+use RuntimeException,
     Stringable;
-use function str_ends_with;
+use function GuzzleHttp\json_encode,
+             str_contains,
+             str_ends_with;
 
 /**
  * @link https://www.tampermonkey.net/documentation.php?ext=dhdg
@@ -147,7 +151,12 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         $contents = file_get_contents($userscript);
         $instance->parse($contents);
 
-        if ($convert_icons) {
+        if ($convert_icons and $instance->hasIcon()) {
+
+            $regex_block = new RegExp('(?:[\/]{2,}\h*==UserScript==\n*)(.*)(?:[\/]{2,}\h*==\/UserScript==\n*)', RegExp::PCRE_DOTALL);
+
+            var_dump($regex_block->replace($contents, (fn($m) => (string) $instance)));
+            exit;
 
             foreach ($instance->properties as $prop) {
                 if (str_contains($prop, 'icon') and $key = $instance->getKey($prop)) {
@@ -560,6 +569,11 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     ////////////////////////////   Parser/Builder   ////////////////////////////
 
+
+    private function hasIcon(): bool {
+
+        return Tools::array_some(fn($p) => str_contains($p, 'icon'), $this->properties);
+    }
 
     private function addProperty(string $prop) {
         $this->properties[$prop] = $prop;
