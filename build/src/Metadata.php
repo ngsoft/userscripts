@@ -114,9 +114,6 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     ////////////////////////////   Metadatas   ////////////////////////////
 
-    /** @var array */
-    private $metadata = [];
-
     /** @var string[] */
     private $properties = [];
 
@@ -185,6 +182,37 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         $this->userscript = $userscript;
         $this->metascript = preg_replace('/\.user\.js$/', '.meta.js', $userscript);
         $this->jsonmeta = preg_replace('/\.user\.js$/', '.json', $userscript);
+    }
+
+    ////////////////////////////   Save Metadata   ////////////////////////////
+
+    /**
+     * Save json metadata
+     *
+     * @return static
+     */
+    public function saveJSON() {
+
+        if (!is_string($this->jsonmeta)) {
+            throw new RuntimeException('Cannot save metadata, no filename.');
+        }
+
+        $json = json_encode($this, JSON_PRETTY_PRINT);
+        file_put_contents($this->jsonmeta, $json);
+        return $this;
+    }
+
+    /**
+     * Save .meta.js
+     *
+     * @return static
+     */
+    public function saveMetaFile() {
+        if (!is_string($this->metascript)) {
+            throw new RuntimeException('Cannot save metadata, no filename.');
+        }
+        file_put_contents($this->metascript, $this);
+        return $this;
     }
 
     ////////////////////////////   Getters   ////////////////////////////
@@ -519,17 +547,11 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     }
 
     private function build(): string {
-
-
         $result = "// ==UserScript==\n";
-
         $lines = [];
         $maxlen = 0;
-
         foreach ($this->getIterator() as $prop => $value) {
-
             if (($len = strlen($prop)) > $maxlen) $maxlen = $len;
-
             if (is_bool($value)) $lines[] = [$prop, ''];
             elseif (is_array($value)) {
                 foreach ($value as $k => $v) {
@@ -538,8 +560,6 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                 }
             } else $lines[] = [$prop, $value];
         }
-
-
         if (count($lines) > 0) {
             $maxlen += 2;
             foreach ($lines as $line) {
@@ -556,10 +576,6 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                 $result .= "\n";
             }
         }
-
-
-
-
         $result .= "// ==/UserScript==\n";
         return $result;
     }
@@ -572,6 +588,8 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         $regex_key_value = new RegExp('^(.*)\h+(.*)$');
 
         if ($block = $regex_block->exec($contents)) {
+
+
             $block = $block[1];
             $data = [];
 
@@ -594,9 +612,10 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
             if (!empty($data)) {
                 foreach ($data as $prop => $value) {
-                    $key = $this->getKey($prop);
-                    $this->addProperty($prop);
-                    $this->{$key} = $value;
+                    if ($key = $this->getKey($prop)) {
+                        $this->addProperty($prop);
+                        $this->{$key} = $value;
+                    }
                 }
             }
         } else throw new RuntimeException(sprintf('No userscript block in %s', $this->userscript));

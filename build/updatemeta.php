@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use NGSOFT\RegExp;
+use NGSOFT\Userscript\Metadata;
 
 require_once __DIR__ . '/vendor/autoload.php';
 $src = dirname(__DIR__) . '/src';
@@ -14,8 +14,22 @@ foreach (scandir($src)as $file) {
 
     echo "$filename\n";
 
-    $userscript = \NGSOFT\Userscript\Metadata::loadUserscript($filename);
+    $userscript = Metadata::loadUserscript($filename);
+
+    //$userscript->saveJSON();
 
     print $userscript;
-    exit;
+
+    $metafile = preg_replace('/\.user\.js$/', '.meta.js', $filename);
+
+    print "$metafile\n";
+
+    if (is_file($metafile)) {
+
+        $meta = Metadata::loadMetascript($metafile);
+
+        print $meta;
+
+        var_dump((string) $meta === (string) $userscript);
+    }
 }
