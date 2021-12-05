@@ -1,5 +1,12 @@
 {
     "require": {
         "ngsoft/tools": "^2.1"
-    }
+    },
+    "autoload": {
+        "psr-4": {
+            "NGSOFT\\Userscript\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

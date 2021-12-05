@@ -1,0 +1,567 @@
+<?php
+
+declare(strict_types=1);
+
+namespace NGSOFT\Userscript;
+
+use IteratorAggregate,
+    JsonSerializable,
+    RuntimeException,
+    Stringable;
+use function str_ends_with;
+
+/**
+ * @link https://www.tampermonkey.net/documentation.php?ext=dhdg
+ */
+class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
+    ////////////////////////////   Metadatas   ////////////////////////////
+
+    /** @var ?string */
+    private $name;
+
+    /** @var ?string */
+    private $namespace;
+
+    /** @var ?string */
+    private $version;
+
+    /** @var ?string */
+    private $author;
+
+    /** @var ?string */
+    private $description;
+
+    /** @var ?string */
+    private $homepage;
+
+    /** @var ?string */
+    private $homepageURL;
+
+    /** @var ?string */
+    private $website;
+
+    /** @var ?string */
+    private $source;
+
+    /** @var ?string */
+    private $icon;
+
+    /** @var ?string */
+    private $iconURL;
+
+    /** @var ?string */
+    private $defaulticon;
+
+    /** @var ?string */
+    private $icon64;
+
+    /** @var ?string */
+    private $icon64URL;
+
+    /** @var ?string */
+    private $updateURL;
+
+    /** @var ?string */
+    private $downloadURL;
+
+    /** @var ?string */
+    private $supportURL;
+
+    /** @var string[] */
+    private $include = [];
+
+    /** @var string[] */
+    private $match = [];
+
+    /** @var string[] */
+    private $exclude = [];
+
+    /** @var string[] */
+    private $require = [];
+
+    /** @var array<string,string> */
+    private $resource = [];
+
+    /** @var string[] */
+    private $connect = [];
+
+    /** @var ?string */
+    private $runAt;
+
+    /** @var string[] */
+    private $grant = [];
+
+    /** @var array<string,string> */
+    private $antifeature = [];
+
+    /** @var bool */
+    private $noframes = false;
+
+    /** @var string[] */
+    private $nocompat = [];
+
+    ////////////////////////////   Filenames   ////////////////////////////
+
+    /** @var string */
+    private $userscript;
+
+    /** @var string */
+    private $metascript;
+
+    /** @var string */
+    private $jsonmeta;
+
+    ////////////////////////////   Metadatas   ////////////////////////////
+
+    /** @var array */
+    private $metadata = [];
+
+    /** @var string[] */
+    private $properties = [];
+
+    ////////////////////////////   Initialization   ////////////////////////////
+
+    /**
+     * Creates a new instance
+     * @return static
+     */
+    public static function create(): self {
+        return new static();
+    }
+
+    /**
+     * Loads Userscript ending with ".user.js"
+     *
+     * @param string $userscript
+     * @return static
+     */
+    public static function loadUserscript(string $userscript): self {
+        if (!is_file($userscript)) throw new RuntimeException(sprintf('%s does not exists.', $userscript));
+        if (!str_ends_with($userscript, '.user.js')) throw new RuntimeException(sprintf('%s: invalid extension(.user.js).', $userscript));
+        $instance = static::create();
+        $instance->setFilenames($userscript);
+        $instance->parse(file_get_contents($userscript));
+        return $instance;
+    }
+
+    /**
+     * Loads Metascript ending with ".meta.js"
+     *
+     * @param string $metascript
+     * @return static
+     */
+    public static function loadMetascript(string $metascript) {
+        if (!is_file($metascript)) throw new RuntimeException(sprintf('%s does not exists.', $metascript));
+        if (!str_ends_with($metascript, '.meta.js')) throw new RuntimeException(sprintf('%s: invalid extension(.meta.js).', $metascript));
+        $userscript = preg_replace('/\.meta\.js$/', '.user.js', $metascript);
+        $instance = static::create();
+        $instance->setFilenames($userscript);
+        $instance->parse(file_get_contents($metascript));
+        return $instance;
+    }
+
+    /**
+     * Loads Metascript ending with ".meta.js"
+     *
+     * @param string $jsonmeta
+     * @return static
+     */
+    public static function loadMetadata(string $jsonmeta) {
+        if (!is_file($jsonmeta)) throw new RuntimeException(sprintf('%s does not exists.', $jsonmeta));
+        if (!str_ends_with($jsonmeta, '.json')) throw new RuntimeException(sprintf('%s: invalid extension(.json).', $jsonmeta));
+        $userscript = preg_replace('/\.json$/', '.user.js', $jsonmeta);
+        $instance = static::create();
+        $instance->setFilenames($userscript);
+        $instance->loadMeta(json_decode(file_get_contents($jsonmeta), true));
+        return $instance;
+    }
+
+    private function __construct() {
+        // instanciate using static methods
+    }
+
+    private function setFilenames(string $userscript) {
+        $this->userscript = $userscript;
+        $this->metascript = preg_replace('/\.user\.js$/', '.meta.js', $userscript);
+        $this->jsonmeta = preg_replace('/\.user\.js$/', '.json', $userscript);
+    }
+
+    ////////////////////////////   Getters   ////////////////////////////
+
+    public function getName(): ?string {
+        return $this->name;
+    }
+
+    public function getNamespace(): ?string {
+        return $this->namespace;
+    }
+
+    public function getVersion(): ?string {
+        return $this->version;
+    }
+
+    public function getAuthor(): ?string {
+        return $this->author;
+    }
+
+    public function getDescription(): ?string {
+        return $this->description;
+    }
+
+    public function getHomepage(): ?string {
+        return $this->homepage;
+    }
+
+    public function getHomepageURL(): ?string {
+        return $this->homepageURL;
+    }
+
+    public function getWebsite(): ?string {
+        return $this->website;
+    }
+
+    public function getSource(): ?string {
+        return $this->source;
+    }
+
+    public function getIcon(): ?string {
+        return $this->icon;
+    }
+
+    public function getIconURL(): ?string {
+        return $this->iconURL;
+    }
+
+    public function getDefaulticon(): ?string {
+        return $this->defaulticon;
+    }
+
+    public function getIcon64(): ?string {
+        return $this->icon64;
+    }
+
+    public function getIcon64URL(): ?string {
+        return $this->icon64URL;
+    }
+
+    public function getUpdateURL(): ?string {
+        return $this->updateURL;
+    }
+
+    public function getDownloadURL(): ?string {
+        return $this->downloadURL;
+    }
+
+    public function getSupportURL(): ?string {
+        return $this->supportURL;
+    }
+
+    public function getInclude(): array {
+        return $this->include;
+    }
+
+    public function getMatch(): array {
+        return $this->match;
+    }
+
+    public function getExclude(): array {
+        return $this->exclude;
+    }
+
+    public function getRequire(): array {
+        return $this->require;
+    }
+
+    public function getResource(): array {
+        return $this->resource;
+    }
+
+    public function getConnect(): array {
+        return $this->connect;
+    }
+
+    public function getRunAt(): ?string {
+        return $this->runAt;
+    }
+
+    public function getGrant(): array {
+        return $this->grant;
+    }
+
+    public function getAntifeature(): array {
+        return $this->antifeature;
+    }
+
+    public function getNoframes(): bool {
+        return $this->noframes;
+    }
+
+    public function getNocompat(): array {
+        return $this->nocompat;
+    }
+
+    ////////////////////////////   Setters   ////////////////////////////
+
+    public function setName(string $name) {
+        $this->addProperty('name');
+
+        $this->name = $name;
+        return $this;
+    }
+
+    public function setNamespace(string $namespace) {
+        $this->addProperty('namespace');
+        $this->namespace = $namespace;
+        return $this;
+    }
+
+    public function setVersion(string $version) {
+        $this->addProperty('version');
+        $this->version = $version;
+        return $this;
+    }
+
+    public function setAuthor(string $author) {
+        $this->addProperty('author');
+        $this->author = $author;
+        return $this;
+    }
+
+    public function setDescription(string $description) {
+        $this->addProperty('description');
+        $this->description = $description;
+        return $this;
+    }
+
+    public function setHomepage(string $homepage) {
+        $this->addProperty('homepage');
+        $this->homepage = $homepage;
+        return $this;
+    }
+
+    public function setHomepageURL(string $homepageURL) {
+        $this->addProperty('homepageURL');
+        $this->homepageURL = $homepageURL;
+        return $this;
+    }
+
+    public function setWebsite(string $website) {
+        $this->addProperty('website');
+        $this->website = $website;
+        return $this;
+    }
+
+    public function setSource(string $source) {
+        $this->addProperty('source');
+        $this->source = $source;
+        return $this;
+    }
+
+    public function setIcon(string $icon) {
+        $this->addProperty('icon');
+        $this->icon = $icon;
+        return $this;
+    }
+
+    public function setIconURL(string $iconURL) {
+        $this->addProperty('iconURL');
+        $this->iconURL = $iconURL;
+        return $this;
+    }
+
+    public function setDefaulticon(string $defaulticon) {
+        $this->addProperty('defaulticon');
+        $this->defaulticon = $defaulticon;
+        return $this;
+    }
+
+    public function setIcon64(string $icon64) {
+        $this->addProperty('icon64');
+        $this->icon64 = $icon64;
+        return $this;
+    }
+
+    public function setIcon64URL(string $icon64URL) {
+        $this->addProperty('icon64URL');
+        $this->icon64URL = $icon64URL;
+        return $this;
+    }
+
+    public function setUpdateURL(string $updateURL) {
+        $this->addProperty('updateURL');
+        $this->updateURL = $updateURL;
+        return $this;
+    }
+
+    public function setDownloadURL(string $downloadURL) {
+        $this->addProperty('downloadURL');
+        $this->downloadURL = $downloadURL;
+        return $this;
+    }
+
+    public function setSupportURL(string $supportURL) {
+        $this->addProperty('supportURL');
+        $this->supportURL = $supportURL;
+        return $this;
+    }
+
+    public function setInclude(array $include) {
+        $this->addProperty('include');
+        $this->include = $include;
+        return $this;
+    }
+
+    public function setMatch(array $match) {
+        $this->addProperty('match');
+        $this->match = $match;
+        return $this;
+    }
+
+    public function setExclude(array $exclude) {
+
+        $this->addProperty('exclude');
+        $this->exclude = $exclude;
+        return $this;
+    }
+
+    public function setRequire(array $require) {
+        $this->addProperty('require');
+        $this->require = $require;
+        return $this;
+    }
+
+    public function setConnect(array $connect) {
+        $this->addProperty('connect');
+        $this->connect = $connect;
+        return $this;
+    }
+
+    public function setRunAt(string $runAt) {
+        $this->addProperty('run-at');
+        $this->runAt = $runAt;
+        return $this;
+    }
+
+    public function setGrant(array $grant) {
+        $this->addProperty('grant');
+        $this->grant = $grant;
+        return $this;
+    }
+
+    public function setNoframes(bool $noframes) {
+        $this->addProperty('noframes');
+        if ($noframes === false) unset($this->properties['noframes']);
+
+        $this->noframes = $noframes;
+        return $this;
+    }
+
+    public function setNocompat(array $nocompat) {
+        $this->addProperty('nocompat');
+        $this->nocompat = $nocompat;
+        return $this;
+    }
+
+    public function addResource(string $name, string $value) {
+        $this->addProperty('resource');
+        $this->resource[$name] = $value;
+        return $this;
+    }
+
+    public function addAntifeature(string $name, string $value) {
+        $this->addProperty('antifeature');
+        $this->antifeature[$name] = $value;
+        return $this;
+    }
+
+    public function addInclude(string $include) {
+        $this->addProperty('include');
+        $this->include[] = $include;
+        return $this;
+    }
+
+    public function addMatch(string $match) {
+        $this->addProperty('match');
+        $this->match[] = $match;
+        return $this;
+    }
+
+    public function addExclude(string $exclude) {
+
+        $this->addProperty('exclude');
+        $this->exclude[] = $exclude;
+        return $this;
+    }
+
+    public function addRequire(string $require) {
+        $this->addProperty('require');
+        $this->require[] = $require;
+        return $this;
+    }
+
+    public function addConnect(string $connect) {
+        $this->addProperty('connect');
+        $this->connect[] = $connect;
+        return $this;
+    }
+
+    ////////////////////////////   Parser/Builder   ////////////////////////////
+
+
+    private function addProperty(string $prop) {
+        $this->properties[$prop] = $prop;
+    }
+
+    private function getKey(string $prop): ?string {
+        $key = preg_replace_callback('/[\-]+(\w)/', fn($m) => strtoupper($m[1]), $prop);
+        return property_exists($this, $key) ? $key : null;
+    }
+
+    private function build(): string {
+        return '';
+    }
+
+    private function parse(string $contents) {
+
+    }
+
+    private function loadMeta(array $meta) {
+
+        foreach ($meta as $prop => $value) {
+            if ($key = $this->getKey($prop)) {
+                $this->addProperty($prop);
+                $this->{$key} = $value;
+            }
+        }
+    }
+
+    public function toArray(): array {
+        $metadata = [];
+        foreach ($this->getIterator() as $prop => $value) {
+            $metadata[$prop] = $value;
+        }
+        return $metadata;
+    }
+
+    ////////////////////////////   Interfaces   ////////////////////////////
+
+    /**
+     * @return \Generator<string,mixed>
+     */
+    public function getIterator() {
+        foreach ($this->properties as $prop) {
+            if ($key = $this->getKey($prop)) {
+                yield $prop => $this->{$key};
+            }
+        }
+    }
+
+    public function jsonSerialize() {
+        return $this->toArray();
+    }
+
+    public function __toString() {
+        return $this->build();
+    }
+
+}
