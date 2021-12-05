@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      3.6.2
+// @version      3.6.3
 // @name         KodiRPC 3.0
 // @description  Send Stream URL to Kodi using jsonRPC
 // @author       daedelus
@@ -29,6 +29,8 @@
 // @connect      *
 // 
 // ==/UserScript==
+
+
 /**
  * todo: replace monkeyconfig by https://cdn.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
  */
@@ -2038,8 +2040,6 @@
                 const fetchUrl = new URL('https://downsub.com/');
 
                 fetchUrl.searchParams.set('url', url);
-
-                console.debug(url);
 
                 this
                         .fetch(fetchUrl, Object.assign({}, this.headers))
