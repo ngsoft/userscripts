@@ -150,7 +150,6 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         if ($convert_icons) {
 
             foreach ($instance->properties as $prop) {
-
                 if (str_contains($prop, 'icon') and $key = $instance->getKey($prop)) {
                     /** @var Icon $icon */
                     $icon = $instance->{$key};

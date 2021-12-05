@@ -9,7 +9,6 @@ use GuzzleHttp\Client,
     Mimey\MimeTypes,
     Stringable,
     Throwable;
-use function str_starts_with;
 
 class Icon implements Stringable, JsonSerializable {
 
