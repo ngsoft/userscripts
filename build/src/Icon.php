@@ -16,15 +16,23 @@ class Icon implements Stringable, JsonSerializable {
     /** @var string */
     private $url;
 
-    public function __construct(string $url) {
+    /** @var bool */
+    private $convert;
+
+    public function __construct(string $url, bool $convert = true) {
 
         $this->url = $url;
+        $this->convert = $convert;
+    }
+
+    public function getURL(): string {
+        return $this->url;
     }
 
     public function getBase64URL(): ?string {
 
         if (preg_match('/;base64,/', $this->url)) return $this->url;
-        elseif (preg_match('/^https?:\/\//', $this->url)) {
+        elseif ($this->convert and preg_match('/^https?:\/\//', $this->url)) {
 
             $mimey = new MimeTypes();
             if ($mime = $mimey->getMimeType(pathinfo($this->url, PATHINFO_EXTENSION))) {
@@ -50,7 +58,7 @@ class Icon implements Stringable, JsonSerializable {
     public function jsonSerialize() {
 
         return [
-            'url' => $this->url,
+            'url' => $this->getURL(),
             'base64URL' => $this->getBase64URL()
         ];
     }

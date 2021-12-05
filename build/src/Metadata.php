@@ -117,26 +117,32 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     /** @var string[] */
     private $properties = [];
 
+    /** @var bool */
+    private $convert_icons = false;
+
     ////////////////////////////   Initialization   ////////////////////////////
 
     /**
      * Creates a new instance
      * @return static
      */
-    public static function create(): self {
-        return new static();
+    public static function create(bool $convert_icons = false): self {
+        $instance = new static();
+        $instance->convert_icons = $convert_icons;
+        return $instance;
     }
 
     /**
      * Loads Userscript ending with ".user.js"
      *
      * @param string $userscript
+     * @param bool $convert_icons
      * @return static
      */
-    public static function loadUserscript(string $userscript): self {
+    public static function loadUserscript(string $userscript, bool $convert_icons = false): self {
         if (!is_file($userscript)) throw new RuntimeException(sprintf('%s does not exists.', $userscript));
         if (!str_ends_with($userscript, '.user.js')) throw new RuntimeException(sprintf('%s: invalid extension(.user.js).', $userscript));
-        $instance = static::create();
+        $instance = static::create($convert_icons);
         $instance->setFilenames($userscript);
         $instance->parse(file_get_contents($userscript));
         return $instance;
@@ -146,13 +152,14 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
      * Loads Metascript ending with ".meta.js"
      *
      * @param string $metascript
+     * @param bool $convert_icons
      * @return static
      */
-    public static function loadMetascript(string $metascript) {
+    public static function loadMetascript(string $metascript, bool $convert_icons = false) {
         if (!is_file($metascript)) throw new RuntimeException(sprintf('%s does not exists.', $metascript));
         if (!str_ends_with($metascript, '.meta.js')) throw new RuntimeException(sprintf('%s: invalid extension(.meta.js).', $metascript));
         $userscript = preg_replace('/\.meta\.js$/', '.user.js', $metascript);
-        $instance = static::create();
+        $instance = static::create($convert_icons);
         $instance->setFilenames($userscript);
         $instance->parse(file_get_contents($metascript));
         return $instance;
@@ -388,31 +395,31 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     public function setIcon(string $icon) {
         $this->addProperty('icon');
-        $this->icon = new Icon($icon);
+        $this->icon = new Icon($icon, $this->convert_icons);
         return $this;
     }
 
     public function setIconURL(string $iconURL) {
         $this->addProperty('iconURL');
-        $this->iconURL = new Icon($iconURL);
+        $this->iconURL = new Icon($iconURL, $this->convert_icons);
         return $this;
     }
 
     public function setDefaulticon(string $defaulticon) {
         $this->addProperty('defaulticon');
-        $this->defaulticon = new Icon($defaulticon);
+        $this->defaulticon = new Icon($defaulticon, $this->convert_icons);
         return $this;
     }
 
     public function setIcon64(string $icon64) {
         $this->addProperty('icon64');
-        $this->icon64 = new Icon($icon64);
+        $this->icon64 = new Icon($icon64, $this->convert_icons);
         return $this;
     }
 
     public function setIcon64URL(string $icon64URL) {
         $this->addProperty('icon64URL');
-        $this->icon64URL = new Icon($icon64URL);
+        $this->icon64URL = new Icon($icon64URL, $this->convert_icons);
         return $this;
     }
 
@@ -615,7 +622,7 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                 foreach ($data as $prop => $value) {
                     if ($key = $this->getKey($prop)) {
                         $this->addProperty($prop);
-                        if (str_contains($prop, 'icon')) $this->{$key} = new Icon($value);
+                        if (str_contains($prop, 'icon')) $this->{$key} = new Icon($value, $this->convert_icons);
                         else $this->{$key} = $value;
                     }
                 }
