@@ -7,29 +7,27 @@ use NGSOFT\Userscript\Metadata;
 require_once __DIR__ . '/vendor/autoload.php';
 $src = dirname(__DIR__) . '/src';
 
+$cnt = 0;
+
 foreach (scandir($src)as $file) {
     if (str_contains($file, '.dev')) continue;
     if (!str_ends_with($file, '.user.js')) continue;
     $filename = "$src/$file";
-
-    echo "$filename\n";
-
     $userscript = Metadata::loadUserscript($filename);
-
-    //$userscript->saveJSON();
-
-    print $userscript;
-
     $metafile = preg_replace('/\.user\.js$/', '.meta.js', $filename);
-
-    print "$metafile\n";
-
     if (is_file($metafile)) {
-
         $meta = Metadata::loadMetascript($metafile);
-
-        print $meta;
-
-        var_dump((string) $meta === (string) $userscript);
+        //$meta->setVersion('21.12.5');
+        $str_user = (string) $userscript;
+        $str_meta = (string) $meta;
+        if (strcmp($str_user, $str_meta) !== 0) {
+            $cnt++;
+            printf("%s has been changed, saving %s\n", basename($filename), basename($metafile));
+            $userscript->saveMetaFile();
+        }
     }
+}
+
+if ($cnt === 0) {
+    print "No changes where made.\n";
 }

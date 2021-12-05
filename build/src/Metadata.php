@@ -595,6 +595,7 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
             while ($matches = $regex_prop->exec($block)) {
                 list(, $prop, $value) = $matches;
+                $value = trim($value);
                 if ($key = $this->getKey($prop)) {
                     if (is_array($this->{$key})) {
                         $data[$prop] = $data[$prop] ?? [];
