@@ -128,11 +128,11 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     /**
      * Creates a new instance
+     * @param bool $convert_icons
      * @return static
      */
-    public static function create(bool $convert_icons = false): self {
+    public static function create(): self {
         $instance = new static();
-        $instance->convert_icons = $convert_icons;
         return $instance;
     }
 
@@ -146,16 +146,19 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     public static function loadUserscript(string $userscript, bool $convert_icons = false): self {
         if (!is_file($userscript)) throw new RuntimeException(sprintf('%s does not exists.', $userscript));
         if (!str_ends_with($userscript, '.user.js')) throw new RuntimeException(sprintf('%s: invalid extension(.user.js).', $userscript));
-        $instance = static::create($convert_icons);
+        $instance = static::create();
         $instance->setFilenames($userscript);
         $contents = file_get_contents($userscript);
         $instance->parse($contents);
 
         if ($convert_icons and $instance->hasIcon()) {
 
+
+            $instance->setDefaulticon($instance->getIcon(), $convert_icons);
+
             $regex_block = new RegExp('(?:[\/]{2,}\h*==UserScript==\n*)(.*)(?:[\/]{2,}\h*==\/UserScript==\n*)', RegExp::PCRE_DOTALL);
 
-            var_dump($regex_block->replace($contents, (fn($m) => (string) $instance)));
+            var_dump($regex_block->replace($contents, (string) $instance));
             exit;
 
             foreach ($instance->properties as $prop) {
@@ -178,14 +181,13 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
      * Loads Metascript ending with ".meta.js"
      *
      * @param string $metascript
-     * @param bool $convert_icons
      * @return static
      */
-    public static function loadMetascript(string $metascript, bool $convert_icons = false) {
+    public static function loadMetascript(string $metascript) {
         if (!is_file($metascript)) throw new RuntimeException(sprintf('%s does not exists.', $metascript));
         if (!str_ends_with($metascript, '.meta.js')) throw new RuntimeException(sprintf('%s: invalid extension(.meta.js).', $metascript));
         $userscript = preg_replace('/\.meta\.js$/', '.user.js', $metascript);
-        $instance = static::create($convert_icons);
+        $instance = static::create();
         $instance->setFilenames($userscript);
         $instance->parse(file_get_contents($metascript));
         return $instance;
@@ -419,33 +421,33 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         return $this;
     }
 
-    public function setIcon(string $icon) {
+    public function setIcon(string $icon, bool $convert = false) {
         $this->addProperty('icon');
-        $this->icon = new Icon($icon, $this->convert_icons);
+        $this->icon = new Icon($icon, $convert);
         return $this;
     }
 
-    public function setIconURL(string $iconURL) {
+    public function setIconURL(string $iconURL, bool $convert = false) {
         $this->addProperty('iconURL');
-        $this->iconURL = new Icon($iconURL, $this->convert_icons);
+        $this->iconURL = new Icon($iconURL, $convert);
         return $this;
     }
 
-    public function setDefaulticon(string $defaulticon) {
+    public function setDefaulticon(string $defaulticon, bool $convert = false) {
         $this->addProperty('defaulticon');
-        $this->defaulticon = new Icon($defaulticon, $this->convert_icons);
+        $this->defaulticon = new Icon($defaulticon, $convert);
         return $this;
     }
 
-    public function setIcon64(string $icon64) {
+    public function setIcon64(string $icon64, bool $convert = false) {
         $this->addProperty('icon64');
-        $this->icon64 = new Icon($icon64, $this->convert_icons);
+        $this->icon64 = new Icon($icon64, $convert);
         return $this;
     }
 
-    public function setIcon64URL(string $icon64URL) {
+    public function setIcon64URL(string $icon64URL, bool $convert = false) {
         $this->addProperty('icon64URL');
-        $this->icon64URL = new Icon($icon64URL, $this->convert_icons);
+        $this->icon64URL = new Icon($icon64URL, $convert);
         return $this;
     }
 
@@ -572,7 +574,7 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     private function hasIcon(): bool {
 
-        return Tools::array_some(fn($p) => str_contains($p, 'icon'), $this->properties);
+        return Tools::array_some(fn($p) => $p == 'icon', $this->properties);
     }
 
     private function addProperty(string $prop) {
@@ -653,7 +655,7 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                 foreach ($data as $prop => $value) {
                     if ($key = $this->getKey($prop)) {
                         $this->addProperty($prop);
-                        if (str_contains($prop, 'icon')) $this->{$key} = new Icon($value, $this->convert_icons);
+                        if (str_contains($prop, 'icon')) $this->{$key} = new Icon($value);
                         else $this->{$key} = $value;
                     }
                 }

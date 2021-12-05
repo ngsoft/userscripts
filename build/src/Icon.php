@@ -21,7 +21,7 @@ class Icon implements Stringable, JsonSerializable {
     /** @var bool */
     private $convert;
 
-    public function __construct(string $url, bool $convert = true) {
+    public function __construct(string $url, bool $convert = false) {
 
         $this->url = $url;
         $this->convert = $convert;
