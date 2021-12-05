@@ -1868,7 +1868,54 @@
                 'Accept': 'application/json, text/plain, */*'
             }, headers);
             return  this.fetch(url, headers)
-                    .then(text => SafeJSON.parse(text));
+                    .then(text => {
+                        if (typeof text !== string) throw new Error('Invalid JSON ' + url);
+                        return SafeJSON.parse(text);
+                    });
+        }
+
+        postJSON(url, data, headers){
+            return new Promise((resolve, reject) => {
+
+                if (url instanceof URL) url = url.href;
+                if (!/^http/.test(typeof url === string ? url : '')) {
+                    reject(new Error('Invalid URL provided.'));
+                    return;
+                }
+                headers = isPlainObject(headers) ? headers : {};
+                headers = Object.assign({"Content-Type": "application/json; charset=UTF-8", 'Accept': 'application/json, text/plain, */*'}, headers);
+
+                data = data || '';
+
+                if (isPlainObject(data)) {
+                    data = SafeJSON.stringify(data);
+                }
+
+
+                if (typeof data !== string) {
+                    reject(new Error('Invalid json data.'));
+                    return;
+                }
+
+
+                utils.GM_xmlhttpRequest({
+                    method: 'POST',
+                    url: url,
+                    data: data,
+                    headers: headers,
+                    onload(xhr){
+                        if (xhr.status !== 200) reject(new Error('Invalid status code: ' + url + ': ' + xhr.status));
+                        else {
+                            let text = xhr.response;
+                            if (typeof text !== string) throw new Error('Invalid JSON ' + url);
+                            resolve(SafeJSON.parse(xhr.response));
+                        }
+                    },
+                    onerror(){
+                        reject(new Error('Cannot fetch ' + url));
+                    }
+                });
+            });
         }
 
 
@@ -1931,6 +1978,14 @@
      */
     class DownSubAPI extends FetchAPI {
 
+        getValidURL(url){
+
+            url = url.replace('dailymotion.com/embed', 'dailymotion.com');
+
+
+            return url;
+        }
+
         /**
          * Get Subtitles
          */
@@ -1940,25 +1995,34 @@
                 if (url instanceof URL) url = url.href;
 
                 if (typeof url !== string) throw new Error('Invalid url');
+                url = this.getValidURL(url);
 
                 this.getSubContext(url)
                         .then(context => {
-                            this.fetchJSON('https://get-info.downsub.com/' + context, Object.assign({}, this.headers))
-                                    .then(obj => {
-                                        if (Array.isArray(obj.subtitles)) {
+                            
+                            if(context.id) {
+                                this.fetchJSON('https://get-info.downsub.com/' + context.id, Object.assign({}, this.headers))
+                                        .then(obj => {
+                                            if (Array.isArray(obj.subtitles)) {
 
-                                            const result = {};
-                                            obj.subtitles.forEach(sub => {
-                                                let url = new URL(obj.urlSubtitle);
-                                                url.searchParams.set('title', obj.title);
-                                                url.searchParams.set('url', sub.url);
-                                                result[sub.code] = url.href;
-                                            });
-                                            resolve(result);
-                                        } else reject(new Error('Cannot fetch subtitle data.'));
+                                                const result = {};
+                                                obj.subtitles.forEach(sub => {
+                                                    let url = new URL(obj.urlSubtitle);
+                                                    url.searchParams.set('title', obj.title);
+                                                    url.searchParams.set('url', sub.url);
+                                                    result[sub.code] = url.href;
+                                                });
+                                                resolve(result);
+                                            } else reject(new Error('Cannot fetch subtitle data.'));
 
-                                    })
-                                    .catch(err => reject(err));
+                                        })
+                                        .catch(err => reject(err));
+                            }
+
+
+                            reject(new Error('Cannot fetch subtitle data.'));
+
+
                         });
             });
         }
@@ -1975,13 +2039,15 @@
 
                 fetchUrl.searchParams.set('url', url);
 
+                console.debug(url);
+
                 this
                         .fetch(fetchUrl, Object.assign({}, this.headers))
                         .then(html => {
                             let matches, obj;
                             if ((matches = /const\ context=\'(.*?)\';/i.exec(html)) !== null) {
                                 if (obj = SafeJSON.parse(atob(matches[1]))) {
-                                    resolve(obj.id);
+                                    resolve(obj);
                                     return;
                                 }
                             }
