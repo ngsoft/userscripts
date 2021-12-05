@@ -1,0 +1,5 @@
+{
+    "require": {
+        "ngsoft/tools": "^2.1"
+    }
+}
