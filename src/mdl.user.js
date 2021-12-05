@@ -4,16 +4,13 @@
 // @description  UI Remaster
 // @author       daedelus
 // @namespace    https://github.com/ngsoft/userscripts
-// 
-// @grant       GM_addStyle
-// @run-at      document-end
+// @grant        GM_addStyle
+// @run-at       document-end
 // @noframes
-// 
-// @include     /^https?:\/\/(\w+\.)?mydramalist\.\w+\//
-// @icon        https://mydramalist.com/favicon.ico
+// @include      /^https?:\/\/(\w+\.)?mydramalist\.\w+\//
+// @icon         https://mydramalist.com/favicon.ico
+// @defaulticon  data:image/x-icon;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBAQFBAYFBQYJBgUGCQsIBgYICwwKCgsKCgwQDAwMDAwMEAwODxAPDgwTExQUExMcGxsbHCAgICAgICAgICD/2wBDAQcHBw0MDRgQEBgaFREVGiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICD/wgARCAAQABADAREAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABAID/8QAFgEBAQEAAAAAAAAAAAAAAAAAAgEF/9oADAMBAAIQAxAAAAHLTyQoKLmz/8QAGBABAQEBAQAAAAAAAAAAAAAAAgMEBQH/2gAIAQEAAQUCPE2I2wVkJ9fQG+n65//EABoRAAIDAQEAAAAAAAAAAAAAAAABAgMRFCH/2gAIAQMBAT8B55Eq2hXsd2+Yf//EABkRAAMAAwAAAAAAAAAAAAAAAAABAwIRE//aAAgBAgEBPwHviKmxxQpH/8QAJBAAAgAEBQUBAAAAAAAAAAAAAQIAERIhEyIxQUIDUmKBkqL/2gAIAQEABj8CDCiTBSL923qcM5ZSq0yI5VT0+TFQAsFEtstN/wACMJuimHxXNbW+vlH/xAAdEAEAAgICAwAAAAAAAAAAAAABETEAIUFRYXGB/9oACAEBAAE/IVs+jsOFwTkgqilNIr7JjBycK528i3Jmlp3JVZd7z//aAAwDAQACAAMAAAAQL1//xAAfEQACAQMFAQAAAAAAAAAAAAABEQAhgdFBYXGhwfH/2gAIAQMBAT8QBg6adwITRUu/kHL48xEGBX3zP//EAB0RAAIBBQEBAAAAAAAAAAAAAAERACFBodHxYfD/2gAIAQIBAT8QIje+IIlV1x2FD73cSWy+an//xAAaEAEBAQEBAQEAAAAAAAAAAAABIREAQTFR/9oACAEBAAE/ELzWK2UiqXkGLw7jL4bdFj4LOIQwPYYA4g3PzjV0xoD5TehaT5O//9k=
 // ==/UserScript==
-
-
 (function(){
     /**
      * Works best wit uBlock Origin
