@@ -145,16 +145,23 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         $contents = file_get_contents($userscript);
         $instance->parse($contents);
 
-        if ($convert_icons and isset($instance->properties['icon']) and!isset($instance->properties['defaulticon'])) {
+        //set defaulticon to base64 to prevent broken links
 
+        if (
+                $convert_icons and
+                isset($instance->properties['icon']) and
+                !isset($instance->properties['defaulticon']) and
+                str_starts_with((string) $instance->getIcon(), 'http')
+        ) {
 
             $instance->setDefaulticon((string) $instance->getIcon(), $convert_icons);
+            if (str_contains((string) $instance->getDefaulticon(), ';base64,')) {
+                $regex_block = new RegExp('(?:[\/]{2,}\h*==UserScript==\n*)(.*)(?:[\/]{2,}\h*==\/UserScript==\n*)', RegExp::PCRE_DOTALL);
 
-            $regex_block = new RegExp('(?:[\/]{2,}\h*==UserScript==\n*)(.*)(?:[\/]{2,}\h*==\/UserScript==\n*)', RegExp::PCRE_DOTALL);
-
-            $replace = $regex_block->replace($contents, (string) $instance);
-            if ($replace !== $contents) {
-                file_put_contents($userscript, $replace);
+                $replace = $regex_block->replace($contents, (string) $instance . "\n");
+                if ($replace !== $contents) {
+                    file_put_contents($userscript, $replace);
+                }
             }
         }
 
