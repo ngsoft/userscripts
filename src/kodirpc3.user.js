@@ -3252,8 +3252,7 @@
             url = url instanceof URL ? url.href : url;
             if (typeof url === string) {
                 let src = new URL(url);
-                
-                if (this.domains.includes(src.host) && this.patterns.some(r => r.test(url))) return true;
+                if (this.domains.some(d => src.host.search(d) !== -1) && this.patterns.some(r => r.test(url))) return true;
  
             }
             return false;
@@ -3315,7 +3314,7 @@
                     Object.defineProperty(doc.body, 'KRPCM', {
                         configurable: true, value: {}
                     });
-                    console.debug("KodiRPC Module @" + GMinfo.script.version, "started");
+                    console.debug("KodiRPC Module@" + GMinfo.script.version, "started");
                 })
                 .trigger('kodirpc.ready')
                 // exposes api for an helper
@@ -3346,6 +3345,7 @@
         // resolveurl
 
         if (resolveurl.resolve(location.href)) {
+
             let
 
                     tags = ['resolve'],
