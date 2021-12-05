@@ -6,6 +6,7 @@ namespace NGSOFT\Userscript;
 
 use IteratorAggregate,
     JsonSerializable,
+    NGSOFT\RegExp,
     RuntimeException,
     Stringable;
 use function str_ends_with;
@@ -518,15 +519,90 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     }
 
     private function build(): string {
-        return '';
+
+
+        $result = "// ==UserScript==\n";
+
+        $lines = [];
+        $maxlen = 0;
+
+        foreach ($this->getIterator() as $prop => $value) {
+
+            if (($len = strlen($prop)) > $maxlen) $maxlen = $len;
+
+            if (is_bool($value)) $lines[] = [$prop, ''];
+            elseif (is_array($value)) {
+                foreach ($value as $k => $v) {
+                    if (is_string($k)) $lines[] = [$prop, $k . ' ' . $v];
+                    else $lines[] = [$prop, $v];
+                }
+            } else $lines[] = [$prop, $value];
+        }
+
+
+        if (count($lines) > 0) {
+            $maxlen += 2;
+            foreach ($lines as $line) {
+                list($prop, $value) = $line;
+                $len = strlen($prop);
+                $result .= '// @' . $prop;
+                if (!empty($value)) {
+                    for ($i = $len; $i < $maxlen; $i++) {
+                        $result .= ' ';
+                    }
+                    $result .= $value;
+                }
+
+                $result .= "\n";
+            }
+        }
+
+
+
+
+        $result .= "// ==/UserScript==\n";
+        return $result;
     }
 
     private function parse(string $contents) {
 
+
+        $regex_block = new RegExp('(?:[\/]{2,}\h*==UserScript==\n*)(.*)(?:[\/]{2,}\h*==\/UserScript==\n*)', RegExp::PCRE_DOTALL);
+        $regex_prop = new RegExp('[\/]{2,}\h+@([\w\-]+)\h*(.*)\n*', 'g');
+        $regex_key_value = new RegExp('^(.*)\h+(.*)$');
+
+        if ($block = $regex_block->exec($contents)) {
+            $block = $block[1];
+            $data = [];
+
+            while ($matches = $regex_prop->exec($block)) {
+                list(, $prop, $value) = $matches;
+                if ($key = $this->getKey($prop)) {
+                    if (is_array($this->{$key})) {
+                        $data[$prop] = $data[$prop] ?? [];
+                        if (in_array($key, ['resource', 'antifeature'])) {
+                            if ($keyvalue = $regex_key_value->exec($value)) {
+                                $data[$prop] [$keyvalue[1]] = $keyvalue[2];
+                            }
+                        } else $data[$prop] [] = $value;
+                        continue;
+                    } elseif (empty($value) and is_bool($this->{$key})) $value = true;
+
+                    $data[$prop] = $value;
+                }
+            }
+
+            if (!empty($data)) {
+                foreach ($data as $prop => $value) {
+                    $key = $this->getKey($prop);
+                    $this->addProperty($prop);
+                    $this->{$key} = $value;
+                }
+            }
+        } else throw new RuntimeException(sprintf('No userscript block in %s', $this->userscript));
     }
 
     private function loadMeta(array $meta) {
-
         foreach ($meta as $prop => $value) {
             if ($key = $this->getKey($prop)) {
                 $this->addProperty($prop);

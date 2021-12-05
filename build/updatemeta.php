@@ -13,4 +13,9 @@ foreach (scandir($src)as $file) {
     $filename = "$src/$file";
 
     echo "$filename\n";
+
+    $userscript = \NGSOFT\Userscript\Metadata::loadUserscript($filename);
+
+    print $userscript;
+    exit;
 }
