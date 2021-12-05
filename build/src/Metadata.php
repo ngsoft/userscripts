@@ -584,7 +584,7 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
 
         $regex_block = new RegExp('(?:[\/]{2,}\h*==UserScript==\n*)(.*)(?:[\/]{2,}\h*==\/UserScript==\n*)', RegExp::PCRE_DOTALL);
-        $regex_prop = new RegExp('[\/]{2,}\h+@([\w\-]+)\h*(.*)\n*', 'g');
+        $regex_prop = new RegExp('[\/]{2,}\h*@([\w\-]+)\h*(.*)\n*', 'g');
         $regex_key_value = new RegExp('^(.*)\h+(.*)$');
 
         if ($block = $regex_block->exec($contents)) {
