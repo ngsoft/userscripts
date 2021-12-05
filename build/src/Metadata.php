@@ -156,7 +156,7 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                     $icon = $instance->{$key};
                     if ($b64 = $icon->getBase64URL() and $b64 != $icon->getURL()) {
                         $contents = str_replace($icon->getURL(), $b64, $contents);
-                        var_dump($icon->getURL(), $b64);
+                        var_dump([$icon->getURL(), $b64]);
                         //file_put_contents($userscript, $contents);
                     }
                 }

@@ -7,16 +7,18 @@ use NGSOFT\Userscript\Metadata;
 require_once __DIR__ . '/vendor/autoload.php';
 $src = dirname(__DIR__) . '/src';
 
+$convert_icons = true;
+
 $cnt = 0;
 
 foreach (scandir($src)as $file) {
     if (str_contains($file, '.dev')) continue;
     if (!str_ends_with($file, '.user.js')) continue;
     $filename = "$src/$file";
-    $userscript = Metadata::loadUserscript($filename);
+    $userscript = Metadata::loadUserscript($filename, $convert_icons);
     $metafile = preg_replace('/\.user\.js$/', '.meta.js', $filename);
     if (is_file($metafile)) {
-        $meta = Metadata::loadMetascript($metafile);
+        $meta = Metadata::loadMetascript($metafile, $convert_icons);
         //$meta->setVersion('21.12.5');
         $str_user = (string) $userscript;
         $str_meta = (string) $meta;
