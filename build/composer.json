@@ -1,6 +1,8 @@
 {
     "require": {
-        "ngsoft/tools": "^2.1"
+        "ngsoft/tools": "^2.1",
+        "guzzlehttp/guzzle": "^7.4",
+        "ralouphie/mimey": "^2.1"
     },
     "autoload": {
         "psr-4": {

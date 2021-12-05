@@ -44,19 +44,19 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     /** @var ?string */
     private $source;
 
-    /** @var ?string */
+    /** @var ?Icon */
     private $icon;
 
-    /** @var ?string */
+    /** @var ?Icon */
     private $iconURL;
 
-    /** @var ?string */
+    /** @var ?Icon */
     private $defaulticon;
 
-    /** @var ?string */
+    /** @var ?Icon */
     private $icon64;
 
-    /** @var ?string */
+    /** @var ?Icon */
     private $icon64URL;
 
     /** @var ?string */
@@ -254,23 +254,23 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     }
 
     public function getIcon(): ?string {
-        return $this->icon;
+        return (string) $this->icon;
     }
 
     public function getIconURL(): ?string {
-        return $this->iconURL;
+        return (string) $this->iconURL;
     }
 
     public function getDefaulticon(): ?string {
-        return $this->defaulticon;
+        return (string) $this->defaulticon;
     }
 
     public function getIcon64(): ?string {
-        return $this->icon64;
+        return (string) $this->icon64;
     }
 
     public function getIcon64URL(): ?string {
-        return $this->icon64URL;
+        return (string) $this->icon64URL;
     }
 
     public function getUpdateURL(): ?string {
@@ -388,31 +388,31 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     public function setIcon(string $icon) {
         $this->addProperty('icon');
-        $this->icon = $icon;
+        $this->icon = new Icon($icon);
         return $this;
     }
 
     public function setIconURL(string $iconURL) {
         $this->addProperty('iconURL');
-        $this->iconURL = $iconURL;
+        $this->iconURL = new Icon($iconURL);
         return $this;
     }
 
     public function setDefaulticon(string $defaulticon) {
         $this->addProperty('defaulticon');
-        $this->defaulticon = $defaulticon;
+        $this->defaulticon = new Icon($defaulticon);
         return $this;
     }
 
     public function setIcon64(string $icon64) {
         $this->addProperty('icon64');
-        $this->icon64 = $icon64;
+        $this->icon64 = new Icon($icon64);
         return $this;
     }
 
     public function setIcon64URL(string $icon64URL) {
         $this->addProperty('icon64URL');
-        $this->icon64URL = $icon64URL;
+        $this->icon64URL = new Icon($icon64URL);
         return $this;
     }
 
@@ -615,7 +615,8 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                 foreach ($data as $prop => $value) {
                     if ($key = $this->getKey($prop)) {
                         $this->addProperty($prop);
-                        $this->{$key} = $value;
+                        if (str_contains($prop, 'icon')) $this->{$key} = new Icon($value);
+                        else $this->{$key} = $value;
                     }
                 }
             }

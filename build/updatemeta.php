@@ -23,7 +23,9 @@ foreach (scandir($src)as $file) {
         if (strcmp($str_user, $str_meta) !== 0) {
             $cnt++;
             printf("%s has been changed, saving %s\n", basename($filename), basename($metafile));
-            $userscript->saveMetaFile();
+
+            print $str_user;
+            // $userscript->saveMetaFile();
         }
     }
 }
