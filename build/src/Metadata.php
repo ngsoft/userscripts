@@ -5,15 +5,10 @@ declare(strict_types=1);
 namespace NGSOFT\Userscript;
 
 use IteratorAggregate,
-    JsonSerializable;
-use NGSOFT\{
-    RegExp, Tools
-};
-use RuntimeException,
+    JsonSerializable,
+    NGSOFT\RegExp,
+    RuntimeException,
     Stringable;
-use function GuzzleHttp\json_encode,
-             str_contains,
-             str_ends_with;
 
 /**
  * @link https://www.tampermonkey.net/documentation.php?ext=dhdg
@@ -128,7 +123,6 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     /**
      * Creates a new instance
-     * @param bool $convert_icons
      * @return static
      */
     public static function create(): self {
@@ -151,26 +145,16 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         $contents = file_get_contents($userscript);
         $instance->parse($contents);
 
-        if ($convert_icons and $instance->hasIcon()) {
+        if ($convert_icons and isset($instance->properties['icon']) and!isset($instance->properties['defaulticon'])) {
 
 
-            $instance->setDefaulticon($instance->getIcon(), $convert_icons);
+            $instance->setDefaulticon((string) $instance->getIcon(), $convert_icons);
 
             $regex_block = new RegExp('(?:[\/]{2,}\h*==UserScript==\n*)(.*)(?:[\/]{2,}\h*==\/UserScript==\n*)', RegExp::PCRE_DOTALL);
 
-            var_dump($regex_block->replace($contents, (string) $instance));
-            exit;
-
-            foreach ($instance->properties as $prop) {
-                if (str_contains($prop, 'icon') and $key = $instance->getKey($prop)) {
-                    /** @var Icon $icon */
-                    $icon = $instance->{$key};
-                    if ($b64 = $icon->getBase64URL() and $b64 != $icon->getURL()) {
-                        $contents = str_replace($icon->getURL(), $b64, $contents);
-                        var_dump([$icon->getURL(), $b64]);
-                        //file_put_contents($userscript, $contents);
-                    }
-                }
+            $replace = $regex_block->replace($contents, (string) $instance);
+            if ($replace !== $contents) {
+                file_put_contents($userscript, $contents);
             }
         }
 
@@ -571,11 +555,6 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     ////////////////////////////   Parser/Builder   ////////////////////////////
 
-
-    private function hasIcon(): bool {
-
-        return Tools::array_some(fn($p) => $p == 'icon', $this->properties);
-    }
 
     private function addProperty(string $prop) {
         $this->properties[$prop] = $prop;

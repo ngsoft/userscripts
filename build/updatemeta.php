@@ -15,6 +15,9 @@ foreach (scandir($src)as $file) {
     if (str_contains($file, '.dev')) continue;
     if (!str_ends_with($file, '.user.js')) continue;
     $filename = "$src/$file";
+
+    $convert_icons = str_contains($file, 'kodi');
+
     $userscript = Metadata::loadUserscript($filename, $convert_icons);
     $metafile = preg_replace('/\.user\.js$/', '.meta.js', $filename);
     if (is_file($metafile)) {
@@ -24,9 +27,7 @@ foreach (scandir($src)as $file) {
         if (strcmp($str_user, $str_meta) !== 0) {
             $cnt++;
             printf("%s has been changed, saving %s\n", basename($filename), basename($metafile));
-
-            print $str_user . $str_meta;
-            // $userscript->saveMetaFile();
+            $userscript->saveMetaFile();
         }
     }
 }
