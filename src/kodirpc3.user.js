@@ -2019,6 +2019,7 @@
 
                                         })
                                         .catch(err => reject(err));
+                                return;
                             }
 
 
