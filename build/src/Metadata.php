@@ -5,15 +5,25 @@ declare(strict_types=1);
 namespace NGSOFT\Userscript;
 
 use IteratorAggregate,
-    JsonSerializable,
-    NGSOFT\RegExp,
-    RuntimeException,
+    JsonSerializable;
+use NGSOFT\{
+    RegExp, Traits\UnionType
+};
+use RuntimeException,
     Stringable;
+use function json_decode,
+             json_encode,
+             str_contains,
+             str_ends_with,
+             str_starts_with;
 
 /**
  * @link https://www.tampermonkey.net/documentation.php?ext=dhdg
  */
 class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
+
+    use UnionType;
+
     ////////////////////////////   Metadatas   ////////////////////////////
 
     /** @var ?string */
@@ -116,6 +126,9 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     /** @var string[] */
     private $properties = [];
 
+    /** @var array<string,string> */
+    private $custom = [];
+
     ////////////////////////////   Initialization   ////////////////////////////
 
     /**
@@ -157,7 +170,7 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
                 $replace = $regex_block->replace($contents, (string) $instance . "\n");
                 if ($replace !== $contents) {
-                    file_put_contents($userscript, $replace);
+                    //file_put_contents($userscript, $replace);
                 }
             }
         }
@@ -350,6 +363,10 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     public function getNocompat(): array {
         return $this->nocompat;
+    }
+
+    public function getCustom(string $name) {
+        return $this->custom[$name] ?? null;
     }
 
     ////////////////////////////   Setters   ////////////////////////////
@@ -557,8 +574,25 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         return $this;
     }
 
+    public function setCustom(string $name, $value) {
+        $this->checkType($value, 'string', 'array', 'bool');
+
+        $key = $this->getKey($name);
+        if (is_string($key)) $this->{$key} = $value;
+        else $this->custom[$name] = $value;
+
+        $this->addProperty($name);
+        return $this;
+    }
+
     ////////////////////////////   Parser/Builder   ////////////////////////////
 
+
+    private function isValidProp(string $prop) {
+        static $re;
+        $re = $re ?? new RegExp('^[\w\-]+$');
+        return $re->test($prop);
+    }
 
     private function addProperty(string $prop) {
         $this->properties[$prop] = $prop;
@@ -569,13 +603,62 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         return property_exists($this, $key) ? $key : null;
     }
 
+    private function getFormatIterator() {
+
+        static $sorted = [
+            [
+                'version', 'name', 'description', 'author',
+                'namespace', 'homepage', 'homepageURL', 'website', 'source',
+                'icon', 'iconURL', 'defaulticon', 'icon64', 'icon64URL',
+            ],
+            [
+                'nocompat', 'run-at', 'noframes', 'grant',
+                'resource', 'require',
+            ],
+            [
+                'supportURL', 'updateURL', 'downloadURL', 'antifeature',
+            ],
+            [
+                'custom',
+            ],
+            [
+                'include', 'match', 'exclude', 'connect',
+            ]
+        ];
+
+        $properties = $this->properties;
+        $len = 0;
+        foreach ($sorted as $block) {
+            if ($len > 0) yield '' => '';
+            $len = 0;
+
+            foreach ($block as $tag) {
+                if ($tag == 'custom') {
+                    foreach ($this->custom as $prop => $value) {
+                        $len++;
+                        yield $prop => $value;
+                    }
+                    continue;
+                }
+                if (isset($properties[$tag])) {
+                    $len++;
+                    if ($key = $this->getKey($tag)) yield $tag => $this->{$key};
+                }
+            }
+        }
+    }
+
     private function build(): string {
-        $result = "// ==UserScript==\n";
-        $lines = [];
+
+        $result = '';
+        $lines = $tmp = [];
         $maxlen = 0;
-        foreach ($this->getIterator() as $prop => $value) {
+
+        foreach ($this->getFormatIterator() as $prop => $value) {
             if (($len = strlen($prop)) > $maxlen) $maxlen = $len;
-            if (is_bool($value)) $lines[] = [$prop, ''];
+            if (empty($prop)) {
+                if (count($lines) > 0) $lines[] = [];
+            } elseif (is_bool($value)) $lines[] = [$prop, ''];
             elseif (is_array($value)) {
                 foreach ($value as $k => $v) {
                     if (is_string($k)) $lines[] = [$prop, $k . ' ' . $v];
@@ -583,23 +666,51 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                 }
             } else $lines[] = [$prop, $value];
         }
-        if (count($lines) > 0) {
+
+
+        if (count($lines) > 0 and $maxlen > 0) {
             $maxlen += 2;
             foreach ($lines as $line) {
+                if (empty($line)) {
+                    $tmp[] = '';
+                    continue;
+                }
                 list($prop, $value) = $line;
+                $comment = '';
                 $len = strlen($prop);
-                $result .= '// @' . $prop;
+
+                $comment .= sprintf('@%s', $prop);
                 if (!empty($value)) {
                     for ($i = $len; $i < $maxlen; $i++) {
-                        $result .= ' ';
+                        $comment .= ' ';
                     }
-                    $result .= $value;
+                    $comment .= $value;
                 }
 
-                $result .= "\n";
+                $tmp[] = $comment;
             }
         }
-        $result .= "// ==/UserScript==\n";
+
+        if (!empty($tmp)) {
+
+            $comments = $next = '';
+            $sep = false;
+
+            foreach ($tmp as $index => $line) {
+                $next = $tmp[$index + 1] ?? '';
+
+                if (empty($line)) {
+                    if (!$sep && !empty($next)) {
+                        $comments .= "//\n";
+                        $sep = true;
+                    }
+                    continue;
+                }
+                $comments .= sprintf("// %s\n", $line);
+                $sep = false;
+            }
+            $result = sprintf("// ==UserScript==\n%s// ==/UserScript==\n", $comments);
+        }
         return $result;
     }
 
@@ -616,6 +727,8 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
             $block = $block[1];
             $data = [];
 
+            $custom = [];
+
             while ($matches = $regex_prop->exec($block)) {
                 list(, $prop, $value) = $matches;
                 $value = trim($value);
@@ -631,16 +744,26 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
                     } elseif (empty($value) and is_bool($this->{$key})) $value = true;
 
                     $data[$prop] = $value;
+                } elseif ($this->isValidProp($prop)) {
+                    $data[$prop] = $data[$prop] ?? [];
+                    if (empty($value)) $value = true;
+                    $data[$prop][] = $value;
+                    $custom[$prop] = $prop;
                 }
             }
 
             if (!empty($data)) {
                 foreach ($data as $prop => $value) {
+                    $this->addProperty($prop);
                     if ($key = $this->getKey($prop)) {
-                        $this->addProperty($prop);
                         if (str_contains($prop, 'icon')) $this->{$key} = new Icon($value);
                         else $this->{$key} = $value;
+                        continue;
                     }
+
+                    // custom
+                    if (count($value) == 1) $this->custom[$prop] = $value[0];
+                    else $this->custom[$prop] = $value;
                 }
             }
         } else throw new RuntimeException(sprintf('No userscript block in %s', $this->userscript));
@@ -672,6 +795,8 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
         foreach ($this->properties as $prop) {
             if ($key = $this->getKey($prop)) {
                 yield $prop => $this->{$key};
+            } elseif (array_key_exists($prop, $this->custom)) {
+                yield $prop => $this->custom[$prop];
             }
         }
     }

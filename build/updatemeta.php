@@ -17,6 +17,7 @@ foreach (scandir($src)as $file) {
     $filename = "$src/$file";
 
     $userscript = Metadata::loadUserscript($filename, $convert_icons);
+
     $metafile = preg_replace('/\.user\.js$/', '.meta.js', $filename);
     if (is_file($metafile)) {
         $meta = Metadata::loadMetascript($metafile);
@@ -27,6 +28,7 @@ foreach (scandir($src)as $file) {
             printf("%s has been changed, saving %s\n", basename($filename), basename($metafile));
             $userscript->saveMetaFile();
         }
+
         continue;
     }
     $cnt++;
