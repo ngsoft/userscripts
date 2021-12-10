@@ -116,9 +116,6 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
     /** @var string[] */
     private $properties = [];
 
-    /** @var bool */
-    private $convert_icons = false;
-
     ////////////////////////////   Initialization   ////////////////////////////
 
     /**
