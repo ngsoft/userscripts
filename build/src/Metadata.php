@@ -771,10 +771,12 @@ class Metadata implements Stringable, JsonSerializable, IteratorAggregate {
 
     private function loadMeta(array $meta) {
         foreach ($meta as $prop => $value) {
+            $this->addProperty($prop);
             if ($key = $this->getKey($prop)) {
-                $this->addProperty($prop);
                 $this->{$key} = $value;
+                continue;
             }
+            $this->custom[$prop] = $value;
         }
     }
 
