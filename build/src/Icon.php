@@ -36,10 +36,8 @@ class Icon implements Stringable, JsonSerializable {
     }
 
     private function isHTTP(string $url): bool {
-
         static $re;
         $re = $re ?? new RegExp('^https?:[\/]{2}');
-
         return $re->test($url);
     }
 
@@ -52,7 +50,7 @@ class Icon implements Stringable, JsonSerializable {
         static $re;
         $re = $re ?? $re = new RegExp('\.(\w+)$');
 
-        if (preg_match(self::RE_HTTP, $this->url)) {
+        if ($this->isHTTP($this->url)) {
             $uri = $this->httpFactory->createUri($this->url);
             $path = preg_split('/[\/]+/', $uri->getPath());
             $basename = array_pop($path);
@@ -68,7 +66,7 @@ class Icon implements Stringable, JsonSerializable {
 
         if (preg_match('/;base64,/', $this->url)) return $this->url;
         elseif (isset($this->b64URL)) return $this->b64URL;
-        elseif ($this->convert and preg_match('/^https?:\/\//', $this->url)) {
+        elseif ($this->convert and $this->isHTTP($this->url)) {
 
 
 
