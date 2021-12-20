@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      3.6.3
+// @version      3.6.4
 // @name         KodiRPC 3.0
 // @description  Send Stream URL to Kodi using jsonRPC
 // @author       daedelus
@@ -2099,6 +2099,21 @@
             });
         }
 
+        getBackend(url){
+
+            let src = new URL('https://yt5s.com/');
+            src.searchParams.set('q', url);
+            return new Promise((resolve, reject) => {
+                this.fetch(src.href, Object.assign({}, this.headers))
+                        .then(html => {
+                            let matches = /convert\h*=\h*[\"\']([^\'\"]+)[\"\']/.exec(html);
+                            if (matches !== null) resolve(matches[1]);
+                            else reject(new Error('Cannot get Backend url.'))
+                        });
+            });
+
+        }
+
 
         getVideoLink(url){
             return new Promise((resolve, reject) => {
@@ -2128,57 +2143,64 @@
                                 reject(new Error('Cannot find quality for video.'));
                                 return;
                             }
-                            this.post(
-                                    'https://backend.svcenter.xyz/api/convert', {
-                                        v_id: obj.vid,
-                                        ftype: 'mp4',
-                                        fquality: fquality,
-                                        token: obj.token,
-                                        timeExpire: obj.timeExpires,
-                                        client: 'yt5s.com'
-                                    }, Object.assign({"X-Requested-Key": "de0cfuirtgf67a"}, this.headers))
-                                    .then(json => {
-                                        const data = SafeJSON.parse(json);
-                                        if (data.c_server) {
 
-                                            let worker = () => {
-                                                this.post(data.c_server + '/api/json/convert', {
+
+                            this.getBackend()
+                                    .then(backend => {
+                                        this.post(
+                                                backend, {
                                                     v_id: obj.vid,
                                                     ftype: 'mp4',
                                                     fquality: fquality,
                                                     token: obj.token,
                                                     timeExpire: obj.timeExpires,
-                                                    fname: obj.fn
-                                                }, Object.assign({}, this.headers))
-                                                        .then(jsonString => {
-                                                            let serverData = SafeJSON.parse(jsonString);
+                                                    client: 'yt5s.com'
+                                                }, Object.assign({"X-Requested-Key": "de0cfuirtgf67a"}, this.headers))
+                                                .then(json => {
+                                                    const data = SafeJSON.parse(json);
+                                                    if (data.c_server) {
 
-                                                            if (typeof serverData.jobID === string) {
-                                                                setTimeout(() => {
-                                                                    worker();
-                                                                }, 200);
-                                                                return;
-                                                            } else if (
-                                                                    serverData.statusCode === 200 &&
-                                                                    /^http/.test(serverData.result)
-                                                                    ) {
+                                                        let worker = () => {
+                                                            this.post(data.c_server + '/api/json/convert', {
+                                                                v_id: obj.vid,
+                                                                ftype: 'mp4',
+                                                                fquality: fquality,
+                                                                token: obj.token,
+                                                                timeExpire: obj.timeExpires,
+                                                                fname: obj.fn
+                                                            }, Object.assign({}, this.headers))
+                                                                    .then(jsonString => {
+                                                                        let serverData = SafeJSON.parse(jsonString);
 
-                                                                resolve({
-                                                                    url: serverData.result,
-                                                                    title: obj.title
-                                                                });
-                                                                return;
+                                                                        if (typeof serverData.jobID === string) {
+                                                                            setTimeout(() => {
+                                                                                worker();
+                                                                            }, 200);
+                                                                            return;
+                                                                        } else if (
+                                                                                serverData.statusCode === 200 &&
+                                                                                /^http/.test(serverData.result)
+                                                                                ) {
 
-                                                            }
-                                                            reject(new Error('Cannot get Video URL.'));
-                                                        })
-                                                        .catch(err => reject(err));
+                                                                            resolve({
+                                                                                url: serverData.result,
+                                                                                title: obj.title
+                                                                            });
+                                                                            return;
 
-                                            };
-                                            worker();
-                                            return;
-                                        }
-                                        reject(new Error('Cannot get Server.'));
+                                                                        }
+                                                                        reject(new Error('Cannot get Video URL.'));
+                                                                    })
+                                                                    .catch(err => reject(err));
+
+                                                        };
+                                                        worker();
+                                                        return;
+                                                    }
+                                                    reject(new Error('Cannot get Server.'));
+                                                })
+                                                .catch(err => reject(err));
+
                                     })
                                     .catch(err => reject(err));
                         })
