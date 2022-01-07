@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.3
+// @version      1.3.1
 // @name         iQiyi
 // @description  Video Player modificatons
 // @namespace    https://github.com/ngsoft/userscripts
@@ -80,6 +80,70 @@
 
 
 
+    class Drama {
+
+        get episode(){
+            let items = this.items;
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                if (item.selected) return item;
+            }
+        }
+        
+        get items(){
+            let items = [];
+            doc.querySelectorAll('.intl-episodes-list .drama-item').forEach(el => items.push(new DramaItem(el)));
+            return items;
+        }
+        
+        
+        get title(){
+            let elem;
+            if ((elem = doc.querySelector('h1.intl-play-title span.intl-album-title-word-wrap span')))
+                return elem.innerText.trim();
+
+            return '';
+        }
+
+
+    }
+
+
+    class DramaItem {
+
+        get selected(){
+            return this.elem.closest('.selected') !== null;
+        }
+
+        get title(){
+
+            return this.elem.getAttribute('title');
+
+        }
+
+        get number(){
+            let val = this.elem.innerText.trim(), matches;
+            if ((matches = /(\d+)/.exec(val))) {
+                return parseInt(matches[1]);
+            }
+            return 0;
+        }
+
+        constructor(root){
+
+            if (root instanceof Element) {
+                this.elem = root.querySelector('.drama-item') || root.closest('.drama-item') || root;
+            } else throw new TypeError('Invalid root.')
+
+        }
+    }
+
+
+
+
+
+
+
     class SubtitleDownloader {
 
         get video(){
@@ -87,26 +151,19 @@
         }
 
         get drama(){
-
-            let el = doc.querySelector('h1.intl-play-title');
-            if (el instanceof Element) {
-                return sanitizeFileName(el.innerText.trim(), " ");
-            }
-            return null;
-
+            return sanitizeFileName(this.dramaInfo.title, ' ');
         }
 
         get episode(){
-            let el = doc.querySelector('ul.intl-episodes-list li.selected > span.drama-item');
-            if (el instanceof Element) {
-                let num = el.innerText.trim(), matches;
-                if (/^[0-9]+$/.test(num)) {
-                    num = parseInt(num);
+            let episode;
+            if((episode = this.dramaInfo.episode)){
+                let num = episode.number;
+                if (num > 0) {
                     if (num < 10) num = "0" + num;
-                    return `.E${num}`;
+                    return ".E" + num;
                 }
             }
-            return "";
+            return '';
         }
 
         get src(){
@@ -170,6 +227,8 @@
 
             if (!(nextelement instanceof Element) || nextelement.parentElement === null) throw new Error("Invalid Control.");
 
+            this.dramaInfo = new Drama();
+
             const btn = html2element(`<iqpdiv class="iqp-btn iqp-btn-srt"><iqp class="iqp-label">SRT</iqp></iqpdiv>`);
 
             this.btn = btn;
@@ -189,8 +248,6 @@
                     btn.hidden = true;
                 }
             });
-
-
 
             
             nextelement.parentElement.insertBefore(btn, nextelement.nextElementSibling);
@@ -339,17 +396,13 @@
         });
         NodeFinder.find(`h1.intl-play-title a`, t => {
 
-            let title = t.innerText.trim();
-
+            let dr = new Drama();
+            let title = dr.title;
             title = title.replace(/\ Season\ \d+$/, '');
-
             let container = t.closest('.pc-info');
             if (container !== null) {
                 new MDLSearch(container, title);
             }
-
-
-
         });
     });
 
