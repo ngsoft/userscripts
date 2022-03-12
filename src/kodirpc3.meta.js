@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      3.6.4
+// @version      3.6.5
 // @name         KodiRPC 3.0
 // @description  Send Stream URL to Kodi using jsonRPC
 // @author       daedelus

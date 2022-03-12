@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      3.6.4
+// @version      3.6.5
 // @name         KodiRPC 3.0
 // @description  Send Stream URL to Kodi using jsonRPC
 // @author       daedelus
@@ -2108,7 +2108,7 @@
                         .then(html => {
                             let matches = /convert\h*=\h*[\"\']([^\'\"]+)[\"\']/.exec(html);
                             if (matches !== null) resolve(matches[1]);
-                            else reject(new Error('Cannot get Backend url.'))
+                            else reject(new Error('Cannot get Backend url.'));
                         });
             });
 
@@ -3662,6 +3662,8 @@
                 if (typeof jw.getPlaylist === f) {
                     let playlist = jw.getPlaylist()[0], track;
 
+
+
                     if (playlist.tracks) {
                         playlist.tracks.forEach(t => {
 
@@ -3678,10 +3680,12 @@
 
                     let
                             host = location.hostname,
+                            desc = host,
                             tags = ['jwplayer'],
                             clip = [],
                             kodiargs = [],
                             pcomplete = () => {
+                        if (typeof track === s) (new Clipboard(track, desc, tags.concat(['subs'])));
                         let args;
                         while (args = kodiargs.shift()) {
                             (new Kodi(...args));
@@ -3689,10 +3693,10 @@
                         while (args = clip.shift()) {
                             (new Clipboard(...args));
                         }
-                        if (typeof track === s) (new Clipboard(track, desc, tags.concat(['subs'])));
+
                     };
 
-
+                    console.debug(playlist, track);
 
                     playlist.sources.forEach((source, i) => {
 
