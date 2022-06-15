@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      3.6.5
+// @version      3.6.6
 // @name         KodiRPC 3.0
 // @description  Send Stream URL to Kodi using jsonRPC
 // @author       daedelus
@@ -19,7 +19,7 @@
 // @grant        GM_addStyle
 // @grant        GM_setClipboard
 // @resource     iziToastCSS https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css
-// @require      https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/configurator.min.js
+// @require      https://cdn.jsdelivr.net/gh/ngsoft/userscripts@master/dist/configurator.js
 // @require      https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js
 // @require      https://cdn.jsdelivr.net/gh/mathiasbynens/utf8.js@v3.0.0/utf8.min.js
 //

@@ -157,18 +157,18 @@
     class WETVCustomPlayer {
 
         static get hasVideo(){
-            return doc.querySelector(`.txp_player video[id]`) !== null;
+            return doc.querySelector(`.player__wrapper video[playerid]`) !== null;
         }
         
         static get player(){
-            return doc.querySelector('.txp_player');
+            return doc.querySelector('.player__wrapper');
         }
 
         static applyStyles(){
             if (this.styles === true) return;
             this.styles = true;
             addstyle(`
-                .txp_player .txp-watermark, .txp_player > button {display: none !important;}
+                .player__wrapper .txp-watermark, .player__wrapper > button {display: none !important;}
             `);
         }
   
@@ -179,7 +179,7 @@
                 this.events = true;
 
                 const codes = {
-                    32: 'video_playpause',
+                    //32: 'video_playpause',
                     13: 'video_fullscreen',
                     78: 'video_next',
                     80: 'video_prev'
@@ -219,7 +219,7 @@
 
             Object.assign(this, {
                 player: txp_player,
-                video: txp_player.querySelector('video[id]'),
+                video: txp_player.querySelector('video[playerid]'),
                 events: {
                     video_playpause(e){
                         if (self.video.paused === true) self.video.play();
@@ -241,7 +241,7 @@
 
                     },
                     video_fullscreen(e){
-                        let btn = doc.querySelector('.txp_btn_fullscreen');
+                        let btn = doc.querySelector('span[data-role="wetv-player-ctrl-fullscreen"]');
                         if (btn !== null) btn.dispatchEvent(new MouseEvent('click'));
                     }
                 }
@@ -272,12 +272,12 @@
         };
     })();
 
-    NodeFinder.findOne(`.txp_right_controls .txp_btn[data-role*="txp-ui-control-subtitle-btn"]`, el => {
+    NodeFinder.findOne(`.txp_right_controls .txp_btn[data-role*="wetv-player-subtitle-container"]`, el => {
         new SubtitleDownloader(el);
     });
 
-    NodeFinder.findOne(`.txp_player video[id]`, el => {
-        let player = el.closest('.txp_player');
+    NodeFinder.findOne(`.player__wrapper video[playerid]`, el => {
+        let player = el.closest('.player__wrapper');
         if (player !== null) new WETVCustomPlayer(player);
     });
 
