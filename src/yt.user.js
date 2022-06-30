@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Embed
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      1.1
+// @version      1.2
 // @description  Embed Video Link
 // @author       daedelus
 // @require      https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
@@ -116,10 +116,10 @@
         }
     }
     
-    NodeFinder.findOne('.np_Main, .html5-video-player', container => {
+    NodeFinder.findOne('.np_Main, .html5-video-player, .photon_app', container => {
         let toolbar = new ToolBar(container), player = container.closest('#player'), video = container.querySelector('video');
         if (player instanceof Element) {
-            Events(player).on('menu_did_hide menu_did_show', e => {
+            Events(player).on('menu_did_hide menu_did_show dmp_MENU_DID_SHOW dmp_MENU_DID_HIDE', e => {
                 if (player.querySelector('.np_MenuSettings') !== null) toolbar.elements.list.hidden = true;
                 else if (video.paused === false) toolbar.elements.list.hidden = true;
                 else toolbar.elements.list.hidden = null;
