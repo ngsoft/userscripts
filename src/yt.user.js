@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Embed
 // @namespace    https://github.com/ngsoft/userscripts
-// @version      1.2
+// @version      1.2.1
 // @description  Embed Video Link
 // @author       daedelus
 // @require      https://cdn.jsdelivr.net/gh/ngsoft/userscripts@1.2.5/dist/gmutils.min.js
@@ -35,6 +35,7 @@
 
             let css = `
                 .user-toolbar{position: absolute; list-style-type: none; top: 15%; left:5%;text-align: center; z-index: 2147483647;}
+                .dmp_iframe .user-toolbar{left: auto; right: 5%; top: 3%;}
                 .user-toolbar li{padding: 4px;}
                 .user-toolbar a{color: inherit; text-decoration: none; font-size: 18px;}
                 .html5-video-player .user-toolbar a{

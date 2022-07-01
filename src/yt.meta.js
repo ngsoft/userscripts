@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      1.2
+// @version      1.2.1
 // @name         Youtube Embed
 // @description  Embed Video Link
 // @author       daedelus
