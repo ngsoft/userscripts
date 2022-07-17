@@ -13,6 +13,10 @@
 // ==/UserScript==
 ((doc, undef) => {
 
+
+    // https://github.com/wayneclub/Subtitle-Downloader/blob/14f24e0d1f530dc4f586fef8440941e4f0485149/services/wetv.py#L222
+    // data = JSON.parse(JSON.parse(document.querySelector('#__NEXT_DATA__').innerHTML)['props']['pageProps']['data']);
+
     /* jshint expr: true */
     /* jshint -W018 */
     /* jshint -W083 */
