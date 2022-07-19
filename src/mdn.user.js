@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      2.5
+// @version      2.6
 // @name         MDN + PHP Web Docs
 // @description  Use MDN Web Docs and PHP UI to store locale and auto redirect to the choosen on every pages
 // @namespace    https://github.com/ngsoft/userscripts
@@ -146,6 +146,9 @@
 
 
 
+
+
+
     /**
      * developer.mozilla.org
      * just override an event
@@ -153,20 +156,13 @@
 
     if (/mozilla.org/i.test(location.hostname)) {
 
-        tools.on('#root', 'submit', e => {
-            let form = e.target.closest('form.language-menu'), locale, pathname;
-            if (form instanceof EventTarget) {
-                e.stopPropagation();
-                e.preventDefault();
-                locale = form.elements.language.value;
-                if (lang.isValid(locale) && lang.current !== locale) {
-                    lang.current = locale;
-                    if ((pathname = getPageLink(locale)) && !isCurrentLocale(locale)) {
-                        location.replace(pathname);
-                    }
-                }
 
+        tools.on('#root', 'click', e => {
+            let target = e.target.closest('.languages-switcher-menu .submenu-item[name]');
+            if (target && target.name) {
+                lang.current = target.name;
             }
+
         }, true);
     }
 
