@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      3.6.6
+// @version      3.7
 // @name         KodiRPC 3.0
 // @description  Send Stream URL to Kodi using jsonRPC
 // @author       daedelus
@@ -2783,570 +2783,1620 @@
     }
 
 
+
     const resolveurl = {
-        // from each plugins in script.module.resolveurl
-        // script.module.urlresolver is nice too but comes with bloatwares
-        patterns: [
+        resolvers: [
+            {
+                resolver: 'abcvideo',
+                pattern: '(?://|\\.)(abcvideo\\.cc)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'abcvideo.cc'
+                ]
+            },
+            {
+                resolver: 'adultswim',
+                pattern: '(?://|\\.)(adultswim\\.com)/videos/((?!streams)[a-z\\-]+/[a-z\\-]+)',
+                domains: [
+                    'adultswim.com'
+                ]
+            },
+            {
+                resolver: 'aliez',
+                pattern: '(?://|\\.)(aliez\\.me)/(?:(?:player/video\\.php\\?id=([0-9]+)&s=([A-Za-z0-9]+))|(?:video/([0-9]+)/([A-Za-z0-9]+)))',
+                domains: [
+                    'aliez.me'
+                ]
+            },
+            {
+                resolver: 'alldebrid',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'amazon',
+                pattern: '(?://|\\.)(amazon\\.com)/clouddrive/share/([0-9a-zA-Z]+)',
+                domains: [
+                    'amazon.com'
+                ]
+            },
+            {
+                resolver: 'anavids',
+                pattern: '(?://|\\.)(anavids\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'anavids.com'
+                ]
+            },
+            {
+                resolver: 'anistream',
+                pattern: '(?://|\\.)(ani-stream\\.com)/(?:embed-)?([0-9a-zA-Z-]+)',
+                domains: [
+                    'ani-stream.com'
+                ]
+            },
+            {
+                resolver: 'anonfiles',
+                pattern: '(?://|\\.)((?:bay|anon)files\\.com)/([0-9a-zA-Z]+)',
+                domains: [
+                    'anonfiles.com',
+                    'bayfiles.com'
+                ]
+            },
+            {
+                resolver: 'aparat',
+                pattern: '(?://|\\.)((?:aparat\\.cam|wolfstream\\.tv))/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'aparat.cam',
+                    'wolfstream.tv'
+                ]
+            },
+            {
+                resolver: 'avideo',
+                pattern: '(?://|\\.)(avideo\\.host)/(?:embed-|e/|d/)?(\\w+)',
+                domains: [
+                    'avideo.host'
+                ]
+            },
+            {
+                resolver: 'bannedvideo',
+                pattern: '(?://|\\.)((?:freeworldnews|banned|electionnight|futurenews)\\.(?:video|tv|news))/(?:watch\\?id=|embed/)([0-9a-f]+)',
+                domains: [
+                    'banned.video',
+                    'freeworldnews.tv',
+                    'electionnight.news',
+                    'futurenews.news'
+                ]
+            },
+            {
+                resolver: 'bitchute',
+                pattern: '(?://|\\.)(bitchute\\.com)/(?:video|embed)/([\\w-]+)/',
+                domains: [
+                    'bitchute.com'
+                ]
+            },
+            {
+                resolver: 'brighteon',
+                pattern: '(?://|\\.)(brighteon\\.com)/(?:embed)?/?([\\w-]+)',
+                domains: [
+                    'brighteon.com'
+                ]
+            },
+            {
+                resolver: 'brupload',
+                pattern: '(?://|\\.)(brupload\\.net)/([0-9A-Za-z]+)',
+                domains: [
+                    'brupload.net'
+                ]
+            },
+            {
+                resolver: 'castamp',
+                pattern: '(?://|\\.)(castamp\\.com)/embed\\.php\\?c=(.*?)&',
+                domains: [
+                    'castamp.com'
+                ]
+            },
+            {
+                resolver: 'cda',
+                pattern: '(?://|\\.)(cda\\.pl)/(?:.\\d+x\\d+|video)/([0-9a-zA-Z]+)',
+                domains: [
+                    'm.cda.pl',
+                    'cda.pl',
+                    'www.cda.pl',
+                    'ebd.cda.pl'
+                ]
+            },
+            {
+                resolver: 'chromecast',
+                pattern: '(?://|\\.)(chromecast\\.video)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'chromecast.video'
+                ]
+            },
+            {
+                resolver: 'clicknupload',
+                pattern: '(?://|\\.)(clicknupload\\.(?:com?|me|link|org|cc))/(?:f/)?([0-9A-Za-z]+)',
+                domains: [
+                    'clicknupload.cc',
+                    'clicknupload.co',
+                    'clicknupload.com',
+                    'clicknupload.me',
+                    'clicknupload.link',
+                    'clicknupload.org'
+                ]
+            },
+            {
+                resolver: 'clipwatching',
+                pattern: '(?://|\\.)((?:clipwatching\\.com|highstream.tv))/(?:embed-)?(\\w+)',
+                domains: [
+                    'clipwatching.com',
+                    'highstream.tv'
+                ]
+            },
+            {
+                resolver: 'cloud9',
+                pattern: '(?://|\\.)(cloud9\\.to)/embed/([0-9a-zA-Z-_]+)',
+                domains: [
+                    'cloud9.to'
+                ]
+            },
+            {
+                resolver: 'cloudb',
+                pattern: '(?://|\\.)(cloudb2?\\.me)/(?:embed-|emb.html\\?)?([0-9a-zA-Z]+)',
+                domains: [
+                    'cloudb.me',
+                    'cloudb2.me'
+                ]
+            },
+            {
+                resolver: 'cloudmailru',
+                pattern: '(?://|\\.)(cloud\\.mail\\.ru)/public/([0-9A-Za-z]+/[^/]+)',
+                domains: [
+                    'cloud.mail.ru'
+                ]
+            },
+            {
+                resolver: 'cloudvideo',
+                pattern: null,
+                domains: [
+                    'cloudvideo.tv'
+                ]
+            },
+            {
+                resolver: 'costv',
+                pattern: '(?://|\\.)(cos\\.tv)/videos/play/([0-9a-zA-Z]+)',
+                domains: [
+                    'cos.tv'
+                ]
+            },
+            {
+                resolver: 'dailymotion',
+                pattern: '(?://|\\.)(dailymotion\\.com|dai\\.ly)(?:/(?:video|embed|sequence|swf)(?:/video)?)?/([0-9a-zA-Z]+)',
+                domains: [
+                    'dailymotion.com',
+                    'dai.ly'
+                ]
+            },
+            {
+                resolver: 'datemule',
+                pattern: '(?://|\\.)(datemule\\.(?:co|com))/watch/(?:featured/)?([\\w-]+)',
+                domains: [
+                    'datemule.co',
+                    'datemule.com'
+                ]
+            },
+            {
+                resolver: 'daxab',
+                pattern: '(?://|\\.)(daxab\\.com)/player/([^\\n]+)',
+                domains: [
+                    'daxab.com'
+                ]
+            },
+            {
+                resolver: 'debrid_link',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'doodstream',
+                pattern: '(?://|\\.)(dood(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|ws))/(?:d|e)/([0-9a-zA-Z]+)',
+                domains: [
+                    'dood.watch',
+                    'doodstream.com',
+                    'dood.to',
+                    'dood.so',
+                    'dood.cx',
+                    'dood.la',
+                    'dood.ws',
+                    'dood.sh',
+                    'doodstream.co'
+                ]
+            },
+            {
+                resolver: 'downace',
+                pattern: '(?://|\\.)(downace\\.com)/(?:embed/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'downace.com'
+                ]
+            },
+            {
+                resolver: 'duckstream',
+                pattern: '(?://|\\.)(duckstream\\.co)/(?:e|embed|v)/([0-9a-zA-Z]+)',
+                domains: [
+                    'duckstream.co'
+                ]
+            },
+            {
+                resolver: 'easyload',
+                pattern: '(?://|\\.)(easyload\\.io)/e/([0-9a-zA-Z]+)',
+                domains: [
+                    'easyload.io'
+                ]
+            },
+            {
+                resolver: 'elupload',
+                pattern: '(?://)(.*\\.elupload\\.com)/(?:embed/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'elupload.com'
+                ]
+            },
+            {
+                resolver: 'entervideo',
+                pattern: '(?://|\\.)((?:entervideo|eplayvid)\\.(?:com|net))/(?:watch/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'entervideo.net',
+                    'eplayvid.com'
+                ]
+            },
+            {
+                resolver: 'evoload',
+                pattern: '(?://|\\.)(evoload\\.io)/(?:e|f|v)/([0-9a-zA-Z]+)',
+                domains: [
+                    'evoload.io'
+                ]
+            },
+            {
+                resolver: 'facebook',
+                pattern: '(?://|\\.)(facebook\\.com)/.+?video_id=([0-9a-zA-Z]+)',
+                domains: [
+                    'facebook.com'
+                ]
+            },
+            {
+                resolver: 'fastdrive',
+                pattern: '(?://|\\.)(fastdrive\\.io)/([0-9a-zA-Z]+)',
+                domains: [
+                    'fastdrive.io'
+                ]
+            },
+            {
+                resolver: 'fastplay',
+                pattern: '(?://|\\.)(fastplay\\.(?:sx|cc|to))/(?:flash-|embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'fastplay.sx',
+                    'fastplay.cc',
+                    'fastplay.to'
+                ]
+            },
+            {
+                resolver: 'fembed',
+                pattern: '(?://|\\.)((?:femb[ae]d(?:-hd)?|feurl|femax20|24hd|anime789|[fv]cdn|sharinglink|streamm4u|votrefil[em]s?|femoload|asianclub|dailyplanet|[jf]player|mrdhan|there|sexhd|gcloud|mediashore|xstreamcdn|vcdnplay|vidohd|vidsource|viplayer|zidiplay|embedsito|dutrag|youvideos|moviepl|vidcloud|diasfem|moviemaniac|albavido|ncdnstm|superplayxyz|cinegrabber|ndrama|jav(?:stream|poll)|suzihaza)\\.(?:com|club|io|xyz|pw|net|to|live|me|stream|co|cc|org|ru|tv|fun|info|top))/(?:v|f)/([a-zA-Z0-9-]+)',
+                domains: [
+                    'fembed.com',
+                    'anime789.com',
+                    '24hd.club',
+                    'vcdn.io',
+                    'sharinglink.club',
+                    'votrefiles.club',
+                    'femoload.xyz',
+                    'feurl.com',
+                    'dailyplanet.pw',
+                    'jplayer.net',
+                    'xstreamcdn.com',
+                    'gcloud.live',
+                    'vcdnplay.com',
+                    'vidohd.com',
+                    'vidsource.me',
+                    'votrefile.xyz',
+                    'zidiplay.com',
+                    'fcdn.stream',
+                    'mediashore.org',
+                    'there.to',
+                    'femax20.com',
+                    'sexhd.co',
+                    'viplayer.cc',
+                    'mrdhan.com',
+                    'votrefilms.xyz',
+                    'embedsito.com',
+                    'dutrag.com',
+                    'youvideos.ru',
+                    'streamm4u.club',
+                    'moviepl.xyz',
+                    'asianclub.tv',
+                    'vidcloud.fun',
+                    'fplayer.info',
+                    'diasfem.com',
+                    'fembad.org',
+                    'moviemaniac.org',
+                    'albavido.xyz',
+                    'ncdnstm.com',
+                    'fembed-hd.com',
+                    'superplayxyz.club',
+                    'cinegrabber.com',
+                    'ndrama.xyz',
+                    'javstream.top',
+                    'javpoll.com',
+                    'suzihaza.com',
+                    'fembed.net'
+                ]
+            },
+            {
+                resolver: 'filepup',
+                pattern: '(?://|\\.)(filepup.(?:net))/(?:play|files)/([0-9a-zA-Z]+)',
+                domains: [
+                    'filepup.net'
+                ]
+            },
+            {
+                resolver: 'filerio',
+                pattern: '(?://|\\.)(filerio\\.in)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'filerio.in'
+                ]
+            },
+            {
+                resolver: 'filesim',
+                pattern: '(?://|\\.)(files\\.im)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'files.im'
+                ]
+            },
+            {
+                resolver: 'flashx',
+                pattern: '(?://|\\.)(flashx\\.(?:tv|to|sx|cc|bz))/(?:embed-|dl\\?|embed.php\\?c=)?([0-9a-zA-Z]+)',
+                domains: [
+                    'flashx.tv',
+                    'flashx.to',
+                    'flashx.sx',
+                    'flashx.bz',
+                    'flashx.cc'
+                ]
+            },
+            {
+                resolver: 'gamovideo',
+                pattern: '(?://|\\.)(gamovideo\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'gamovideo.com'
+                ]
+            },
+            {
+                resolver: 'gofile',
+                pattern: '(?://|\\.)(gofile\\.io)/(?:\\?c=|d/)([0-9a-zA-Z]+)',
+                domains: [
+                    'gofile.io'
+                ]
+            },
+            {
+                resolver: 'gogostream',
+                pattern: '(?://|\\.)(gogo-play\\.net)/(?:streaming|embed|load|ajax)\\.php\\?id=([a-zA-Z0-9]+)',
+                domains: [
+                    'gogo-play.net'
+                ]
+            },
+            {
+                resolver: 'gomoplayer',
+                pattern: '(?://|\\.)((?:gomoplayer|tunestream|xvideosharing)\\.(?:com|net))/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'gomoplayer.com',
+                    'tunestream.net',
+                    'xvideosharing.com'
+                ]
+            },
+            {
+                resolver: 'googlevideo',
+                pattern: 'https?://(.*?(?:\\.googlevideo|\\.bp\\.blogspot|blogger|(?:plus|drive|get|docs)\\.google|google(?:usercontent|drive|apis))\\.com)/(.*?(?:videoplayback\\?|[\\?&]authkey|host/)*.+)',
+                domains: [
+                    'googlevideo.com',
+                    'googleusercontent.com',
+                    'get.google.com',
+                    'plus.google.com',
+                    'googledrive.com',
+                    'drive.google.com',
+                    'docs.google.com',
+                    'youtube.googleapis.com',
+                    'bp.blogspot.com',
+                    'blogger.com'
+                ]
+            },
+            {
+                resolver: 'gounlimited',
+                pattern: '(?://|\\.)(gounlimited\\.to)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'gounlimited.to'
+                ]
+            },
+            {
+                resolver: 'hdvid',
+                pattern: '(?://|\\.)((?:hdvid|vidhdthe)\\.(?:tv|fun|online))/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'hdvid.tv',
+                    'hdvid.fun',
+                    'vidhdthe.online'
+                ]
+            },
+            {
+                resolver: 'hexupload',
+                pattern: '(?://|\\.)(hexupload\\.net)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'hexupload.net'
+                ]
+            },
+            {
+                resolver: 'holavid',
+                pattern: '(?://|\\.)(holavid\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'holavid.com'
+                ]
+            },
+            {
+                resolver: 'hugefiles',
+                pattern: '(?://|\\.)(hugefiles\\.(?:net|cc))/([0-9a-zA-Z/]+)',
+                domains: [
+                    'hugefiles.net',
+                    'hugefiles.cc'
+                ]
+            },
+            {
+                resolver: 'hxfile',
+                pattern: '(?://|\\.)(hxfile\\.co)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'hxfile.co'
+                ]
+            },
+            {
+                resolver: 'hxload',
+                pattern: '(?://|\\.)(hxload\\.(?:to|co|io))/(?:embed/|\\?e=)?([0-9a-zA-Z]+)',
+                domains: [
+                    'hxload.to',
+                    'hxload.co',
+                    'hxload.io'
+                ]
+            },
+            {
+                resolver: 'indavideo',
+                pattern: '(?://|\\.)(indavideo\\.hu)/(?:player/video|video)/([0-9A-Za-z-_]+)',
+                domains: [
+                    'indavideo.hu'
+                ]
+            },
+            {
+                resolver: 'itemfix',
+                pattern: '(?://|\\.)(itemfix\\.com)/v\\?t=([0-9A-Za-z_]+)',
+                domains: [
+                    'itemfix.com'
+                ]
+            },
+            {
+                resolver: 'jetload',
+                pattern: '(?://|\\.)(jetload\\.(?:net|tv|to))/(?:[a-zA-Z]/|.*?embed\\.php\\?u=)?([0-9a-zA-Z]+)',
+                domains: [
+                    'jetload.net',
+                    'jetload.to'
+                ]
+            },
+            {
+                resolver: 'k2s',
+                pattern: '(?://|\\.)(k2s\\.cc)/(?:file/)?([0-9a-f]+)',
+                domains: [
+                    'k2s.cc'
+                ]
+            },
+            {
+                resolver: 'lbry',
+                pattern: '(?://|\\.)(lbry\\.tv|odysee\\.com|madiator\\.com)/(\\@[^:\\/]+\\:[^:\\/]+\\/[^:\\/]+:[0-9a-zA-Z]+)',
+                domains: [
+                    'lbry.tv',
+                    'odysee.com',
+                    'madiator.com'
+                ]
+            },
+            {
+                resolver: 'letsupload',
+                pattern: '(?://|\\.)(letsupload\\.(?:io|org))/([0-9a-zA-Z]+)',
+                domains: [
+                    'letsupload.io',
+                    'letsupload.org'
+                ]
+            },
+            {
+                resolver: 'lewdhost',
+                pattern: '(?://|\\.)(stream\\.lewd\\.host)/embed/([0-9a-zA-Z]+)',
+                domains: [
+                    'stream.lewd.host'
+                ]
+            },
+            {
+                resolver: 'liivideo',
+                pattern: '(?://|\\.)(liivideo\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'liivideo.com'
+                ]
+            },
+            {
+                resolver: 'linksnappy',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'mailru',
+                pattern: '(?://|\\.)(mail\\.ru)/(?:\\w+/)?(?:videos/embed/)?(inbox|mail|embed|mailua|list|bk|v)/(?:([^/]+)/[^.]+/)?(\\d+)',
+                domains: [
+                    'mail.ru',
+                    'my.mail.ru',
+                    'm.my.mail.ru',
+                    'videoapi.my.mail.ru',
+                    'api.video.mail.ru'
+                ]
+            },
+            {
+                resolver: 'megadebrid',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'megaupnet',
+                pattern: '(?://|\\.)(megaup\\.net)/([0-9a-zA-Z]+)',
+                domains: [
+                    'megaup.net'
+                ]
+            },
+            {
+                resolver: 'megogo',
+                pattern: '(?://|\\.)(megogo\\.(?:net|ru))/.+?(?:id=|view/)(\\d+)',
+                domains: [
+                    'megogo.net',
+                    'megogo.ru'
+                ]
+            },
+            {
+                resolver: 'mixdrop',
+                pattern: '(?://|\\.)(mixdrop\\.(?:co|to|sx|bz))/(?:f|e)/(\\w+)',
+                domains: [
+                    'mixdrop.co',
+                    'mixdrop.to',
+                    'mixdrop.sx',
+                    'mixdrop.bz'
+                ]
+            },
+            {
+                resolver: 'mp4upload',
+                pattern: '(?://|\\.)(mp4upload\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'mp4upload.com'
+                ]
+            },
+            {
+                resolver: 'mycloud',
+                pattern: '(?://|\\.)(my?cloud\\.to)/embed/([\\S]+)',
+                domains: [
+                    'mycloud.to',
+                    'mcloud.to'
+                ]
+            },
+            {
+                resolver: 'myfeminist',
+                pattern: '(?://|\\.)(myfeminist\\.com)/(?:embed-)?([a-zA-z0-9]+)',
+                domains: [
+                    'myfeminist.com'
+                ]
+            },
+            {
+                resolver: 'mystream',
+                pattern: '(?://|\\.)(my?stream\\.(?:la|to|cloud|xyz|fun|press))/(?:external|embed-|watch/)?([0-9a-zA-Z_]+)',
+                domains: [
+                    'mystream.la',
+                    'mystream.to',
+                    'mstream.xyz',
+                    'mstream.cloud',
+                    'mstream.fun',
+                    'mstream.press'
+                ]
+            },
+            {
+                resolver: 'myupload',
+                pattern: '(?://|\\.)(myupload\\.co)/plugins/mediaplayer/site/_embed.php\\?u=([0-9a-zA-Z]+)',
+                domains: [
+                    'myupload.co'
+                ]
+            },
+            {
+                resolver: 'newtube',
+                pattern: '(?://|\\.)(newtube\\.app)/(?:user/)?(?:embed/|\\w+)/(\\w+)',
+                domains: [
+                    'newtube.app'
+                ]
+            },
+            {
+                resolver: 'ninjastream',
+                pattern: '(?://|\\.)(ninjastream\\.to)/(?:watch|download)/([0-9a-zA-Z]+)',
+                domains: [
+                    'ninjastream.to'
+                ]
+            },
+            {
+                resolver: 'nxload',
+                pattern: '(?://|\\.)(nxload\\.com)/(?:v/|embed[-/])?([0-9a-zA-Z]+)',
+                domains: [
+                    'nxload.com'
+                ]
+            },
+            {
+                resolver: 'ok',
+                pattern: '(?://|\\.)(ok\\.ru|odnoklassniki\\.ru)/(?:videoembed|video|live)/(\\d+)',
+                domains: [
+                    'ok.ru',
+                    'odnoklassniki.ru'
+                ]
+            },
+            {
+                resolver: 'onlystream',
+                pattern: '(?://|\\.)(onlystream\\.tv)/(?:e/)?([0-9a-zA-Z-_/]+)',
+                domains: [
+                    'onlystream.tv'
+                ]
+            },
+            {
+                resolver: 'oogly',
+                pattern: '(?://|\\.)(oogly\\.io)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'oogly.io'
+                ]
+            },
+            {
+                resolver: 'pandafiles',
+                pattern: '(?://|\\.)(pandafiles\\.com)/([0-9a-zA-Z]+)',
+                domains: [
+                    'pandafiles.com'
+                ]
+            },
+            {
+                resolver: 'peertube',
+                pattern: '(?://|\\.)(peertube\\.(?:tv|co\\.uk|uno))/(?:videos/)?(?:embed|watch|w)/([0-9a-zA-Z-]+)',
+                domains: [
+                    'peertube.tv',
+                    'peertube.co.uk',
+                    'peertube.uno'
+                ]
+            },
+            {
+                resolver: 'pixeldrain',
+                pattern: '(?://|\\.)(pixeldrain\\.com)/(?:u|l)/([0-9a-zA-Z\\-]+)',
+                domains: [
+                    'pixeldrain.com'
+                ]
+            },
+            {
+                resolver: 'pkspeed',
+                pattern: '(?://|\\.)(pkspeed\\.net)/(?:embed-)?([A-Za-z0-9]+)',
+                domains: [
+                    'pkspeed.net'
+                ]
+            },
+            {
+                resolver: 'playhd',
+                pattern: '(?://|\\.)(play(?:hd|drive)\\.(?:one|xyz))/e/([0-9a-zA-Z]+)',
+                domains: [
+                    'playhd.one',
+                    'playdrive.xyz'
+                ]
+            },
+            {
+                resolver: 'playtube',
+                pattern: '(?://|\\.)(playtube\\.ws)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'playtube.ws'
+                ]
+            },
+            {
+                resolver: 'playwire',
+                pattern: '(?://|\\.)(config\\.playwire\\.com)/(.+?)/(?:zeus|player)\\.json',
+                domains: [
+                    'playwire.com'
+                ]
+            },
+            {
+                resolver: 'premiumize_me',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'putload',
+                pattern: '(?://|\\.)(putload\\.tv|shitmovie\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'putload.tv',
+                    'shitmovie.com'
+                ]
+            },
+            {
+                resolver: 'racaty',
+                pattern: '(?://|\\.)(racaty\\.net)/([0-9a-zA-Z]+)',
+                domains: [
+                    'racaty.net'
+                ]
+            },
+            {
+                resolver: 'rapidgator',
+                pattern: '(?://|\\.)(rapidgator\\.net|rg\\.to)/+file/+([a-z0-9]+)(?=[/?#]|$)',
+                domains: [
+                    'rapidgator.net',
+                    'rg.to'
+                ]
+            },
+            {
+                resolver: 'realdebrid',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'rovideo',
+                pattern: '(?://|\\.)(rovideo\\.net)/(?:embed|videos)/([0-9]+)',
+                domains: [
+                    'rovideo.net'
+                ]
+            },
+            {
+                resolver: 'rpnet',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'rumble',
+                pattern: '(?://|\\.)(rumble\\.com)/(?:embed/)?([^/\\?]+)',
+                domains: [
+                    'rumble.com'
+                ]
+            },
+            {
+                resolver: 'rutube',
+                pattern: '(?://|\\.)(rutube\\.ru)/(?:play/embed/|video/)([0-9a-zA-Z]+)',
+                domains: [
+                    'rutube.ru'
+                ]
+            },
+            {
+                resolver: 'sapo',
+                pattern: '(?://|\\.)(videos\\.sapo\\.pt)/([0-9a-zA-Z]+)',
+                domains: [
+                    'videos.sapo.pt'
+                ]
+            },
+            {
+                resolver: 'saruch',
+                pattern: '(?://|\\.)(saruch\\.co)/(?:embed|video)/([0-9a-zA-Z]+)',
+                domains: [
+                    'saruch.co'
+                ]
+            },
+            {
+                resolver: 'send',
+                pattern: '(?://|\\.)(send\\.cm)/([0-9a-zA-Z]+)',
+                domains: [
+                    'send.cm'
+                ]
+            },
+            {
+                resolver: 'sendfox',
+                pattern: '(?://|\\.)(sendfox\\.org)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'sendfox.org'
+                ]
+            },
+            {
+                resolver: 'sendvid',
+                pattern: '(?://|\\.)(sendvid\\.com)/(?:embed/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'sendvid.com'
+                ]
+            },
+            {
+                resolver: 'sibnet',
+                pattern: '(?://|\\.)(sibnet\\.ru)/(?:shell\\.php\\?videoid=|.*video)([0-9a-zA-Z]+)',
+                domains: [
+                    'sibnet.ru'
+                ]
+            },
+            {
+                resolver: 'simplydebrid',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'smoozed',
+                pattern: null,
+                domains: [
+                    '*'
+                ]
+            },
+            {
+                resolver: 'speedostream',
+                pattern: '(?://|\\.)(speedostream\\.com)/(?:embed-)?([^\\n]+)',
+                domains: [
+                    'speedostream.com'
+                ]
+            },
+            {
+                resolver: 'speedvideo',
+                pattern: '(?://|\\.)(speedvideo\\.net)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'speedvideo.net'
+                ]
+            },
+            {
+                resolver: 'speedwatch',
+                pattern: '(?://|\\.)(speedwatch\\.io)/(?:plyr|e|play-embed|file)/([0-9a-zA-Z]+)',
+                domains: [
+                    'speedwatch.io'
+                ]
+            },
+            {
+                resolver: 'streamable',
+                pattern: '(?://|\\.)(streamable\\.com)/(?:s/)?([a-zA-Z0-9]+(?:/[a-zA-Z0-9]+)?)',
+                domains: [
+                    'streamable.com'
+                ]
+            },
+            {
+                resolver: 'streamani',
+                pattern: '(?://|\\.)(streamani\\.net)/(?:streaming|embed|load|ajax)\\.php\\?id=([a-zA-Z0-9]+)',
+                domains: [
+                    'streamani.net'
+                ]
+            },
+            {
+                resolver: 'streamcommunity',
+                pattern: '(?://|\\.)(streamingcommunity\\.(?:one|xyz|video|vip|work|name|live|tv|space|art|fun|website))/watch/(\\d+(?:\\?e=)?\\d+)',
+                domains: [
+                    'streamingcommunity.xyz',
+                    'streamingcommunity.one',
+                    'streamingcommunity.vip',
+                    'streamingcommunity.work',
+                    'streamingcommunity.name',
+                    'streamingcommunity.video',
+                    'streamingcommunity.live',
+                    'streamingcommunity.tv',
+                    'streamingcommunity.space',
+                    'streamingcommunity.art',
+                    'streamingcommunity.fun',
+                    'streamingcommunity.website'
+                ]
+            },
+            {
+                resolver: 'streamhub',
+                pattern: '(?://|\\.)(streamhub\\.to)/(?:embed-|e/|d/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'streamhub.to'
+                ]
+            },
+            {
+                resolver: 'streamlare',
+                pattern: '(?://|\\.)(streamlare\\.com)/(?:e|v)/([0-9A-Za-z]+)',
+                domains: [
+                    'streamlare.com'
+                ]
+            },
+            {
+                resolver: 'streamoupload',
+                pattern: '(?://|\\.)(streamoupload\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'streamoupload.com'
+                ]
+            },
+            {
+                resolver: 'streamrapid',
+                pattern: '(?://|\\.)((?:rabbitstream|streamrapid)\\.(?:ru|net))/embed-([^\\n]+)',
+                domains: [
+                    'streamrapid.ru',
+                    'rabbitstream.net'
+                ]
+            },
+            {
+                resolver: 'streamsb',
+                pattern: '(?://|\\.)((?:view|watch|embed|tube|player|cloudemb|japopav|stream)?s?b?(?:embed\\d?|play\\d?|video)?\\.(?:com|net|org|one|tv))/(?:embed-|e/|play/|d/|sup/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'sbembed.com',
+                    'sbembed1.com',
+                    'sbplay.org',
+                    'sbvideo.net',
+                    'streamsb.net',
+                    'sbplay.one',
+                    'cloudemb.com',
+                    'playersb.com',
+                    'tubesb.com',
+                    'sbplay1.com',
+                    'embedsb.com',
+                    'watchsb.com',
+                    'sbplay2.com',
+                    'japopav.tv',
+                    'viewsb.com'
+                ]
+            },
+            {
+                resolver: 'streamtape',
+                pattern: '(?://|\\.)(s(?:tr)?(?:eam)?(?:ta?p?e?|cloud)\\.(?:com|cloud|net|pe|site|link|cc|online|fun))/(?:e|v)/([0-9a-zA-Z]+)',
+                domains: [
+                    'streamtape.com',
+                    'strtape.cloud',
+                    'streamtape.net',
+                    'streamta.pe',
+                    'streamtape.site',
+                    'strcloud.link',
+                    'strtpe.link',
+                    'streamtape.cc',
+                    'scloud.online',
+                    'stape.fun'
+                ]
+            },
+            {
+                resolver: 'streamty',
+                pattern: '(?://|\\.)(streamty\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'streamty.com'
+                ]
+            },
+            {
+                resolver: 'streamvid',
+                pattern: '(?://|\\.)(streamvid\\.co)/player/([0-9a-zA-Z]+)',
+                domains: [
+                    'streamvid.co'
+                ]
+            },
+            {
+                resolver: 'streamwire',
+                pattern: '(?://|\\.)(streamwire\\.net)/(?:embed-|e/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'streamwire.net'
+                ]
+            },
+            {
+                resolver: 'streamz',
+                pattern: '(?://|\\.)(streamzz?\\.(?:cc|vg|to|ws))/([0-9a-zA-Z]+)',
+                domains: [
+                    'streamz.cc',
+                    'streamz.vg',
+                    'streamzz.to',
+                    'streamz.ws'
+                ]
+            },
+            {
+                resolver: 'superitu',
+                pattern: '(?://|\\.)(superitu\\.com)/embed/redirector\\.php\\?id=([0-9a-zA-Z=]+)',
+                domains: [
+                    'superitu.com'
+                ]
+            },
+            {
+                resolver: 'supervideo',
+                pattern: '(?://|\\.)(supervideo\\.tv)/(?:embed-|e/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'supervideo.tv'
+                ]
+            },
+            {
+                resolver: 'truhd',
+                pattern: '(?://|\\.)(truhd\\.xyz)/embed/([0-9a-zA-Z]+)',
+                domains: [
+                    'truhd.xyz'
+                ]
+            },
+            {
+                resolver: 'tubitv',
+                pattern: '(?://|\\.)(tubitv\\.com)/(?:video|embed)/(\\d+)',
+                domains: [
+                    'tubitv.com'
+                ]
+            },
+            {
+                resolver: 'tudou',
+                pattern: '(?://|\\.)(tudou\\.com)/programs/view/([0-9a-zA-Z]+)',
+                domains: [
+                    'tudou.com'
+                ]
+            },
+            {
+                resolver: 'tunepk',
+                pattern: '(?://|\\.)(tune\\.(?:video|pk))/(?:player|video|play)/(?:[\\w\\.\\?]+=)?(\\d+)',
+                domains: [
+                    'tune.pk',
+                    'tune.video'
+                ]
+            },
+            {
+                resolver: 'turboviplay',
+                pattern: '(?://|\\.)((?:turboviplay|emturbovid)\\.com)/t/([0-9a-zA-Z]+)',
+                domains: [
+                    'turboviplay.com',
+                    'emturbovid.com'
+                ]
+            },
+            {
+                resolver: 'tusfiles',
+                pattern: '(?://|\\.)(tusfiles\\.(?:net|com))/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'tusfiles.net',
+                    'tusfiles.com'
+                ]
+            },
+            {
+                resolver: 'tvlogy',
+                pattern: '(?://|\\.)((?:hls\\.|flow\\.)?tvlogy\\.to)/(?:embed/|watch\\.php\\?v=|player/index.php\\?data=)?([0-9a-zA-Z/]+)',
+                domains: [
+                    'tvlogy.to'
+                ]
+            },
+            {
+                resolver: 'twitchtv',
+                pattern: 'https?://(?:www\\.)?(twitch\\.tv)/(.+?)(?:\\?|$)',
+                domains: [
+                    'twitch.tv'
+                ]
+            },
+            {
+                resolver: 'uploadflix',
+                pattern: '(?://|\\.)(uploadflix\\.org)/([0-9a-zA-Z]+)',
+                domains: [
+                    'uploadflix.org'
+                ]
+            },
+            {
+                resolver: 'upstream',
+                pattern: '(?://|\\.)(upstream\\.to)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'upstream.to'
+                ]
+            },
+            {
+                resolver: 'uptobox',
+                pattern: '(?://|\\.)(uptobox.com|uptostream.com)/(?:iframe/)?([0-9A-Za-z_]+)',
+                domains: [
+                    'uptobox.com',
+                    'uptostream.com'
+                ]
+            },
+            {
+                resolver: 'upvideo',
+                pattern: '(?://|\\.)((?:upvideo|videoloca|makaveli|tnaket|highload)\\.(?:to|xyz))/(?:e|v|f)/([0-9a-zA-Z]+)',
+                domains: [
+                    'upvideo.to',
+                    'videoloca.xyz',
+                    'tnaket.xyz',
+                    'makaveli.xyz',
+                    'highload.to'
+                ]
+            },
+            {
+                resolver: 'uqload',
+                pattern: '(?://|\\.)(uqload\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'uqload.com'
+                ]
+            },
+            {
+                resolver: 'userload',
+                pattern: '(?://|\\.)(userload\\.co)/(?:e|f|embed)/([0-9a-zA-Z]+)',
+                domains: [
+                    'userload.co'
+                ]
+            },
+            {
+                resolver: 'userscloud',
+                pattern: '(?://|\\.)(userscloud\\.com)/(?:embed-|embed/)?([0-9a-zA-Z/]+)',
+                domains: [
+                    'userscloud.com'
+                ]
+            },
+            {
+                resolver: 'veeHD',
+                pattern: '(?://|\\.)(veehd\\.com)/video/([0-9A-Za-z]+)',
+                domains: [
+                    'veehd.com'
+                ]
+            },
+            {
+                resolver: 'veoh',
+                pattern: '(?://|\\.)(veoh\\.com)/(?:watch/|.+?permalinkId=)?([0-9a-zA-Z/]+)',
+                domains: [
+                    'veoh.com'
+                ]
+            },
+            {
+                resolver: 'vevio',
+                pattern: '(?://|\\.)(vev\\.(?:io|red))/(?:embed/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vev.io',
+                    'vev.red'
+                ]
+            },
+            {
+                resolver: 'vidbob',
+                pattern: '(?://|\\.)(vidbob\\.com)/(?:embed-)?([0-9a-zA-Z-]+)',
+                domains: [
+                    'vidbob.com'
+                ]
+            },
+            {
+                resolver: 'vidbom',
+                pattern: '(?://|\\.)((?:v[aie]d[bp][aoe]?m|myvii?d|v[aei]dshar[er]?)\\.(?:com|net|org))(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)',
+                domains: [
+                    'vidbom.com',
+                    'vidbem.com',
+                    'vidbm.com',
+                    'vedpom.com',
+                    'vedbom.com',
+                    'vedbom.org',
+                    'vadbom.com',
+                    'vidbam.org',
+                    'myviid.com',
+                    'myviid.net',
+                    'myvid.com',
+                    'vidshare.com',
+                    'vedsharr.com',
+                    'vedshar.com',
+                    'vedshare.com',
+                    'vadshar.com',
+                    'vidshar.org'
+                ]
+            },
+            {
+                resolver: 'vidcloud',
+                pattern: '(?://|\\.)(vidcloud\\.(?:co|pro|is))/(?:embed\\d/|v/|player\\?fid=)([0-9a-zA-Z?&=]+)',
+                domains: [
+                    'vidcloud.co',
+                    'vidcloud.pro',
+                    'vidcloud.is'
+                ]
+            },
+            {
+                resolver: 'vidcloud9',
+                pattern: '(?://|\\.)((?:vidcloud9|vidnode|vidnext|vidembed)\\.(?:com|net|cc|io|me))/(?:streaming|embedplus|load(?:server)?)(?:\\.php)?\\?id=([0-9a-zA-Z]+)',
+                domains: [
+                    'vidcloud9.com',
+                    'vidnode.net',
+                    'vidnext.net',
+                    'vidembed.net',
+                    'vidembed.cc',
+                    'vidembed.io',
+                    'vidembed.me'
+                ]
+            },
+            {
+                resolver: 'videa',
+                pattern: '(?://|\\.)((?:videa|videakid)\\.hu)/(?:player/?\\?v=|player/v/|videok/)(?:.*-|)([0-9a-zA-Z]+)',
+                domains: [
+                    'videa.hu',
+                    'videakid.hu'
+                ]
+            },
+            {
+                resolver: 'videoapne',
+                pattern: '(?://|\\.)(videoapne\\.co)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'videoapne.co'
+                ]
+            },
+            {
+                resolver: 'videobee',
+                pattern: '(?://|\\.)(thevideobee\\.to)/(?:embed-)?([0-9A-Za-z]+)',
+                domains: [
+                    'thevideobee.to'
+                ]
+            },
+            {
+                resolver: 'videobin',
+                pattern: '(?://|\\.)(videobin\\.co)/(?:embed-|source/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'videobin.co'
+                ]
+            },
+            {
+                resolver: 'videohost2',
+                pattern: '(?://|\\.)(videohost2\\.com)/playh\\.php\\?id=([0-9a-f]+)',
+                domains: [
+                    'videohost2.com'
+                ]
+            },
+            {
+                resolver: 'videomega',
+                pattern: '(?://|\\.)(videomega\\.co)/(?:e/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'videomega.co'
+                ]
+            },
+            {
+                resolver: 'videooo',
+                pattern: '(?://|\\.)(videooo\\.news)/(?:embed-)?([^\\n]+)',
+                domains: [
+                    'videooo.news'
+                ]
+            },
+            {
+                resolver: 'videoseyred',
+                pattern: '(?://|\\.)(videoseyred\\.in)/embed/([0-9a-zA-Z]+)',
+                domains: [
+                    'videoseyred.in'
+                ]
+            },
+            {
+                resolver: 'videossh',
+                pattern: '(?://|\\.)(videos\\.sh)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'videos.sh'
+                ]
+            },
+            {
+                resolver: 'videovard',
+                pattern: '(?://|\\.)(videovard\\.(?:sx|to))/[ved]/([0-9a-zA-Z]+)',
+                domains: [
+                    'videovard.sx',
+                    'videovard.to'
+                ]
+            },
+            {
+                resolver: 'videowood',
+                pattern: '(?://|\\.)(videowood\\.tv)/(?:embed/|video/)([0-9a-z]+)',
+                domains: [
+                    'videowood.tv'
+                ]
+            },
+            {
+                resolver: 'videoz',
+                pattern: '(?://|\\.)(videoz\\.me)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'videoz.me'
+                ]
+            },
 
-            /(?:\/\/|\.)(abcvideo\.cc)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(adultswim\.com)\/videos\/((?!streams)[a-z\-]+\/[a-z\-]+)/,
-            /(?:\/\/|\.)(aliez\.me)\/(?:(?:player\/video\.php\?id=([0-9]+)&s=([A-Za-z0-9]+))|(?:video\/([0-9]+)\/([A-Za-z0-9]+)))/,
-            /(?:\/\/|\.)(amazon\.com)\/clouddrive\/share\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(anavids\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(ani-stream\.com)\/(?:embed-)?([0-9a-zA-Z-]+)/,
-            /(?:\/\/|\.)((?:aparat\.cam|wolfstream\.tv))\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(bitchute\.com)\/(?:video|embed)\/([\w-]+)\//,
-            /(?:\/\/|\.)(brighteon\.com)\/(?:embed)?\/?([\w-]+)/,
-            /(?:\/\/|\.)(brupload\.net)\/([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)(castamp\.com)\/embed\.php\?c=(.*?)&/,
-            /(?:\/\/|\.)(cda\.pl)\/(?:.\d+x\d+|video)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(chromecast\.video)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(clicknupload\.(?:com?|me|link|org|cc))\/(?:f\/)?([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)((?:clipwatching\.com|highstream.tv))\/(?:embed-)?(\w+)/,
-            /(?:\/\/|\.)(cloud9\.to)\/embed\/([0-9a-zA-Z-_]+)/,
-            /(?:\/\/|\.)(cloudb2?\.me)\/(?:embed-|emb.html\?)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(cloud\.mail\.ru)\/public\/([0-9A-Za-z]+\/[^\/]+)/,
-            /(?:\/\/|\.)(cos\.tv)\/videos\/play\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(dailymotion\.com|dai\.ly)(?:\/(?:video|embed|sequence|swf)(?:\/video)?)?\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(datemule\.(?:co|com))\/watch\/(?:featured\/)?([\w-]+)/,
-            /(?:\/\/|\.)(daxab\.com)\/player\/([^\n]+)/,
-            /(?:\/\/|\.)(dood(?:stream)?\.(?:com|watch|to|so|cx|la|ws))\/(?:d|e)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(downace\.com)\/(?:embed\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(easyload\.io)\/e\/([0-9a-zA-Z]+)/,
-            /(?:\/\/)(.*\.elupload\.com)\/(?:embed\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)((?:entervideo|eplayvid)\.(?:com|net))\/(?:watch\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(evoload\.io)\/(?:e|f|v)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(facebook\.com)\/.+?video_id=([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(fastdrive\.io)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(fastplay\.(?:sx|cc|to))\/(?:flash-|embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)((?:fembed|feurl|femax20|24hd|anime789|[fv]cdn|sharinglink|streamm4u|votrefil[em]s?|femoload|asianclub|dailyplanet|[jf]player|mrdhan|there|sexhd|gcloud|mediashore|xstreamcdn|vcdnplay|vidohd|vidsource|viplayer|zidiplay|embedsito|dutrag|youvideos|moviepl|vidcloud|diasfem)\.(?:com|club|io|xyz|pw|net|to|live|me|stream|co|cc|org|ru|tv|fun|info))\/(?:v|f)\/([a-zA-Z0-9-]+)/,
-            /(?:\/\/|\.)(filepup.(?:net))\/(?:play|files)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(filerio\.in)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(flashx\.(?:tv|to|sx|cc|bz))\/(?:embed-|dl\?|embed.php\?c=)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(gamovideo\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(gofile\.io)\/(?:[\?]c=|d\/)([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(gogo-play\.net)\/(?:streaming|embed|load|ajax)\.php\?id=([a-zA-Z0-9]+)/,
-            /(?:\/\/|\.)((?:gomoplayer|tunestream|xvideosharing)\.(?:com|net))\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /https?:\/\/(.*?(?:\.googlevideo|\.bp\.blogspot|blogger|(?:plus|drive|get|docs)\.google|google(?:usercontent|drive|apis))\.com)\/(.*?(?:videoplayback\?|[\?&]authkey|host\/)*.+)/,
-            /(?:\/\/|\.)(gounlimited\.to)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)((?:hdvid|vidhdthe)\.(?:tv|fun|online))\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(holavid\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(hugefiles\.(?:net|cc))\/([0-9a-zA-Z\/]+)/,
-            /(?:\/\/|\.)(hxload\.(?:to|co|io))\/(?:embed\/|[\?]e=)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(indavideo\.hu)\/(?:player\/video|video)\/([0-9A-Za-z-_]+)/,
-            /(?:\/\/|\.)(itemfix\.com)\/v\?t=([0-9A-Za-z_]+)/,
-            /(?:\/\/|\.)(jetload\.(?:net|tv|to))\/(?:[a-zA-Z]\/|.*?embed\.php\?u=)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(k2s\.cc)\/(?:file\/)?([0-9a-f]+)/,
-            /(?:\/\/|\.)(letsupload\.(?:io|org))\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(stream\.lewd\.host)\/embed\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(liivideo\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(mail\.ru)\/(?:\w+\/)?(?:videos\/embed\/)?(inbox|mail|embed|mailua|list|bk|v)\/(?:([^\/]+)\/[^.]+\/)?(\d+)/,
-            /(?:\/\/|\.)(megaup\.net)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(megogo\.(?:net|ru))\/.+?(?:id=|view\/)(\d+)/,
-            /(?:\/\/|\.)(mixdrop\.(?:co|to|sx))\/(?:f|e)\/(\w+)/,
-            /(?:\/\/|\.)(mp4upload\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(my?cloud\.to)\/embed\/([\S]+)/,
-            /(?:\/\/|\.)(my?stream\.(?:la|to|cloud|xyz|fun|press))\/(?:external|embed-|watch\/)?([0-9a-zA-Z_]+)/,
-            /(?:\/\/|\.)(myupload\.co)\/plugins\/mediaplayer\/site\/_embed.php\?u=([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(newtube\.app)\/(?:user\/\w+|embed)\/(\w+)/,
-            /(?:\/\/|\.)(ninjastream\.to)\/(?:watch|download)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(nxload\.com)\/(?:v\/|embed[-\/])?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(ok\.ru|odnoklassniki\.ru)\/(?:videoembed|video)\/(\d+)/,
-            /(?:\/\/|\.)(onlystream\.tv)\/(?:e\/)?([0-9a-zA-Z-_\/]+)/,
-            /(?:\/\/|\.)(oogly\.io)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(pandafiles\.com)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(peertube\.uno)\/videos\/(?:embed|watch)\/([0-9a-f-]+)/,
-            /(?:\/\/|\.)(pixeldrain\.com)\/(?:u|l)\/([0-9a-zA-Z\-]+)/,
-            /(?:\/\/|\.)(pkspeed\.net)\/(?:embed-)?([A-Za-z0-9]+)/,
-            /(?:\/\/|\.)(play(?:hd|drive)\.(?:one|xyz))\/e\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(playtube\.ws)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(config\.playwire\.com)\/(.+?)\/(?:zeus|player)\.json(?:\/\/|\.)(cdn\.playwire\.com.+?\d+)\/(?:config|embed)\/(\d+)/,
-            /(?:\/\/|\.)(putload\.tv|shitmovie\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(rapidgator\.net|rg\.to)\/+file\/+([a-z0-9]+)(?=[\/?#]|$)/,
-            /(?:\/\/|\.)(rumble\.com)\/(?:embed\/)?([^\/\?]+)/,
-            /(?:\/\/|\.)(rutube\.ru)\/(?:play\/embed\/|video\/)([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videos\.sapo\.pt)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(saruch\.co)\/(?:embed|video)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(sendfox\.org)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(sendvid\.com)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(sibnet\.ru)\/(?:shell\.php\?videoid=|.*video)([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(speedostream\.com)\/(?:embed-)?([^\n]+)/,
-            /(?:\/\/|\.)(speedvideo\.net)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(speedwatch\.io)\/(?:plyr|e|play-embed|file)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(streamable\.com)\/(?:s\/)?([a-zA-Z0-9]+(?:\/[a-zA-Z0-9]+)?)/,
-            /(?:\/\/|\.)(streamani\.net)\/(?:streaming|embed|load|ajax)\.php\?id=([a-zA-Z0-9]+)/,
-            /(?:\/\/|\.)(streamingcommunity\.(?:one|xyz|video|vip|work|name|live|tv|space))\/watch\/(\d+(?:[\?]e=)?\d+)/,
-            /(?:\/\/|\.)(streamlare\.com)\/(?:e|v)\/([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)(streamoupload\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(streamrapid\.ru)\/embed-([^\n]+)/,
-            /(?:\/\/|\.)((?:tube|player|cloudemb|stream)?s?b?(?:embed\d?|embedsb\d?|play\d?|video)?\.(?:com|net|org|one))\/(?:embed-|e|play|d)?\/?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(str(?:eam)?tap?e?\.(?:com|cloud|net|pe))\/(?:e|v)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(streamty\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(streamvid\.co)\/player\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(streamwire\.net)\/(?:embed-|e\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(streamzz?\.(?:cc|vg|to|ws))\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(superitu\.com)\/embed\/redirector\.php\?id=([0-9a-zA-Z=]+)/,
-            /(?:\/\/|\.)(supervideo\.tv)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(trollvid(?:\.net|\.io)|mp4edge\.com)\/(?:embed\.php.file=|embed\/|stream\/)([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(truhd\.xyz)\/embed\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(tubitv\.com)\/(?:video|embed)\/(\d+)/,
-            /(?:\/\/|\.)(tudou\.com)\/programs\/view\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(tune\.(?:video|pk))\/(?:player|video|play)\/(?:[\w\.\?]+=)?(\d+)/,
-            /(?:\/\/|\.)(tusfiles\.(?:net|com))\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)((?:hls\.|flow\.)?tvlogy\.to)\/(?:embed\/|watch\.php\?v=|player\/index.php\?data=)?([0-9a-zA-Z\/]+)/,
-            /https?:\/\/(?:www\.)?(twitch\.tv)\/(.+?)(?:[\?]|$)^https?:\/\/(?:www\.)?twitch\.tv\/(?:directory|user|p|jobs|store|login|products|search|.+?\/profile|videos\/all)(?:[?\/].*)?$/,
-            /(?:\/\/|\.)(upstream\.to)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(uptobox.com|uptostream.com)\/(?:iframe\/)?([0-9A-Za-z_]+)/,
-            /(?:\/\/|\.)((?:upvideo|videoloca|makaveli|tnaket|highload)\.(?:to|xyz))\/(?:e|v|f)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(uqload\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(userload\.co)\/(?:e|f|embed)\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(userscloud\.com)\/(?:embed-|embed\/)?([0-9a-zA-Z\/]+)/,
-            /(?:\/\/|\.)(veehd\.com)\/video\/([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)(veoh\.com)\/(?:watch\/|.+?permalinkId=)?([0-9a-zA-Z\/]+)/,
-            /(?:\/\/|\.)(vev\.(?:io|red))\/(?:embed\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vidbob\.com)\/(?:embed-)?([0-9a-zA-Z-]+)/,
-            /(?:\/\/|\.)((?:v[ie]d[bp][oe]?m|myvii?d|v[ei]dshar[er]?)\.(?:com|net|org))(?::\d+)?\/(?:embed[\/-])?([A-Za-z0-9]+)/,
-            /(?:\/\/|\.)(vidcloud\.(?:co|pro|is))\/(?:embed\d\/|v\/|player\?fid=)([0-9a-zA-Z?&=]+)/,
-            /(?:\/\/|\.)((?:vidcloud9|vidnode|vidnext|vidembed)\.(?:com|net|cc))\/(?:streaming|embedplus|load(?:server)?)(?:\.php)?\?id=([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)((?:videa|videakid)\.hu)\/(?:player\/?\?v=|player\/v\/|videok\/)(?:.*-|)([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videoapne\.co)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(thevideobee\.to)\/(?:embed-)?([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)(videobin\.co)\/(?:embed-|source\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videohost2\.com)\/playh\.php\?id=([0-9a-f]+)/,
-            /(?:\/\/|\.)(videomega\.co)\/(?:e\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videooo\.news)\/(?:embed-)?([^\n]+)/,
-            /(?:\/\/|\.)(videoseyred\.in)\/embed\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videos\.sh)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videovard\.sx)\/[vef]\/([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videowood\.tv)\/(?:embed\/|video\/)([0-9a-z]+)/,
-            /(?:\/\/|\.)(videoz\.me)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)((?:videozupload|videzup)\.(?:net|pl|top))\/video\/([0-9a-z]+)/,
-            /(?:\/\/|\.)(vidfast\.co)\/(?:embed-)?([a-zA-Z0-9]+)/,
-            /(?:\/\/|\.)(vidia\.tv)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vidlox\.(?:tv|me|xyz))\/(?:embed-|source\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vidmojo\.net)\/(?:embed-)?([^\n]+)/,
-            /(?:\/\/|\.)(vidmoly\.(?:me|to|net))\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vidmx\.xyz)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vid(?:org|piz)\.(?:net|xyz))\/(?:embed[\/-])?([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)(vidoza\.(?:net|co))\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vidspace\.io)\/(?:embed-)?([a-zA-Z0-9]+)/,
-            /(?:\/\/|\.)(vidstore\.me)\/(.+)/,
-            /(?:\/\/|\.)(vidstreaming\.io)\/(?:streaming|embed|load)\.php\?id=([a-zA-Z0-9]+)/,
-            /(?:\/\/|\.)(vidto\.[sm]e)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(viduplayer\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vidwatch\d*\.me)\/(?:embed-)?([a-zA-Z0-9]+)/,
-            /(?:\/\/|\.)(vidzi\.(?:tv|nu))\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vimeo\.com)\/(?:video\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(v[ie]uclips\.(?:net|com))\/(?:embed\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vivo\.sx)\/(?:embed\/)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(vk\.com)\/(?:video_ext\.php\?|video)(.+)/,
-            /(?:\/\/|\.)(vkprime\.com)\/(?:embed-)?([a-zA-Z0-9]+)/,
-            /(?:\/\/|\.)(speedwatch\.us|vkspeed\.com)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(videoslala\.com)\/v\/([^\n]+)/,
-            /(?:\/\/|\.)((?:videoslala|myfeminist)\.(?:com|net))\/embed\/([^\n]+)/,
-            /(?:\/\/|\.)(vlare\.tv)\/(?:v|embed)\/([\w-]+)(?:\/(?:false|true)\/(?:false|true)\/\d+?)?/,
-            /(?:\/\/|\.)(voe\.sx)\/(?:e\/)?([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)(vshare\.eu)\/(?:embed-|)?([0-9a-zA-Z\/]+)/,
-            /(?:\/\/|\.)(vudeo\.net)\/(?:embed-)?([0-9a-zA-Z-]+)/,
-            /(?:\/\/|\.)(vupload\.com)\/(?:e\/|v\/)?([0-9A-Za-z]+)/,
-            /(?:\/\/|\.)(vup\.to)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(watchvideo[0-9]?[0-9]?\.us)\/(?:embed-)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)(weshare\.me)\/(?:services\/mediaplayer\/site\/_embed(?:\.max)?\.php\?u=)?([A-Za-z0-9]+)/,
-            /(?:\/\/|\.)(wstream\.video)\/(?:video6zvimpy52\/|video.php\?file_code=)?([0-9a-zA-Z]+)/,
-            /(?:\/\/|\.)((?:yadi\.sk|disk\.yandex\.ru))\/i\/([\w\-]+)/,
-            /(?:\/\/|\.)(youdbox\.(?:com|net|org))\/(?:embed-)?(\w+)/,
-            /(?:\/\/|\.)(yourupload\.com|yucache\.net)\/(?:watch|embed)?\/?([0-9A-Za-z]+)/,
-
-            /(?:\/\/|\.)(cloudvideo\.tv)\/(?:embed[/-])?([A-Za-z0-9]+)/
-        ],
-
-        domains: [
-            '24hd.club',
-            'abcvideo.cc',
-            'adultswim.com',
-            'aliez.me',
-            'amazon.com',
-            'anavids.com',
-            'ani-stream.com',
-            'anime789.com',
-            'aparat.cam',
-            'api.video.mail.ru',
-            'asianclub.tv',
-            'bitchute.com',
-            'blogger.com',
-            'bp.blogspot.com',
-            'brighteon.com',
-            'brupload.net',
-            'byzoo.org',
-            'castamp.com',
-            'cda.pl',
-            'chromecast.video',
-            'clicknupload.cc',
-            'clicknupload.co',
-            'clicknupload.com',
-            'clicknupload.link',
-            'clicknupload.me',
-            'clicknupload.org',
-            'clipwatching.com',
-            'cloud.mail.ru',
-            'cloud9.to',
-            'cloudb.me',
-            'cloudb2.me',
-            'cloudemb.com',
-            'cloudvideo.tv',
-            'cos.tv',
-            'dai.ly',
-            'dailymotion.com',
-            'dailyplanet.pw',
-            'datemule.co',
-            'datemule.com',
-            'daxab.com',
-            'diasfem.com',
-            'disk.yandex.ru',
-            'docs.google.com',
-            'dood.cx',
-            'dood.la',
-            'dood.so',
-            'dood.to',
-            'dood.watch',
-            'dood.ws',
-            'doodstream.com',
-            'downace.com',
-            'drive.google.com',
-            'dutrag.com',
-            'easyload.io',
-            'easyvideo.me',
-            'ebd.cda.pl',
-            'elupload.com',
-            'embedsb.com',
-            'embedsito.com',
-            'entervideo.net',
-            'eplayvid.com',
-            'evoload.io',
-            'facebook.com',
-            'fastdrive.io',
-            'fastplay.cc',
-            'fastplay.sx',
-            'fastplay.to',
-            'fcdn.stream',
-            'femax20.com',
-            'fembed.com',
-            'femoload.xyz',
-            'feurl.com',
-            'filepup.net',
-            'filerio.in',
-            'flashx.bz',
-            'flashx.cc',
-            'flashx.sx',
-            'flashx.to',
-            'flashx.tv',
-            'fplayer.info',
-            'gamovideo.com',
-            'gcloud.live',
-            'get.google.com',
-            'gofile.io',
-            'gogo-play.net',
-            'gomoplayer.com',
-            'googledrive.com',
-            'googleusercontent.com',
-            'googlevideo.com',
-            'gounlimited.to',
-            'hdvid.fun',
-            'hdvid.tv',
-            'highload.to',
-            'highstream.tv',
-            'holavid.com',
-            'hugefiles.cc',
-            'hugefiles.net',
-            'hxload.co',
-            'hxload.io',
-            'hxload.to',
-            'indavideo.hu',
-            'itemfix.com',
-            'jetload.net',
-            'jetload.to',
-            'jplayer.net',
-            'k2s.cc',
-            'lbry.tv',
-            'letsupload.io',
-            'letsupload.org',
-            'liivideo.com',
-            'm.cda.pl',
-            'm.my.mail.ru',
-            'mail.ru',
-            'makaveli.xyz',
-            'mcloud.to',
-            'mediashore.org',
-            'megaup.net',
-            'megogo.net',
-            'megogo.ru',
-            'mixdrop.co',
-            'mixdrop.sx',
-            'mixdrop.to',
-            'moviepl.xyz',
-            'mp4edge.com',
-            'mp4upload.com',
-            'mrdhan.com',
-            'mstream.cloud',
-            'mstream.fun',
-            'mstream.press',
-            'mstream.xyz',
-            'my.mail.ru',
-            'mycloud.to',
-            'myfeminist.com',
-            'mystream.la',
-            'mystream.to',
-            'myupload.co',
-            'myvid.com',
-            'myviid.com',
-            'myviid.net',
-            'newtube.app',
-            'ninjastream.to',
-            'nxload.com',
-            'odnoklassniki.ru',
-            'odysee.com',
-            'ok.ru',
-            'onlystream.tv',
-            'oogly.io',
-            'pandafiles.com',
-            'peertube.uno',
-            'pixeldrain.com',
-            'pkspeed.net',
-            'play44.net',
-            'playbb.me',
-            'playdrive.xyz',
-            'player.vimeo.com',
-            'playersb.com',
-            'playhd.one',
-            'playpanda.net',
-            'playtube.ws',
-            'playwire.com',
-            'plus.google.com',
-            'putload.tv',
-            'rapidgator.net',
-            'rg.to',
-            'rumble.com',
-            'rutube.ru',
-            'saruch.co',
-            'sbembed.com',
-            'sbembed1.com',
-            'sbplay.one',
-            'sbplay.org',
-            'sbplay1.com',
-            'sbvideo.net',
-            'sendfox.org',
-            'sendvid.com',
-            'sexhd.co',
-            'sharinglink.club',
-            'shitmovie.com',
-            'sibnet.ru',
-            'speedostream.com',
-            'speedvideo.net',
-            'speedwatch.io',
-            'speedwatch.us',
-            'stream.lewd.host',
-            'streamable.com',
-            'streamani.net',
-            'streamingcommunity.live',
-            'streamingcommunity.name',
-            'streamingcommunity.one',
-            'streamingcommunity.space',
-            'streamingcommunity.tv',
-            'streamingcommunity.video',
-            'streamingcommunity.vip',
-            'streamingcommunity.work',
-            'streamingcommunity.xyz',
-            'streamlare.com',
-            'streamm4u.club',
-            'streamoupload.com',
-            'streamrapid.ru',
-            'streamsb.net',
-            'streamta.pe',
-            'streamtape.com',
-            'streamtape.net',
-            'streamty.com',
-            'streamvid.co',
-            'streamwire.net',
-            'streamz.cc',
-            'streamz.vg',
-            'streamz.ws',
-            'streamzz.to',
-            'strtape.cloud',
-            'superitu.com',
-            'supervideo.tv',
-            'there.to',
-            'thevid.live',
-            'thevid.net',
-            'thevid.tv',
-            'thevideobee.to',
-            'tnaket.xyz',
-            'trollvid.io',
-            'trollvid.net',
-            'truhd.xyz',
-            'tubesb.com',
-            'tubitv.com',
-            'tudou.com',
-            'tune.pk',
-            'tune.video',
-            'tunestream.net',
-            'tusfiles.com',
-            'tusfiles.net',
-            'tvlogy.to',
-            'twitch.tv',
-            'upstream.to',
-            'uptobox.com',
-            'uptostream.com',
-            'upvideo.to',
-            'uqload.com',
-            'userload.co',
-            'userscloud.com',
-            'vcdn.io',
-            'vcdnplay.com',
-            'vedbom.com',
-            'vedbom.org',
-            'vedpom.com',
-            'vedshar.com',
-            'vedsharr.com',
-            'veehd.com',
-            'veoh.com',
-            'veuclips.com',
-            'vev.io',
-            'vev.red',
-            'vidbem.com',
-            'vidbm.com',
-            'vidbob.com',
-            'vidbom.com',
-            'vidcloud.co',
-            'vidcloud.fun',
-            'vidcloud.is',
-            'vidcloud.pro',
-            'vidcloud9.com',
-            'videa.hu',
-            'videakid.hu',
-            'vidembed.cc',
-            'vidembed.net',
-            'video44.net',
-            'videoapi.my.mail.ru',
-            'videoapne.co',
-            'videobin.co',
-            'videohost2.com',
-            'videoloca.xyz',
-            'videomega.co',
-            'videooo.news',
-            'videos.sapo.pt',
-            'videos.sh',
-            'videoseyred.in',
-            'videoslala.com',
-            'videoslala.net',
-            'videovard.sx',
-            'videowing.me',
-            'videowood.tv',
-            'videoz.me',
-            'videozoo.me',
-            'videozupload.net',
-            'videzup.pl',
-            'videzup.top',
-            'vidfast.co',
-            'vidhdthe.online',
-            'vidia.tv',
-            'vidlox.me',
-            'vidlox.tv',
-            'vidlox.xyz',
-            'vidmojo.net',
-            'vidmoly.me',
-            'vidmoly.net',
-            'vidmoly.to',
-            'vidmx.xyz',
-            'vidnext.net',
-            'vidnode.net',
-            'vidohd.com',
-            'vidorg.net',
-            'vidoza.co',
-            'vidoza.net',
-            'vidpiz.xyz',
-            'vidshare.com',
-            'vidsource.me',
-            'vidspace.io',
-            'vidstore.me',
-            'vidstreaming.io',
-            'vidto.me',
-            'vidto.se',
-            'viduplayer.com',
-            'vidwatch.me',
-            'vidwatch3.me',
-            'vidwatch4.me',
-            'vidzi.nu',
-            'vidzi.tv',
-            'vimeo.com',
-            'viplayer.cc',
-            'viuclips.net',
-            'vivo.sx',
-            'vk.com',
-            'vkprime.com',
-            'vkspeed.com',
-            'vlare.tv',
-            'voe.sx',
-            'votrefile.xyz',
-            'votrefiles.club',
-            'votrefilms.xyz',
-            'vshare.eu',
-            'vudeo.net',
-            'vup.to',
-            'vupload.com',
-            'watchvideo.us',
-            'watchvideo10.us',
-            'watchvideo11.us',
-            'watchvideo12.us',
-            'watchvideo13.us',
-            'watchvideo14.us',
-            'watchvideo15.us',
-            'watchvideo16.us',
-            'watchvideo17.us',
-            'watchvideo18.us',
-            'watchvideo19.us',
-            'watchvideo2.us',
-            'watchvideo20.us',
-            'watchvideo21.us',
-            'watchvideo3.us',
-            'watchvideo4.us',
-            'watchvideo5.us',
-            'watchvideo6.us',
-            'watchvideo7.us',
-            'watchvideo8.us',
-            'watchvideo9.us',
-            'weshare.me',
-            'wolfstream.tv',
-            'wstream.video',
-            'www.cda.pl',
-            'xstreamcdn.com',
-            'xvideosharing.com',
-            'yadi.sk',
-            'youdbox.com',
-            'youdbox.net',
-            'youdbox.org',
-            'yourupload.com',
-            'youtu.be',
-            'youtube-nocookie.com',
-            'youtube.com',
-            'youtube.googleapis.com',
-            'youvideos.ru',
-            'yucache.net',
-            'zidiplay.com'
-        ],
-
-
-
-
-        resolve(url){
-            url = url instanceof URL ? url.href : url;
-            if (typeof url === string) {
-                let src = new URL(url);
-                if (this.domains.some(d => src.host.search(d) !== -1) && this.patterns.some(r => r.test(url))) return true;
- 
+            {
+                resolver: 'videozupload',
+                pattern: '(?://|\\.)((?:videozupload|videzup)\\.(?:net|pl|top))/video/([0-9a-z]+)',
+                domains: [
+                    'videozupload.net',
+                    'videzup.pl',
+                    'videzup.top'
+                ]
+            },
+            {
+                resolver: 'vidfast',
+                pattern: '(?://|\\.)(vidfast\\.co)/(?:embed-)?([a-zA-Z0-9]+)',
+                domains: [
+                    'vidfast.co'
+                ]
+            },
+            {
+                resolver: 'vidia',
+                pattern: '(?://|\\.)(vidia\\.tv)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vidia.tv'
+                ]
+            },
+            {
+                resolver: 'vidlox',
+                pattern: '(?://|\\.)(vidlox\\.(?:tv|me|xyz))/(?:embed-|source/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vidlox.tv',
+                    'vidlox.me',
+                    'vidlox.xyz'
+                ]
+            },
+            {
+                resolver: 'vidmojo',
+                pattern: '(?://|\\.)(vidmojo\\.net)/(?:embed-)?([^\\n]+)',
+                domains: [
+                    'vidmojo.net'
+                ]
+            },
+            {
+                resolver: 'vidmoly',
+                pattern: '(?://|\\.)(vidmoly\\.(?:me|to|net))/(?:embed-|w/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vidmoly.me',
+                    'vidmoly.to',
+                    'vidmoly.net'
+                ]
+            },
+            {
+                resolver: 'vidmx',
+                pattern: '(?://|\\.)(vidmx\\.xyz)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vidmx.xyz'
+                ]
+            },
+            {
+                resolver: 'vidorg',
+                pattern: '(?://|\\.)(vid(?:org|piz)\\.(?:net|xyz))/(?:embed[/-])?([0-9A-Za-z]+)',
+                domains: [
+                    'vidorg.net',
+                    'vidpiz.xyz'
+                ]
+            },
+            {
+                resolver: 'vidoza',
+                pattern: '(?://|\\.)(vidoza\\.(?:net|co))/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vidoza.net',
+                    'vidoza.co'
+                ]
+            },
+            {
+                resolver: 'vidspace',
+                pattern: '(?://|\\.)(vidspace\\.io)/(?:embed-)?([a-zA-Z0-9]+)',
+                domains: [
+                    'vidspace.io'
+                ]
+            },
+            {
+                resolver: 'vidstore',
+                pattern: '(?://|\\.)(vidstore\\.me)/(.+)',
+                domains: [
+                    'vidstore.me'
+                ]
+            },
+            {
+                resolver: 'vidstreaming',
+                pattern: '(?://|\\.)(vidstreaming\\.io)/(?:streaming|embed|load)\\.php\\?id=([a-zA-Z0-9]+)',
+                domains: [
+                    'vidstreaming.io'
+                ]
+            },
+            {
+                resolver: 'vidto',
+                pattern: '(?://|\\.)(vidto\\.[sm]e)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vidto.me',
+                    'vidto.se'
+                ]
+            },
+            {
+                resolver: 'viduplayer',
+                pattern: '(?://|\\.)(viduplayer\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'viduplayer.com'
+                ]
+            },
+            {
+                resolver: 'vidwatch',
+                pattern: '(?://|\\.)(vidwatch\\d*\\.me)/(?:embed-)?([a-zA-Z0-9]+)',
+                domains: [
+                    'vidwatch3.me',
+                    'vidwatch4.me',
+                    'vidwatch.me'
+                ]
+            },
+            {
+                resolver: 'vidzi',
+                pattern: '(?://|\\.)(vidzi\\.(?:tv|nu))/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vidzi.tv',
+                    'vidzi.nu'
+                ]
+            },
+            {
+                resolver: 'vimeo',
+                pattern: '(?://|\\.)(vimeo\\.com)/(?:video/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vimeo.com',
+                    'player.vimeo.com'
+                ]
+            },
+            {
+                resolver: 'viuclips',
+                pattern: '(?://|\\.)(v[ie]uclips\\.(?:net|com))/(?:embed/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'viuclips.net',
+                    'veuclips.com'
+                ]
+            },
+            {
+                resolver: 'vivosx',
+                pattern: '(?://|\\.)(vivo\\.(?:sx|st))/(?:embed/)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vivo.sx',
+                    'vivo.st'
+                ]
+            },
+            {
+                resolver: 'vk',
+                pattern: '(?://|\\.)(vk\\.com)/(?:video_ext\\.php\\?|video)(.+)',
+                domains: [
+                    'vk.com'
+                ]
+            },
+            {
+                resolver: 'vkprime',
+                pattern: '(?://|\\.)(vkprime\\.com)/(?:embed-)?([a-zA-Z0-9]+)',
+                domains: [
+                    'vkprime.com'
+                ]
+            },
+            {
+                resolver: 'vkspeed',
+                pattern: '(?://|\\.)(speedwatch\\.us|vkspeed\\.com)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vkspeed.com',
+                    'speedwatch.us'
+                ]
+            },
+            {
+                resolver: 'vlalacom',
+                pattern: '(?://|\\.)(videoslala\\.com)/v/([^\\n]+)',
+                domains: [
+                    'videoslala.com'
+                ]
+            },
+            {
+                resolver: 'vlalanet',
+                pattern: '(?://|\\.)(videoslala\\.net)/embed/([^\\n]+)',
+                domains: [
+                    'videoslala.net'
+                ]
+            },
+            {
+                resolver: 'vlaretv',
+                pattern: '(?://|\\.)(vlare\\.tv)/(?:v|embed)/([\\w-]+)(?:/(?:false|true)/(?:false|true)/\\d+?)?',
+                domains: [
+                    'vlare.tv'
+                ]
+            },
+            {
+                resolver: 'voesx',
+                pattern: '(?://|\\.)(voe\\.sx)/(?:e/)?([0-9A-Za-z]+)',
+                domains: [
+                    'voe.sx'
+                ]
+            },
+            {
+                resolver: 'vshareeu',
+                pattern: '(?://|\\.)(vshare\\.eu)/(?:embed-|)?([0-9a-zA-Z/]+)',
+                domains: [
+                    'vshare.eu'
+                ]
+            },
+            {
+                resolver: 'vtube',
+                pattern: '(?://|\\.)(vtube\\.to)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vtube.to'
+                ]
+            },
+            {
+                resolver: 'vudeo',
+                pattern: '(?://|\\.)(vudeo\\.(?:net|io))/(?:embed-)?([0-9a-zA-Z-]+)',
+                domains: [
+                    'vudeo.net',
+                    'vudeo.io'
+                ]
+            },
+            {
+                resolver: 'vupload',
+                pattern: '(?://|\\.)(vupload\\.com)/(?:embed-|e/|v/)?([0-9A-Za-z]+)',
+                domains: [
+                    'vupload.com'
+                ]
+            },
+            {
+                resolver: 'vupto',
+                pattern: '(?://|\\.)(vup\\.to)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'vup.to'
+                ]
+            },
+            {
+                resolver: 'watchvideo',
+                pattern: '(?://|\\.)(watchvideo[0-9]?[0-9]?\\.us)/(?:embed-)?([0-9a-zA-Z]+)',
+                domains: [
+                    'watchvideo.us',
+                    'watchvideo2.us',
+                    'watchvideo3.us',
+                    'watchvideo4.us',
+                    'watchvideo5.us',
+                    'watchvideo6.us',
+                    'watchvideo7.us',
+                    'watchvideo8.us',
+                    'watchvideo9.us',
+                    'watchvideo10.us',
+                    'watchvideo11.us',
+                    'watchvideo12.us',
+                    'watchvideo13.us',
+                    'watchvideo14.us',
+                    'watchvideo15.us',
+                    'watchvideo16.us',
+                    'watchvideo17.us',
+                    'watchvideo18.us',
+                    'watchvideo19.us',
+                    'watchvideo20.us',
+                    'watchvideo21.us'
+                ]
+            },
+            {
+                resolver: 'weshare',
+                pattern: '(?://|\\.)(weshare\\.me)/(?:services/mediaplayer/site/_embed(?:\\.max)?\\.php\\?u=)?([A-Za-z0-9]+)',
+                domains: [
+                    'weshare.me'
+                ]
+            },
+            {
+                resolver: 'wstream',
+                pattern: '(?://|\\.)(wstream\\.video)/(?:video6zvimpy52/|video.php\\?file_code=)?([0-9a-zA-Z]+)',
+                domains: [
+                    'wstream.video'
+                ]
+            },
+            {
+                resolver: 'yandex',
+                pattern: '(?://|\\.)((?:yadi\\.sk|disk\\.yandex\\.ru))/i/([\\w\\-]+)',
+                domains: [
+                    'disk.yandex.ru',
+                    'yadi.sk'
+                ]
+            },
+            {
+                resolver: 'youdbox',
+                pattern: '(?://|\\.)(you?dbox\\.(?:com|net|org))/(?:embed-)?(\\w+)',
+                domains: [
+                    'youdbox.com',
+                    'youdbox.net',
+                    'youdbox.org',
+                    'yodbox.com'
+                ]
+            },
+            {
+                resolver: 'yourupload',
+                pattern: '(?://|\\.)(yourupload\\.com|yucache\\.net)/(?:watch|embed)?/?([0-9A-Za-z]+)',
+                domains: [
+                    'yourupload.com',
+                    'yucache.net'
+                ]
             }
-            return false;
-        }
+        ]
     };
+
+
+
+    resolveurl.resolve = function(url){
+        url = url instanceof URL ? url : new URL(url);
+        for (let index = 0; index < this.resolvers.length; index++) {
+            let resolver = this.resolvers[index], domains = resolver.domains, re, host;
+            for (let i = 0; i < domains.length; i++) {
+                host = domains[i], re;
+                if (host === '*' || host === url.host) {
+                    if (resolver.pattern) {
+                        re = new RegExp(resolver.pattern);
+                        if (re.test(url.href)) {
+                            console.debug(resolver);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
+
+
 
 
     function getSubtitlesFromUrl(src){
