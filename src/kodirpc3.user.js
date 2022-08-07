@@ -4381,11 +4381,10 @@
             let resolver = this.resolvers[index], domains = resolver.domains, re, host;
             for (let i = 0; i < domains.length; i++) {
                 host = domains[i], re;
-                if (host === '*' || host === url.host) {
+                if (host === '*' || url.host.indexOf(host) !== -1) {
                     if (resolver.pattern) {
                         re = new RegExp(resolver.pattern);
                         if (re.test(url.href)) {
-                            console.debug(resolver);
                             return true;
                         }
                     }
@@ -4483,26 +4482,38 @@
 
         // resolveurl
 
-        if (resolveurl.resolve(location.href)) {
-
-            let
-
-                    tags = ['resolve'],
-                    desc = 'from ' + location.hostname,
-                    subtitles = null;
-
-            
-            getSubtitlesFromUrl(location.href).then(sub => {
-                let subtitles = sub.default || sub.english || null;
-                (new RPCStream(location.href, subtitles, {desc: desc, tags: tags}, {mode: 3}));
-                if (typeof subtitles === string) (new Clipboard(subtitles, desc, tags.concat(['subs'])));
+        (function(){
 
 
-            });
-            
-            
+            let URLS = [
+                new URL(location.href),
+                new URL(location.protocol + '//' + location.host + location.pathname)
+            ], loc;
 
-        }
+            for (let i = 0; i < URLS.length; i++) {
+                
+                loc = URLS[i];
+                
+                if (resolveurl.resolve(loc)) {
+                    let
+
+                            tags = ['resolve'],
+                            desc = 'from ' + loc.host,
+                            subtitles = null;
+
+                    getSubtitlesFromUrl(location.href).then(sub => {
+                        let subtitles = sub.default || sub.english || null;
+                        (new RPCStream(loc.href, subtitles, {desc: desc, tags: tags}, {mode: 3}));
+                        if (typeof subtitles === string) (new Clipboard(subtitles, desc, tags.concat(['subs'])));
+                    });
+                    break;
+                }
+
+
+            }
+
+        }());
+
 
 
 
