@@ -1,5 +1,5 @@
 // ==UserScript==
-// @version      3.7.1
+// @version      3.7.2
 // @name         KodiRPC 3.0
 // @description  Send Stream URL to Kodi using jsonRPC
 // @author       daedelus
@@ -4729,12 +4729,12 @@
                         playlist.tracks.forEach(t => {
 
                             if (typeof track !== 'string') {
-                                track = t.file;
+                                track = getURL(t.file);
                             } else if (t.label && /^(en)/i.test(t.label)) {
-                                track = t.file;
+                                track = getURL(t.file);
                                 en = true;
                             } else if (t.label && /^(fr)/i.test(t.label) && !en) {
-                                track = t.file;
+                                track = getURL(t.file);
                             }
 
                         });
@@ -4760,7 +4760,6 @@
 
                     };
 
-                    console.debug(playlist, track);
 
                     playlist.sources.forEach((source, i) => {
 
@@ -4828,6 +4827,20 @@
                 (new RPCStream(url, null, 'from ' + src.hostname, {mode: 0}));
             }
         }
+
+
+        // Chinese MacPlayer
+
+        NodeFinder.findOne('.MacPlayer', () => {
+            if (typeof MacPlayer === 'object' && MacPlayer.PlayUrl) {
+
+                let url = new URL(MacPlayer.PlayUrl);
+
+
+                (new RPCStream(url, null, {desc: 'from ' + url.host, tags: ['MACPLAYER']}, {mode: 0}));
+                (new Clipboard(url));
+            }
+        });
 
 
     });
